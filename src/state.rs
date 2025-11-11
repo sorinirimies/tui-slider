@@ -432,7 +432,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "min must be less than max")]
     fn test_invalid_bounds() {
         SliderState::new(50.0, 100.0, 0.0);
     }

@@ -124,12 +124,10 @@ impl App {
             } else {
                 self.selected_horizontal = self.horizontal_sliders.len() - 1;
             }
+        } else if self.selected_vertical > 0 {
+            self.selected_vertical -= 1;
         } else {
-            if self.selected_vertical > 0 {
-                self.selected_vertical -= 1;
-            } else {
-                self.selected_vertical = self.vertical_sliders.len() - 1;
-            }
+            self.selected_vertical = self.vertical_sliders.len() - 1;
         }
     }
 
@@ -138,10 +136,8 @@ impl App {
             if let Some((_, state, _)) = self.horizontal_sliders.get_mut(self.selected_horizontal) {
                 state.increase(5.0);
             }
-        } else {
-            if let Some((_, state, _)) = self.vertical_sliders.get_mut(self.selected_vertical) {
-                state.increase(5.0);
-            }
+        } else if let Some((_, state, _)) = self.vertical_sliders.get_mut(self.selected_vertical) {
+            state.increase(5.0);
         }
     }
 
@@ -150,10 +146,8 @@ impl App {
             if let Some((_, state, _)) = self.horizontal_sliders.get_mut(self.selected_horizontal) {
                 state.decrease(5.0);
             }
-        } else {
-            if let Some((_, state, _)) = self.vertical_sliders.get_mut(self.selected_vertical) {
-                state.decrease(5.0);
-            }
+        } else if let Some((_, state, _)) = self.vertical_sliders.get_mut(self.selected_vertical) {
+            state.decrease(5.0);
         }
     }
 }
