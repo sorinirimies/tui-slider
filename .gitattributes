@@ -1,0 +1,20 @@
+# Git LFS tracking for large binary files
+*.gif filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+
+# Ensure consistent line endings
+*.rs text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.tape text eol=lf
+*.sh text eol=lf
+
+# Justfile
+justfile text eol=lf
+
+# Lock files should be treated as binary
+Cargo.lock binary

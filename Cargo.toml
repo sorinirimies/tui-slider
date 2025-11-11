@@ -1,0 +1,36 @@
+[package]
+name = "tui-slider"
+version = "0.1.0"
+edition = "2021"
+authors = ["Sorin Irimies <sorinirimies@gmail.com>"]
+license = "MIT"
+description = "A simple TUI slider component library for ratatui"
+repository = "https://github.com/sorinirimies/tui-slider"
+keywords = ["tui", "slider", "ratatui", "terminal", "widget"]
+categories = ["command-line-interface", "gui", "visualization", "rendering", "multimedia"]
+readme = "README.md"
+rust-version = "1.74.0"
+
+[dependencies]
+ratatui = "0.28"
+crossterm = "0.28"
+
+[dev-dependencies]
+anyhow = "1.0"
+rand = "0.8"
+
+[[example]]
+name = "horizontal"
+path = "examples/horizontal.rs"
+
+[[example]]
+name = "vertical"
+path = "examples/vertical.rs"
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
