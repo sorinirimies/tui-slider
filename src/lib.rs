@@ -66,6 +66,8 @@
 pub mod orientation;
 pub mod slider;
 pub mod state;
+pub mod style;
+pub mod symbols;
 
 // Re-export main types
 pub use orientation::SliderOrientation;
@@ -77,6 +79,8 @@ pub mod prelude {
     pub use crate::orientation::SliderOrientation;
     pub use crate::slider::Slider;
     pub use crate::state::SliderState;
+    pub use crate::style;
+    pub use crate::symbols;
 }
 
 #[cfg(test)]

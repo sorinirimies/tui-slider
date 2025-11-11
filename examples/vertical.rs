@@ -1,6 +1,6 @@
-//! Vertical and Horizontal slider example
+//! Vertical slider example with different styles
 //!
-//! This example demonstrates both vertical and horizontal sliders with consistent styling.
+//! This example demonstrates vertical sliders with various styling configurations.
 
 use anyhow::Result;
 use crossterm::{
@@ -10,144 +10,155 @@ use crossterm::{
 };
 use ratatui::{
     backend::CrosstermBackend,
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
     Frame, Terminal,
 };
 use std::io;
+use tui_slider::style::SliderStyle;
 use tui_slider::{Slider, SliderOrientation, SliderState};
 
-/// Configuration for consistent slider styling
-#[derive(Debug, Clone)]
-struct SliderConfig {
-    filled_symbol: &'static str,
-    empty_symbol: &'static str,
-    handle_symbol: &'static str,
-}
-
-impl SliderConfig {
-    fn default() -> Self {
-        Self {
-            filled_symbol: "━",
-            empty_symbol: "─",
-            handle_symbol: "●",
-        }
-    }
-}
-
 struct App {
-    horizontal_sliders: Vec<(String, SliderState, Color)>,
-    vertical_sliders: Vec<(String, SliderState, Color)>,
-    selected_horizontal: usize,
-    selected_vertical: usize,
-    focus_horizontal: bool,
-    config: SliderConfig,
+    sliders: Vec<(String, SliderState, SliderStyle)>,
+    selected: usize,
 }
 
 impl App {
     fn new() -> Self {
         Self {
-            horizontal_sliders: vec![
+            sliders: vec![
                 (
                     "Volume".to_string(),
                     SliderState::new(75.0, 0.0, 100.0),
-                    Color::Cyan,
+                    SliderStyle::default_style(),
                 ),
                 (
                     "Bass".to_string(),
                     SliderState::new(60.0, 0.0, 100.0),
-                    Color::Green,
+                    SliderStyle::blocks(),
                 ),
                 (
                     "Treble".to_string(),
                     SliderState::new(55.0, 0.0, 100.0),
-                    Color::Yellow,
+                    SliderStyle::dots(),
                 ),
                 (
                     "Balance".to_string(),
                     SliderState::new(50.0, 0.0, 100.0),
-                    Color::Magenta,
-                ),
-            ],
-            vertical_sliders: vec![
-                (
-                    "Bass".to_string(),
-                    SliderState::new(90.0, 0.0, 100.0),
-                    Color::Red,
+                    SliderStyle::arrows(),
                 ),
                 (
-                    "Low Mid".to_string(),
+                    "Gain".to_string(),
+                    SliderState::new(35.0, 0.0, 100.0),
+                    SliderStyle::minimal(),
+                ),
+                (
+                    "Reverb".to_string(),
+                    SliderState::new(45.0, 0.0, 100.0),
+                    SliderStyle::double_line(),
+                ),
+                (
+                    "Delay".to_string(),
+                    SliderState::new(30.0, 0.0, 100.0),
+                    SliderStyle::wave(),
+                ),
+                (
+                    "Chorus".to_string(),
+                    SliderState::new(65.0, 0.0, 100.0),
+                    SliderStyle::progress(),
+                ),
+                (
+                    "Distortion".to_string(),
+                    SliderState::new(40.0, 0.0, 100.0),
+                    SliderStyle::thick(),
+                ),
+                (
+                    "Compression".to_string(),
+                    SliderState::new(70.0, 0.0, 100.0),
+                    SliderStyle::gradient(),
+                ),
+                (
+                    "Flanger".to_string(),
+                    SliderState::new(25.0, 0.0, 100.0),
+                    SliderStyle::rounded(),
+                ),
+                (
+                    "Phaser".to_string(),
                     SliderState::new(55.0, 0.0, 100.0),
-                    Color::Yellow,
+                    SliderStyle::retro(),
                 ),
                 (
-                    "Mid".to_string(),
-                    SliderState::new(50.0, 0.0, 100.0),
-                    Color::Green,
+                    "Mix".to_string(),
+                    SliderState::new(70.0, 0.0, 100.0),
+                    SliderStyle::segmented(),
                 ),
                 (
-                    "High Mid".to_string(),
+                    "Attack".to_string(),
+                    SliderState::new(45.0, 0.0, 100.0),
+                    SliderStyle::segmented_blocks(),
+                ),
+                (
+                    "Release".to_string(),
+                    SliderState::new(60.0, 0.0, 100.0),
+                    SliderStyle::segmented_dots(),
+                ),
+                (
+                    "Sustain".to_string(),
                     SliderState::new(80.0, 0.0, 100.0),
-                    Color::Cyan,
+                    SliderStyle::segmented_bars(),
                 ),
                 (
-                    "Treble".to_string(),
-                    SliderState::new(43.0, 0.0, 100.0),
-                    Color::Blue,
+                    "Decay".to_string(),
+                    SliderState::new(35.0, 0.0, 100.0),
+                    SliderStyle::segmented_squares(),
+                ),
+                (
+                    "Resonance".to_string(),
+                    SliderState::new(55.0, 0.0, 100.0),
+                    SliderStyle::segmented_diamonds(),
+                ),
+                (
+                    "Cutoff".to_string(),
+                    SliderState::new(75.0, 0.0, 100.0),
+                    SliderStyle::segmented_stars(),
+                ),
+                (
+                    "Drive".to_string(),
+                    SliderState::new(40.0, 0.0, 100.0),
+                    SliderStyle::segmented_arrows(),
+                ),
+                (
+                    "Presence".to_string(),
+                    SliderState::new(85.0, 0.0, 100.0),
+                    SliderStyle::segmented_thick(),
                 ),
             ],
-            selected_horizontal: 0,
-            selected_vertical: 0,
-            focus_horizontal: false,
-            config: SliderConfig::default(),
+            selected: 0,
         }
-    }
-
-    fn toggle_focus(&mut self) {
-        self.focus_horizontal = !self.focus_horizontal;
     }
 
     fn next(&mut self) {
-        if self.focus_horizontal {
-            self.selected_horizontal =
-                (self.selected_horizontal + 1) % self.horizontal_sliders.len();
-        } else {
-            self.selected_vertical = (self.selected_vertical + 1) % self.vertical_sliders.len();
-        }
+        self.selected = (self.selected + 1) % self.sliders.len();
     }
 
     fn previous(&mut self) {
-        if self.focus_horizontal {
-            if self.selected_horizontal > 0 {
-                self.selected_horizontal -= 1;
-            } else {
-                self.selected_horizontal = self.horizontal_sliders.len() - 1;
-            }
-        } else if self.selected_vertical > 0 {
-            self.selected_vertical -= 1;
+        if self.selected > 0 {
+            self.selected -= 1;
         } else {
-            self.selected_vertical = self.vertical_sliders.len() - 1;
+            self.selected = self.sliders.len() - 1;
         }
     }
 
     fn increase(&mut self) {
-        if self.focus_horizontal {
-            if let Some((_, state, _)) = self.horizontal_sliders.get_mut(self.selected_horizontal) {
-                state.increase(5.0);
-            }
-        } else if let Some((_, state, _)) = self.vertical_sliders.get_mut(self.selected_vertical) {
+        if let Some((_, state, _)) = self.sliders.get_mut(self.selected) {
             state.increase(5.0);
         }
     }
 
     fn decrease(&mut self) {
-        if self.focus_horizontal {
-            if let Some((_, state, _)) = self.horizontal_sliders.get_mut(self.selected_horizontal) {
-                state.decrease(5.0);
-            }
-        } else if let Some((_, state, _)) = self.vertical_sliders.get_mut(self.selected_vertical) {
+        if let Some((_, state, _)) = self.sliders.get_mut(self.selected) {
             state.decrease(5.0);
         }
     }
@@ -190,7 +201,6 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut A
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                    KeyCode::Tab => app.toggle_focus(),
                     KeyCode::Right | KeyCode::Char('l') => app.next(),
                     KeyCode::Left | KeyCode::Char('h') => app.previous(),
                     KeyCode::Up | KeyCode::Char('k') => app.increase(),
@@ -210,13 +220,11 @@ fn ui(f: &mut Frame, app: &App) {
             Constraint::Length(3),
             Constraint::Min(10),
             Constraint::Length(3),
-            Constraint::Min(10),
-            Constraint::Length(3),
         ])
         .split(f.area());
 
     // Title
-    let title = Paragraph::new("Slider Demo - Vertical & Horizontal")
+    let title = Paragraph::new("Vertical Slider Styles Demo")
         .style(
             Style::default()
                 .fg(Color::Cyan)
@@ -225,78 +233,45 @@ fn ui(f: &mut Frame, app: &App) {
         .alignment(Alignment::Center);
     f.render_widget(title, main_chunks[0]);
 
-    // Vertical section title
-    let v_title = Paragraph::new(if !app.focus_horizontal {
-        "Vertical Sliders / Equalizer [ACTIVE]"
-    } else {
-        "Vertical Sliders / Equalizer"
-    })
-    .style(if !app.focus_horizontal {
-        Style::default()
-            .fg(Color::Yellow)
-            .add_modifier(Modifier::BOLD)
-    } else {
-        Style::default().fg(Color::DarkGray)
-    })
-    .alignment(Alignment::Center);
-    f.render_widget(v_title, main_chunks[2]);
-
-    // Horizontal section title
-    let h_title = Paragraph::new(if app.focus_horizontal {
-        "Horizontal Sliders [ACTIVE]"
-    } else {
-        "Horizontal Sliders"
-    })
-    .style(if app.focus_horizontal {
-        Style::default()
-            .fg(Color::Yellow)
-            .add_modifier(Modifier::BOLD)
-    } else {
-        Style::default().fg(Color::DarkGray)
-    })
-    .alignment(Alignment::Center);
-    f.render_widget(h_title, main_chunks[4]);
-
     // Help text
-    let help = Paragraph::new(
-        "Tab: Switch section | ←/→ or h/l: Select | ↑/↓ or k/j: Adjust | q/Esc: Quit",
-    )
-    .style(Style::default().fg(Color::Gray))
-    .alignment(Alignment::Center);
-    f.render_widget(help, main_chunks[4]);
+    let help = Paragraph::new("←/→ or h/l: Select | ↑/↓ or k/j: Adjust | q/Esc: Quit")
+        .style(Style::default().fg(Color::Gray))
+        .alignment(Alignment::Center);
+    f.render_widget(help, main_chunks[2]);
 
-    // Render vertical sliders
-    render_vertical_sliders(f, app, main_chunks[1]);
-
-    // Render horizontal sliders
-    render_horizontal_sliders(f, app, main_chunks[3]);
+    // Render sliders
+    render_sliders(f, app, main_chunks[1]);
 }
 
-fn render_vertical_sliders(f: &mut Frame, app: &App, area: Rect) {
-    let num_sliders = app.vertical_sliders.len();
+fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
+    let num_sliders = app.sliders.len();
     let slider_width = 12;
-    let total_width = slider_width * num_sliders as u16;
-    let remaining = area.width.saturating_sub(total_width);
-    let spacing = remaining / (num_sliders as u16 + 1);
+    let spacing = 2;
+    let total_width = (slider_width + spacing) * num_sliders as u16;
 
-    let mut constraints = vec![Constraint::Length(spacing)];
+    // Center the sliders if there's extra space
+    let remaining = area.width.saturating_sub(total_width);
+    let left_margin = remaining / 2;
+
+    let mut constraints = vec![Constraint::Length(left_margin)];
     for _ in 0..num_sliders {
         constraints.push(Constraint::Length(slider_width));
         constraints.push(Constraint::Length(spacing));
     }
+    constraints.push(Constraint::Min(0));
 
     let slider_chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(constraints)
         .split(area);
 
-    for (i, (label, state, color)) in app.vertical_sliders.iter().enumerate() {
+    for (i, (label, state, style)) in app.sliders.iter().enumerate() {
         let chunk_index = 1 + (i * 2);
         if chunk_index >= slider_chunks.len() {
             break;
         }
 
-        let is_selected = !app.focus_horizontal && i == app.selected_vertical;
+        let is_selected = i == app.selected;
 
         let block = Block::default()
             .borders(Borders::ALL)
@@ -307,98 +282,188 @@ fn render_vertical_sliders(f: &mut Frame, app: &App, area: Rect) {
             } else {
                 Style::default().fg(Color::DarkGray)
             })
-            .title(Line::from(vec![Span::styled(
-                label.clone(),
-                if is_selected {
+            .title(ratatui::text::Line::from(vec![
+                ratatui::text::Span::styled(
+                    label.clone(),
+                    if is_selected {
+                        Style::default()
+                            .fg(Color::Cyan)
+                            .add_modifier(Modifier::BOLD)
+                    } else {
+                        Style::default().fg(Color::Gray)
+                    },
+                ),
+            ]));
+
+        if style.segmented {
+            // Render segmented slider
+            render_segmented_slider(
+                f,
+                state,
+                style,
+                is_selected,
+                block,
+                slider_chunks[chunk_index],
+            );
+        } else {
+            let inner_area = block.inner(slider_chunks[chunk_index]);
+            f.render_widget(block, slider_chunks[chunk_index]);
+
+            // Reserve space for value at bottom
+            let slider_area = ratatui::layout::Rect {
+                x: inner_area.x,
+                y: inner_area.y,
+                width: inner_area.width,
+                height: inner_area.height.saturating_sub(2),
+            };
+
+            let slider = Slider::from_state(state)
+                .orientation(SliderOrientation::Vertical)
+                .filled_symbol(style.filled_symbol)
+                .empty_symbol(style.empty_symbol)
+                .handle_symbol(style.handle_symbol)
+                .filled_color(style.filled_color)
+                .empty_color(style.empty_color)
+                .handle_color(if is_selected {
+                    Color::White
+                } else {
+                    style.handle_color
+                })
+                .show_handle(true);
+
+            f.render_widget(slider, slider_area);
+
+            // Render value below slider in separate area
+            let value_area = ratatui::layout::Rect {
+                x: inner_area.x,
+                y: inner_area.y + slider_area.height,
+                width: inner_area.width,
+                height: 1,
+            };
+
+            let value_text = format!("{:.0}", state.value());
+            let value_para = Paragraph::new(value_text)
+                .style(if is_selected {
                     Style::default()
                         .fg(Color::Cyan)
                         .add_modifier(Modifier::BOLD)
                 } else {
                     Style::default().fg(Color::Gray)
-                },
-            )]));
+                })
+                .alignment(Alignment::Center);
 
-        let inner_area = block.inner(slider_chunks[chunk_index]);
-        f.render_widget(block, slider_chunks[chunk_index]);
-
-        let slider = Slider::from_state(state)
-            .orientation(SliderOrientation::Vertical)
-            .filled_symbol(app.config.filled_symbol)
-            .empty_symbol(app.config.empty_symbol)
-            .handle_symbol(app.config.handle_symbol)
-            .filled_color(*color)
-            .empty_color(Color::DarkGray)
-            .handle_color(if is_selected { Color::White } else { *color })
-            .show_handle(true);
-
-        f.render_widget(slider, inner_area);
-
-        let value_text = format!("{:.0}", state.value());
-        let value_para = Paragraph::new(value_text)
-            .style(if is_selected {
-                Style::default()
-                    .fg(Color::Cyan)
-                    .add_modifier(Modifier::BOLD)
-            } else {
-                Style::default().fg(Color::Gray)
-            })
-            .alignment(Alignment::Center);
-
-        if inner_area.height > 2 {
-            let value_area = Rect {
-                x: inner_area.x,
-                y: inner_area.y + inner_area.height - 1,
-                width: inner_area.width,
-                height: 1,
-            };
             f.render_widget(value_para, value_area);
         }
     }
 }
 
-fn render_horizontal_sliders(f: &mut Frame, app: &App, area: Rect) {
-    let num_sliders = app.horizontal_sliders.len();
-    let mut constraints = vec![Constraint::Length(1)];
-    for _ in 0..num_sliders {
-        constraints.push(Constraint::Length(5));
+fn render_segmented_slider(
+    f: &mut Frame,
+    state: &SliderState,
+    style: &SliderStyle,
+    is_selected: bool,
+    block: Block,
+    area: ratatui::layout::Rect,
+) {
+    let inner = block.inner(area);
+    f.render_widget(block, area);
+
+    if inner.width < 1 || inner.height < 3 {
+        return;
     }
-    constraints.push(Constraint::Min(0));
 
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(constraints)
-        .split(area);
+    // Use full available height (minus space for value at bottom)
+    let total_height = inner.height.saturating_sub(2) as usize;
 
-    for (i, (label, state, color)) in app.horizontal_sliders.iter().enumerate() {
-        if i + 1 >= chunks.len() {
-            break;
+    if total_height < 10 {
+        // Not enough height, render non-segmented
+        let slider = Slider::from_state(state)
+            .orientation(SliderOrientation::Vertical)
+            .filled_symbol(style.filled_symbol)
+            .empty_symbol(style.empty_symbol)
+            .handle_symbol(style.handle_symbol)
+            .filled_color(style.filled_color)
+            .empty_color(style.empty_color)
+            .handle_color(if is_selected {
+                Color::White
+            } else {
+                style.handle_color
+            })
+            .show_handle(true);
+        f.render_widget(slider, inner);
+        return;
+    }
+
+    let percentage = state.percentage();
+
+    // Render segments with spaces to fill entire height
+    // Each segment takes 2 lines: symbol + space
+    let num_segments = total_height / 2;
+    let filled_segments = (num_segments as f64 * percentage).round() as usize;
+    let handle_position = filled_segments.saturating_sub(1);
+
+    // Build the segmented bar from top to bottom (to match visual order)
+    let mut lines = Vec::new();
+
+    for i in (0..num_segments).rev() {
+        // Add handle at the correct position
+        if i == handle_position && filled_segments > 0 {
+            lines.push(Line::from(vec![Span::styled(
+                style.handle_symbol,
+                Style::default().fg(if is_selected {
+                    Color::White
+                } else {
+                    style.handle_color
+                }),
+            )]));
+        } else {
+            let symbol = if i < filled_segments {
+                Span::styled(style.filled_symbol, Style::default().fg(style.filled_color))
+            } else {
+                Span::styled(style.empty_symbol, Style::default().fg(style.empty_color))
+            };
+            lines.push(Line::from(vec![symbol]));
         }
 
-        let is_selected = app.focus_horizontal && i == app.selected_horizontal;
-
-        let block = Block::default()
-            .borders(Borders::ALL)
-            .border_style(if is_selected {
-                Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::BOLD)
-            } else {
-                Style::default().fg(Color::DarkGray)
-            })
-            .title(format!(" {} ", label));
-
-        let slider = Slider::from_state(state)
-            .orientation(SliderOrientation::Horizontal)
-            .filled_symbol(app.config.filled_symbol)
-            .empty_symbol(app.config.empty_symbol)
-            .handle_symbol(app.config.handle_symbol)
-            .filled_color(*color)
-            .empty_color(Color::DarkGray)
-            .handle_color(if is_selected { Color::White } else { *color })
-            .show_value(true)
-            .show_handle(true)
-            .block(block);
-
-        f.render_widget(slider, chunks[i + 1]);
+        // Add space after each segment (except last one)
+        if lines.len() < total_height {
+            lines.push(Line::from(vec![Span::raw(" ")]));
+        }
     }
+
+    // Fill any remaining height
+    while lines.len() < total_height {
+        lines.push(Line::from(vec![Span::raw(" ")]));
+    }
+
+    // Render the slider lines taking full height
+    let slider_area = ratatui::layout::Rect {
+        x: inner.x,
+        y: inner.y,
+        width: inner.width,
+        height: total_height as u16,
+    };
+
+    let para = Paragraph::new(lines).alignment(Alignment::Center);
+    f.render_widget(para, slider_area);
+
+    // Add value at the bottom in a separate area
+    let value_area = ratatui::layout::Rect {
+        x: inner.x,
+        y: inner.y + total_height as u16,
+        width: inner.width,
+        height: 1,
+    };
+
+    let value_para = Paragraph::new(format!("{:.0}", state.value()))
+        .style(if is_selected {
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD)
+        } else {
+            Style::default().fg(Color::Gray)
+        })
+        .alignment(Alignment::Center);
+
+    f.render_widget(value_para, value_area);
 }

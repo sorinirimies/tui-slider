@@ -1,6 +1,7 @@
-//! Horizontal slider example with different styles
+//! Custom slider styles showcase
 //!
-//! This example demonstrates horizontal sliders with various styling configurations.
+//! This example demonstrates how to create custom slider styles using the builder pattern.
+//! It shows various custom styles with RGB colors and different symbol combinations.
 
 use anyhow::Result;
 use crossterm::{
@@ -12,12 +13,13 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
+    text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
     Frame, Terminal,
 };
 use std::io;
 use tui_slider::style::SliderStyle;
-use tui_slider::{Slider, SliderOrientation, SliderState};
+use tui_slider::{symbols, Slider, SliderOrientation, SliderState};
 
 struct App {
     sliders: Vec<(String, SliderState, SliderStyle)>,
@@ -29,109 +31,140 @@ impl App {
         Self {
             sliders: vec![
                 (
-                    "Volume".to_string(),
+                    "Sunset Gradient".to_string(),
                     SliderState::new(75.0, 0.0, 100.0),
-                    SliderStyle::default_style(),
+                    SliderStyle::custom("Sunset")
+                        .filled_symbol(symbols::FILLED_BLOCK)
+                        .empty_symbol(symbols::FILLED_LIGHT_SHADE)
+                        .handle_symbol(symbols::HANDLE_CIRCLE)
+                        .filled_color(Color::Rgb(255, 100, 50))
+                        .empty_color(Color::Rgb(80, 40, 30))
+                        .handle_color(Color::Rgb(255, 200, 100)),
                 ),
                 (
-                    "Bass".to_string(),
+                    "Ocean Wave".to_string(),
                     SliderState::new(60.0, 0.0, 100.0),
-                    SliderStyle::blocks(),
+                    SliderStyle::custom("Ocean")
+                        .filled_symbol(symbols::FILLED_WAVE)
+                        .empty_symbol(symbols::EMPTY_WAVE)
+                        .handle_symbol(symbols::HANDLE_DOUBLE_CIRCLE)
+                        .filled_color(Color::Rgb(50, 150, 255))
+                        .empty_color(Color::Rgb(30, 60, 100))
+                        .handle_color(Color::Rgb(150, 220, 255)),
                 ),
                 (
-                    "Treble".to_string(),
-                    SliderState::new(55.0, 0.0, 100.0),
-                    SliderStyle::dots(),
-                ),
-                (
-                    "Balance".to_string(),
-                    SliderState::new(50.0, 0.0, 100.0),
-                    SliderStyle::arrows(),
-                ),
-                (
-                    "Gain".to_string(),
-                    SliderState::new(35.0, 0.0, 100.0),
-                    SliderStyle::minimal(),
-                ),
-                (
-                    "Reverb".to_string(),
+                    "Forest Green".to_string(),
                     SliderState::new(45.0, 0.0, 100.0),
-                    SliderStyle::double_line(),
+                    SliderStyle::custom("Forest")
+                        .filled_symbol(symbols::FILLED_DARK_SHADE)
+                        .empty_symbol(symbols::FILLED_LIGHT_SHADE)
+                        .handle_symbol(symbols::HANDLE_DIAMOND)
+                        .filled_color(Color::Rgb(50, 150, 50))
+                        .empty_color(Color::Rgb(30, 60, 30))
+                        .handle_color(Color::Rgb(100, 255, 100)),
                 ),
                 (
-                    "Delay".to_string(),
-                    SliderState::new(30.0, 0.0, 100.0),
-                    SliderStyle::wave(),
-                ),
-                (
-                    "Chorus".to_string(),
-                    SliderState::new(65.0, 0.0, 100.0),
-                    SliderStyle::progress(),
-                ),
-                (
-                    "Distortion".to_string(),
-                    SliderState::new(40.0, 0.0, 100.0),
-                    SliderStyle::thick(),
-                ),
-                (
-                    "Compression".to_string(),
-                    SliderState::new(70.0, 0.0, 100.0),
-                    SliderStyle::gradient(),
-                ),
-                (
-                    "Flanger".to_string(),
-                    SliderState::new(25.0, 0.0, 100.0),
-                    SliderStyle::rounded(),
-                ),
-                (
-                    "Phaser".to_string(),
-                    SliderState::new(55.0, 0.0, 100.0),
-                    SliderStyle::retro(),
-                ),
-                (
-                    "Mix".to_string(),
-                    SliderState::new(70.0, 0.0, 100.0),
-                    SliderStyle::segmented(),
-                ),
-                (
-                    "Attack".to_string(),
-                    SliderState::new(45.0, 0.0, 100.0),
-                    SliderStyle::segmented_blocks(),
-                ),
-                (
-                    "Release".to_string(),
-                    SliderState::new(60.0, 0.0, 100.0),
-                    SliderStyle::segmented_dots(),
-                ),
-                (
-                    "Sustain".to_string(),
+                    "Purple Haze".to_string(),
                     SliderState::new(80.0, 0.0, 100.0),
-                    SliderStyle::segmented_bars(),
+                    SliderStyle::custom("Purple")
+                        .filled_symbol(symbols::FILLED_MEDIUM_SHADE)
+                        .empty_symbol(symbols::EMPTY_LIGHT_SHADE)
+                        .handle_symbol(symbols::HANDLE_HEXAGON)
+                        .filled_color(Color::Rgb(150, 50, 200))
+                        .empty_color(Color::Rgb(60, 30, 80))
+                        .handle_color(Color::Rgb(220, 150, 255)),
                 ),
                 (
-                    "Decay".to_string(),
+                    "Fire".to_string(),
+                    SliderState::new(90.0, 0.0, 100.0),
+                    SliderStyle::custom("Fire")
+                        .filled_symbol(symbols::FILLED_BAR)
+                        .empty_symbol(symbols::EMPTY_BAR_OUTLINE)
+                        .handle_symbol(symbols::HANDLE_TRIANGLE_RIGHT)
+                        .filled_color(Color::Rgb(255, 50, 0))
+                        .empty_color(Color::Rgb(100, 30, 0))
+                        .handle_color(Color::Rgb(255, 200, 0)),
+                ),
+                (
+                    "Ice Crystal".to_string(),
                     SliderState::new(35.0, 0.0, 100.0),
-                    SliderStyle::segmented_squares(),
+                    SliderStyle::custom("Ice")
+                        .filled_symbol(symbols::FILLED_DIAMOND)
+                        .empty_symbol(symbols::EMPTY_DIAMOND)
+                        .handle_symbol(symbols::HANDLE_DOUBLE_DIAMOND)
+                        .filled_color(Color::Rgb(100, 200, 255))
+                        .empty_color(Color::Rgb(40, 80, 120))
+                        .handle_color(Color::Rgb(200, 240, 255)),
                 ),
                 (
-                    "Resonance".to_string(),
+                    "Neon Pink".to_string(),
+                    SliderState::new(70.0, 0.0, 100.0),
+                    SliderStyle::custom("Neon")
+                        .filled_symbol(symbols::FILLED_LOWER_BAR)
+                        .empty_symbol(symbols::EMPTY_LOWER_BAR)
+                        .handle_symbol(symbols::HANDLE_LOWER_BAR)
+                        .filled_color(Color::Rgb(255, 0, 150))
+                        .empty_color(Color::Rgb(80, 0, 60))
+                        .handle_color(Color::Rgb(0, 255, 200)),
+                ),
+                (
+                    "Gold Rush".to_string(),
                     SliderState::new(55.0, 0.0, 100.0),
-                    SliderStyle::segmented_diamonds(),
+                    SliderStyle::custom("Gold")
+                        .filled_symbol(symbols::FILLED_STAR)
+                        .empty_symbol(symbols::EMPTY_STAR)
+                        .handle_symbol(symbols::HANDLE_FILLED_STAR)
+                        .filled_color(Color::Rgb(255, 200, 0))
+                        .empty_color(Color::Rgb(100, 80, 0))
+                        .handle_color(Color::Rgb(255, 255, 150)),
                 ),
                 (
-                    "Cutoff".to_string(),
-                    SliderState::new(75.0, 0.0, 100.0),
-                    SliderStyle::segmented_stars(),
+                    "Cyber Segmented".to_string(),
+                    SliderState::new(65.0, 0.0, 100.0),
+                    SliderStyle::custom("Cyber")
+                        .filled_symbol("▰")
+                        .empty_symbol("▱")
+                        .handle_symbol(symbols::HANDLE_BULLSEYE)
+                        .filled_color(Color::Rgb(0, 255, 150))
+                        .empty_color(Color::Rgb(20, 80, 60))
+                        .handle_color(Color::Rgb(150, 255, 200))
+                        .with_segments(true),
                 ),
                 (
-                    "Drive".to_string(),
-                    SliderState::new(40.0, 0.0, 100.0),
-                    SliderStyle::segmented_arrows(),
-                ),
-                (
-                    "Presence".to_string(),
+                    "Lava Segmented".to_string(),
                     SliderState::new(85.0, 0.0, 100.0),
-                    SliderStyle::segmented_thick(),
+                    SliderStyle::custom("Lava")
+                        .filled_symbol("█")
+                        .empty_symbol("░")
+                        .handle_symbol(symbols::HANDLE_SQUARE)
+                        .filled_color(Color::Rgb(255, 80, 0))
+                        .empty_color(Color::Rgb(100, 30, 0))
+                        .handle_color(Color::Rgb(255, 255, 0))
+                        .with_segments(true),
+                ),
+                (
+                    "Electric Blue".to_string(),
+                    SliderState::new(40.0, 0.0, 100.0),
+                    SliderStyle::custom("Electric")
+                        .filled_symbol("━")
+                        .empty_symbol("╌")
+                        .handle_symbol(symbols::HANDLE_LARGE_CIRCLE)
+                        .filled_color(Color::Rgb(0, 150, 255))
+                        .empty_color(Color::Rgb(0, 50, 100))
+                        .handle_color(Color::Rgb(150, 220, 255))
+                        .with_segments(true),
+                ),
+                (
+                    "Rainbow Dots".to_string(),
+                    SliderState::new(50.0, 0.0, 100.0),
+                    SliderStyle::custom("Rainbow")
+                        .filled_symbol("●")
+                        .empty_symbol("○")
+                        .handle_symbol(symbols::HANDLE_DIAMOND)
+                        .filled_color(Color::Rgb(200, 100, 255))
+                        .empty_color(Color::Rgb(60, 40, 80))
+                        .handle_color(Color::Rgb(255, 200, 100))
+                        .with_segments(true),
                 ),
             ],
             selected: 0,
@@ -223,7 +256,7 @@ fn ui(f: &mut Frame, app: &App) {
         .split(f.area());
 
     // Title
-    let title = Paragraph::new("Horizontal Slider Styles Demo")
+    let title = Paragraph::new("Custom Slider Styles Showcase")
         .style(
             Style::default()
                 .fg(Color::Cyan)
@@ -306,8 +339,6 @@ fn render_segmented_slider(
     block: Block,
     area: ratatui::layout::Rect,
 ) {
-    use ratatui::text::{Line, Span};
-
     let inner = block.inner(area);
     f.render_widget(block, area);
 
@@ -317,7 +348,7 @@ fn render_segmented_slider(
 
     // Calculate segments
     let segment_count = 20;
-    let segment_width = 3; // dash + space + space
+    let segment_width = 3; // symbol + space + space
     let available_width = inner.width as usize;
     let max_segments = available_width / segment_width;
     let actual_segments = segment_count.min(max_segments);

@@ -347,6 +347,193 @@ impl SliderState {
     pub fn position(&self, length: u16) -> u16 {
         (self.percentage() * length as f64).round() as u16
     }
+
+    /// Returns the range (max - min)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(50.0, 0.0, 100.0);
+    /// assert_eq!(state.range(), 100.0);
+    ///
+    /// let state = SliderState::new(50.0, 25.0, 75.0);
+    /// assert_eq!(state.range(), 50.0);
+    /// ```
+    pub fn range(&self) -> f64 {
+        self.max - self.min
+    }
+
+    /// Returns true if the slider is at its minimum value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(0.0, 0.0, 100.0);
+    /// assert!(state.is_at_min());
+    ///
+    /// let state = SliderState::new(50.0, 0.0, 100.0);
+    /// assert!(!state.is_at_min());
+    /// ```
+    pub fn is_at_min(&self) -> bool {
+        (self.value - self.min).abs() < f64::EPSILON
+    }
+
+    /// Returns true if the slider is at its maximum value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(100.0, 0.0, 100.0);
+    /// assert!(state.is_at_max());
+    ///
+    /// let state = SliderState::new(50.0, 0.0, 100.0);
+    /// assert!(!state.is_at_max());
+    /// ```
+    pub fn is_at_max(&self) -> bool {
+        (self.value - self.max).abs() < f64::EPSILON
+    }
+
+    /// Returns true if the slider is at or near the middle of its range
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(50.0, 0.0, 100.0);
+    /// assert!(state.is_at_middle());
+    ///
+    /// let state = SliderState::new(0.0, 0.0, 100.0);
+    /// assert!(!state.is_at_middle());
+    /// ```
+    pub fn is_at_middle(&self) -> bool {
+        let middle = (self.min + self.max) / 2.0;
+        (self.value - middle).abs() < self.range() * 0.1
+    }
+
+    /// Returns true if the slider value is in the lower third of its range
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(20.0, 0.0, 100.0);
+    /// assert!(state.is_low());
+    ///
+    /// let state = SliderState::new(80.0, 0.0, 100.0);
+    /// assert!(!state.is_low());
+    /// ```
+    pub fn is_low(&self) -> bool {
+        self.percentage() < 0.33
+    }
+
+    /// Returns true if the slider value is in the middle third of its range
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(50.0, 0.0, 100.0);
+    /// assert!(state.is_medium());
+    ///
+    /// let state = SliderState::new(10.0, 0.0, 100.0);
+    /// assert!(!state.is_medium());
+    /// ```
+    pub fn is_medium(&self) -> bool {
+        let pct = self.percentage();
+        (0.33..0.67).contains(&pct)
+    }
+
+    /// Returns true if the slider value is in the upper third of its range
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(80.0, 0.0, 100.0);
+    /// assert!(state.is_high());
+    ///
+    /// let state = SliderState::new(20.0, 0.0, 100.0);
+    /// assert!(!state.is_high());
+    /// ```
+    pub fn is_high(&self) -> bool {
+        self.percentage() >= 0.67
+    }
+
+    /// Returns the distance from the minimum value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(75.0, 0.0, 100.0);
+    /// assert_eq!(state.distance_from_min(), 75.0);
+    ///
+    /// let state = SliderState::new(75.0, 25.0, 100.0);
+    /// assert_eq!(state.distance_from_min(), 50.0);
+    /// ```
+    pub fn distance_from_min(&self) -> f64 {
+        self.value - self.min
+    }
+
+    /// Returns the distance from the maximum value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(75.0, 0.0, 100.0);
+    /// assert_eq!(state.distance_from_max(), 25.0);
+    ///
+    /// let state = SliderState::new(75.0, 25.0, 100.0);
+    /// assert_eq!(state.distance_from_max(), 25.0);
+    /// ```
+    pub fn distance_from_max(&self) -> f64 {
+        self.max - self.value
+    }
+
+    /// Returns a formatted string representation of the current value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(75.5, 0.0, 100.0);
+    /// assert_eq!(state.value_string(1), "75.5");
+    /// assert_eq!(state.value_string(0), "76");
+    /// ```
+    pub fn value_string(&self, decimals: usize) -> String {
+        format!("{:.decimals$}", self.value, decimals = decimals)
+    }
+
+    /// Returns a formatted percentage string (e.g., "75%")
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(75.0, 0.0, 100.0);
+    /// assert_eq!(state.percentage_string(), "75%");
+    ///
+    /// let state = SliderState::new(50.0, 0.0, 100.0);
+    /// assert_eq!(state.percentage_string(), "50%");
+    /// ```
+    pub fn percentage_string(&self) -> String {
+        format!("{:.0}%", self.percentage() * 100.0)
+    }
 }
 
 impl Default for SliderState {
