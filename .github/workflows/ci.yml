@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 env:
   CARGO_TERM_COLOR: always
@@ -101,7 +101,4 @@ jobs:
         run: |
           cargo build --example horizontal
           cargo build --example vertical
-          cargo build --example audio_levels
-          cargo build --example music_player
-          cargo build --example equalizer
-          cargo build --example custom_styles
+          cargo build --example custom
