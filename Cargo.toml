@@ -27,6 +27,10 @@ path = "examples/horizontal.rs"
 name = "vertical"
 path = "examples/vertical.rs"
 
+[[example]]
+name = "custom"
+path = "examples/custom.rs"
+
 [profile.dev]
 opt-level = 1
 
