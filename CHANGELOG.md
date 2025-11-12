@@ -1,10 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.1.1] - 2025-11-12
+## [0.1.2] - 2025-11-12
 
 ### Documentation
 - Add release quick start guide
+
+### Miscellaneous
+- Bump version to 0.1.1
 
 ## [0.1.1] - 2025-11-12
 
