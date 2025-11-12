@@ -260,7 +260,7 @@ push-tags-all:
     git push gitea --tags
     @echo "✅ Tags pushed to both GitHub and Gitea!"
 
-# Push release to both GitHub and Gitea
+# Push release to both GitHub and Gitea (without bumping)
 push-release-all:
     @echo "Pushing release to both GitHub and Gitea..."
     git push origin main
@@ -287,6 +287,29 @@ setup-gitea url:
     git remote add gitea {{url}}
     @echo "✅ Gitea remote added!"
     @echo "Test with: git push gitea main"
+
+# Full release workflow: bump version and push to Gitea
+release-gitea version: (bump version)
+    @echo "Pushing to Gitea..."
+    git push gitea main
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on Gitea!"
+
+# Full release workflow: bump version and push to GitHub (alias for release)
+release-github version: (bump version)
+    @echo "Pushing to GitHub..."
+    git push origin main
+    git push origin v{{version}}
+    @echo "✅ Release v{{version}} complete on GitHub!"
+
+# Full release workflow: bump version and push to both GitHub and Gitea
+release-all version: (bump version)
+    @echo "Pushing to both GitHub and Gitea..."
+    git push origin main
+    git push gitea main
+    git push origin v{{version}}
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on both remotes!"
 JUSTFILE_APPEND
 
         success "Added Gitea commands to justfile"
@@ -323,10 +346,26 @@ push-tags-all:
     git push gitea --tags
     @echo "✅ Tags pushed to both GitHub and Gitea!"
 
+# Push release to both GitHub and Gitea (without bumping)
+push-release-all:
+    @echo "Pushing release to both GitHub and Gitea..."
+    git push origin main
+    git push gitea main
+    git push origin --tags
+    git push gitea --tags
+    @echo "✅ Release pushed to both remotes!"
+
 # Show configured remotes
 remotes:
     @echo "Configured git remotes:"
     @git remote -v
+
+# Setup Gitea remote (provide your Gitea URL)
+setup-gitea url:
+    @echo "Adding Gitea remote..."
+    git remote add gitea {{url}}
+    @echo "✅ Gitea remote added!"
+    @echo "Test with: git push gitea main"
 
 # Sync Gitea with GitHub (force)
 sync-gitea:
@@ -334,6 +373,29 @@ sync-gitea:
     git push gitea main --force
     git push gitea --tags --force
     @echo "✅ Gitea synced!"
+
+# Full release workflow: bump version and push to Gitea
+release-gitea version: (bump version)
+    @echo "Pushing to Gitea..."
+    git push gitea main
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on Gitea!"
+
+# Full release workflow: bump version and push to GitHub
+release-github version: (bump version)
+    @echo "Pushing to GitHub..."
+    git push origin main
+    git push origin v{{version}}
+    @echo "✅ Release v{{version}} complete on GitHub!"
+
+# Full release workflow: bump version and push to both GitHub and Gitea
+release-all version: (bump version)
+    @echo "Pushing to both GitHub and Gitea..."
+    git push origin main
+    git push gitea main
+    git push origin v{{version}}
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on both remotes!"
 JUSTFILE_CREATE
 
     success "Created justfile with Gitea commands"
@@ -421,6 +483,11 @@ echo "  just push-gitea       # Push to Gitea only"
 echo "  just push-all         # Push to both GitHub and Gitea"
 echo "  just sync-gitea       # Sync Gitea with GitHub"
 echo "  just remotes          # Show all remotes"
+echo ""
+info "Release commands:"
+echo "  just release-github 0.2.5  # Release to GitHub only"
+echo "  just release-gitea 0.2.5   # Release to Gitea only"
+echo "  just release-all 0.2.5     # Release to both remotes"
 echo ""
 
 info "Documentation:"
