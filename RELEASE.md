@@ -28,22 +28,12 @@ This installs:
    just changelog-preview-unreleased
    ```
 
-3. **Prepare release** (bumps version, updates changelog, creates tag):
+3. **Prepare and push release** (bumps version, updates changelog, creates tag, and pushes):
    ```bash
    just release 0.2.0
    ```
 
-4. **Review changes**:
-   - Check `CHANGELOG.md`
-   - Review git commit and tag
-   - Test examples if needed
-
-5. **Push to remote**:
-   ```bash
-   just push-release
-   ```
-
-6. **Publish to crates.io**:
+4. **Publish to crates.io**:
    ```bash
    just publish
    ```
@@ -59,10 +49,10 @@ just release-full 0.2.0
 This will:
 - Run all checks (fmt, clippy, tests)
 - Build release version
-- Bump version in `Cargo.toml`
+- Bump version in `Cargo.toml` and `Cargo.lock`
 - Update `CHANGELOG.md`
 - Create git commit and tag
-- Push to remote
+- Push commits and tags to remote
 - Publish to crates.io
 
 ## What the Release Process Does
@@ -87,11 +77,14 @@ This will:
 4. **Git operations**:
    - Creates commit: `chore(release): bump version to X.Y.Z`
    - Creates annotated tag: `vX.Y.Z`
+   - Pushes main branch to origin
+   - Pushes the version tag to origin
 
 ### `just push-release`
 
 - Pushes main branch to origin
 - Pushes all tags to origin
+- (Note: `just release` already pushes automatically)
 
 ### `just publish`
 
@@ -213,9 +206,9 @@ Before releasing:
 
 After releasing:
 
-- [ ] Verify tag is pushed (`git tag -l`)
+- [ ] Verify tag is pushed to GitHub (`git ls-remote --tags origin`)
 - [ ] Check GitHub releases page
-- [ ] Verify crate on crates.io
+- [ ] Verify crate on crates.io (after running `just publish`)
 - [ ] Test installation: `cargo install tui-slider --version X.Y.Z`
 
 ## GitHub Actions

@@ -30,7 +30,7 @@ just changelog-preview-unreleased
 
 See what will be in the changelog.
 
-### 3. Prepare Release
+### 3. Prepare and Push Release
 
 ```bash
 just release 0.1.1
@@ -42,27 +42,9 @@ This will:
 - 📋 Generate `CHANGELOG.md`
 - 💾 Create git commit
 - 🏷️ Create git tag `v0.1.1`
+- 🚀 Push commits and tags to origin
 
-### 4. Review Changes
-
-```bash
-# View the changelog
-just view-changelog
-
-# Check git status
-git log --oneline -3
-git show HEAD
-```
-
-### 5. Push to GitHub
-
-```bash
-just push-release
-```
-
-Pushes both commits and tags to origin.
-
-### 6. Publish to crates.io
+### 4. Publish to crates.io
 
 ```bash
 # Dry run first (optional)
@@ -136,14 +118,18 @@ cargo clippy --fix --allow-dirty
 
 ### Need to undo version bump
 ```bash
-# Undo the last commit (but keep changes)
-git reset --soft HEAD~1
-
-# Or completely undo (lose changes)
+# If already pushed, you'll need to force push (be careful!)
+# First, undo locally
 git reset --hard HEAD~1
 
-# Delete the tag
+# Delete the tag locally
 git tag -d v0.1.1
+
+# Delete the tag from remote
+git push origin :refs/tags/v0.1.1
+
+# Force push main (only if necessary and safe)
+git push origin main --force
 ```
 
 ## Version Numbers (Semantic Versioning)
@@ -154,4 +140,16 @@ git tag -d v0.1.1
 
 Examples:
 ```bash
-just
+just release 0.1.1  # Bug fix
+just release 0.2.0  # New feature
+just release 1.0.0  # Breaking changes
+```
+
+## Note
+
+The `just release` command now **automatically pushes** to GitHub. If you want to review before pushing, you can manually run the steps:
+
+```bash
+# Manual workflow (without auto-push)
+just release-check           # Run checks only
+# Then manually bump version and push when ready

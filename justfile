@@ -133,8 +133,10 @@ bump version: check-git-cliff
     @echo "📝 Changelog updated"
     @echo "🏷️  Tag v{{version}} created"
     @echo ""
-    @echo "To complete the release, run:"
-    @echo "  just push-release"
+    @echo "Pushing to remote..."
+    @git push origin main
+    @git push origin v{{version}}
+    @echo "✅ Release v{{version}} pushed to remote!"
 
 # Quick release check: format, check, test, and build
 release-check: fmt clippy test build-release
@@ -158,12 +160,10 @@ push-release:
 # Full release workflow: check, bump version, and push
 release version: release-check (bump version)
     @echo ""
-    @echo "🎉 Release v{{version}} prepared!"
+    @echo "🎉 Release v{{version}} complete!"
     @echo ""
-    @echo "Next steps:"
-    @echo "  1. Review the changes and CHANGELOG.md"
-    @echo "  2. Push to remote: just push-release"
-    @echo "  3. Publish to crates.io: just publish"
+    @echo "Next step:"
+    @echo "  Publish to crates.io: just publish"
     @echo ""
 
 # Complete release workflow including push and publish
