@@ -31,6 +31,10 @@ path = "examples/vertical.rs"
 name = "custom"
 path = "examples/custom.rs"
 
+[[example]]
+name = "thumb_toggle"
+path = "examples/thumb_toggle.rs"
+
 [profile.dev]
 opt-level = 1
 
