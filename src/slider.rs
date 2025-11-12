@@ -14,7 +14,7 @@
 //! - Customizable colors for filled, empty, and handle
 //! - Customizable symbols for bar and handle
 //! - Optional label and value display
-//! - Optional handle display
+//! - Optional handle/thumb display
 //! - State management with bounds checking
 
 use crate::{orientation::SliderOrientation, state::SliderState};
@@ -351,18 +351,45 @@ impl<'a> Slider<'a> {
         self
     }
 
-    /// Sets whether to show the handle on the slider
+    /// Sets whether to show the handle (thumb indicator) on the slider
+    ///
+    /// The handle is the visual indicator that shows the current position
+    /// on the slider bar. You can hide it for a cleaner, progress-bar style look.
     ///
     /// # Examples
     ///
     /// ```
     /// use tui_slider::Slider;
     ///
+    /// // Show the handle (default)
     /// let slider = Slider::default().show_handle(true);
+    ///
+    /// // Hide the handle for a progress bar style
+    /// let slider = Slider::default().show_handle(false);
     /// ```
     pub fn show_handle(mut self, show: bool) -> Self {
         self.show_handle = show;
         self
+    }
+
+    /// Sets whether to show the thumb indicator on the slider
+    ///
+    /// This is an alias for `show_handle()`. The thumb is the visual indicator
+    /// that shows the current position on the slider bar.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::Slider;
+    ///
+    /// // Show the thumb (default)
+    /// let slider = Slider::default().show_thumb(true);
+    ///
+    /// // Hide the thumb for a progress bar style
+    /// let slider = Slider::default().show_thumb(false);
+    /// ```
+    pub fn show_thumb(self, show: bool) -> Self {
+        self.show_handle(show)
     }
 
     /// Calculates the percentage (0.0 to 1.0) of the current value
@@ -581,5 +608,23 @@ mod tests {
         assert_eq!(slider.value, 60.0);
         assert_eq!(slider.min, 0.0);
         assert_eq!(slider.max, 100.0);
+    }
+
+    #[test]
+    fn test_show_handle() {
+        let slider = Slider::default().show_handle(true);
+        assert!(slider.show_handle);
+
+        let slider = Slider::default().show_handle(false);
+        assert!(!slider.show_handle);
+    }
+
+    #[test]
+    fn test_show_thumb_alias() {
+        let slider = Slider::default().show_thumb(true);
+        assert!(slider.show_handle);
+
+        let slider = Slider::default().show_thumb(false);
+        assert!(!slider.show_handle);
     }
 }

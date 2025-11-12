@@ -106,6 +106,22 @@ let slider = Slider::from_state(&state)
     .show_handle(true);
 ```
 
+### Toggle Thumb/Handle Visibility
+
+```rust
+// Show the thumb indicator (default)
+let slider = Slider::from_state(&state)
+    .show_thumb(true);
+
+// Hide the thumb for a progress bar style
+let slider = Slider::from_state(&state)
+    .show_thumb(false);
+
+// show_handle() is an alias for show_thumb()
+let slider = Slider::from_state(&state)
+    .show_handle(false);
+```
+
 ## 🎮 Interactive Usage
 
 ```rust
@@ -143,6 +159,8 @@ let percentage = state.percentage();
 - `filled_color(color)` - Set filled bar color
 - `empty_color(color)` - Set empty bar color
 - `handle_color(color)` - Set handle color
+- `show_handle(bool)` - Show/hide thumb indicator
+- `show_thumb(bool)` - Alias for show_handle
 - `block(block)` - Add border block
 
 ### SliderState
@@ -162,11 +180,17 @@ let percentage = state.percentage();
 Run the examples to see the sliders in action:
 
 ```bash
-# Horizontal sliders
+# Horizontal sliders with different styles
 cargo run --example horizontal
 
 # Vertical sliders (equalizer style)
 cargo run --example vertical
+
+# Custom slider configurations
+cargo run --example custom
+
+# Toggle thumb/handle visibility
+cargo run --example thumb_toggle
 ```
 
 ## 🏗️ Architecture

@@ -102,3 +102,4 @@ jobs:
           cargo build --example horizontal
           cargo build --example vertical
           cargo build --example custom
+          cargo build --example thumb_toggle
