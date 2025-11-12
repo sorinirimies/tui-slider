@@ -262,16 +262,10 @@ pipeline:
 ### Permission Denied (SSH)
 
 ```bash
-# Test SSH connection with verbose output
-ssh -Tv git@gitea.yourdomain.com
+# Test SSH connection
+ssh -T git@gitea.yourdomain.com
 
-# Check if SSH key exists
-ls -la ~/.ssh/id_ed25519* ~/.ssh/id_rsa*
-
-# If no keys, generate one
-ssh-keygen -t ed25519 -C "your_email@example.com"
-
-# Copy public key
+# If fails, add SSH key to Gitea
 cat ~/.ssh/id_ed25519.pub
 
 # Add to Gitea:
@@ -289,17 +283,11 @@ ssh -T git@gitea.yourdomain.com
 HTTPS requires passwords. Use SSH instead:
 
 ```bash
-# Check current remote URL
-git remote get-url gitea
+# Use token authentication
+git remote set-url gitea https://username:token@gitea.yourdomain.com/username/tui-slider.git
 
-# If it's HTTPS, switch to SSH
-git remote set-url gitea git@gitea.yourdomain.com:username/tui-slider.git
-
-# Verify
-git remote -v
-
-# Test SSH
-ssh -T git@gitea.yourdomain.com
+# Generate token in Gitea:
+# Settings → Applications → Generate New Token
 ```
 
 ### Push Failed - Repository Not Found
