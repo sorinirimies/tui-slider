@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 - Enhance SSH support for password-free Gitea setup
 - Add multi-Gitea support and project migration tools
 
+### Miscellaneous
+- Bump version to 0.1.4
+
 ## [0.1.3] - 2025-11-12
 
 ### Documentation
