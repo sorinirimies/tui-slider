@@ -1,6 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2025-11-12
+
+### Features
+- Add comprehensive Gitea dual-hosting support
+- Enhance SSH support for password-free Gitea setup
+- Add multi-Gitea support and project migration tools
+
 ## [0.1.3] - 2025-11-12
 
 ### Documentation
@@ -9,6 +16,9 @@ All notable changes to this project will be documented in this file.
 
 ### Features
 - Auto-push in release command
+
+### Miscellaneous
+- Bump version to 0.1.3
 
 ### Refactor
 - Simplify GitHub workflows to match tui-checkbox
