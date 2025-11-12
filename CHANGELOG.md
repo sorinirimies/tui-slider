@@ -1,6 +1,18 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2025-11-12
+
+### Documentation
+- Add visual release workflow diagram
+- Add comprehensive GitHub workflows documentation
+
+### Features
+- Auto-push in release command
+
+### Refactor
+- Simplify GitHub workflows to match tui-checkbox
+
 ## [0.1.2] - 2025-11-12
 
 ### Documentation
@@ -8,6 +20,7 @@ All notable changes to this project will be documented in this file.
 
 ### Miscellaneous
 - Bump version to 0.1.1
+- Bump version to 0.1.2
 
 ## [0.1.1] - 2025-11-12
 
