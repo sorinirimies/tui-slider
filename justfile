@@ -133,10 +133,12 @@ bump version: check-git-cliff
     @echo "📝 Changelog updated"
     @echo "🏷️  Tag v{{version}} created"
     @echo ""
-    @echo "Pushing to remote..."
+    @echo "Pushing to both GitHub and Gitea..."
     @git push origin main
+    @git push gitea main
     @git push origin v{{version}}
-    @echo "✅ Release v{{version}} pushed to remote!"
+    @git push gitea v{{version}}
+    @echo "✅ Release v{{version}} pushed to both remotes!"
 
 # Quick release check: format, check, test, and build
 release-check: fmt clippy test build-release
@@ -150,12 +152,21 @@ publish-dry:
 publish:
     cargo publish
 
-# Push release to remote
+# Push release to GitHub only
 push-release:
-    @echo "Pushing release to remote..."
+    @echo "Pushing release to GitHub..."
     git push origin main
     git push origin --tags
-    @echo "✅ Release pushed to remote!"
+    @echo "✅ Release pushed to GitHub!"
+
+# Push release to both GitHub and Gitea
+push-release-all:
+    @echo "Pushing release to both GitHub and Gitea..."
+    git push origin main
+    git push gitea main
+    git push origin --tags
+    git push gitea --tags
+    @echo "✅ Release pushed to both remotes!"
 
 # Full release workflow: check, bump version, and push
 release version: release-check (bump version)
@@ -205,13 +216,29 @@ commit message:
     git add .
     git commit -m "{{message}}"
 
-# Git: push to origin
+# Git: push to origin (GitHub)
 push:
     git push origin main
 
-# Git: push tags
+# Git: push to Gitea
+push-gitea:
+    git push gitea main
+
+# Git: push to both GitHub and Gitea
+push-all:
+    git push origin main
+    git push gitea main
+    @echo "✅ Pushed to both GitHub and Gitea!"
+
+# Git: push tags to origin
 push-tags:
     git push --tags
+
+# Git: push tags to both remotes
+push-tags-all:
+    git push origin --tags
+    git push gitea --tags
+    @echo "✅ Tags pushed to both GitHub and Gitea!"
 
 # Show current version
 version:
@@ -230,7 +257,27 @@ info:
     @echo "Version: $(just version)"
     @echo "Author: Sorin Irimies <sorinirimies@gmail.com>"
     @echo "License: MIT"
-    @echo "Repository: https://github.com/sorinirimies/tui-slider"
+    @echo "Repository (GitHub): https://github.com/sorinirimies/tui-slider"
+    @echo "Repository (Gitea): Configure with 'git remote add gitea <url>'"
+
+# Show configured remotes
+remotes:
+    @echo "Configured git remotes:"
+    @git remote -v
+
+# Setup Gitea remote (provide your Gitea URL)
+setup-gitea url:
+    @echo "Adding Gitea remote..."
+    git remote add gitea {{url}}
+    @echo "✅ Gitea remote added!"
+    @echo "Test with: git push gitea main"
+
+# Sync Gitea with GitHub (force)
+sync-gitea:
+    @echo "Syncing Gitea with GitHub..."
+    git push gitea main --force
+    git push gitea --tags --force
+    @echo "✅ Gitea synced!"
 
 # View changelog
 view-changelog:
