@@ -3,6 +3,12 @@
 # Install git-cliff: cargo install git-cliff
 # Usage: just <task>
 
+# Configuration
+# Set these to match your setup
+GITEA_REMOTE := "gitea"
+GITEA_REMOTE_2 := "gitea2"  # Optional second Gitea instance
+PUBLISH_TARGET := "github"  # Options: github, gitea, gitea2
+
 # Default task - show available commands
 default:
     @just --list
@@ -133,12 +139,9 @@ bump version: check-git-cliff
     @echo "📝 Changelog updated"
     @echo "🏷️  Tag v{{version}} created"
     @echo ""
-    @echo "Pushing to both GitHub and Gitea..."
-    @git push origin main
-    @git push gitea main
-    @git push origin v{{version}}
-    @git push gitea v{{version}}
-    @echo "✅ Release v{{version}} pushed to both remotes!"
+    @echo "Pushing to configured remotes..."
+    @just push-release-configured
+    @echo "✅ Release v{{version}} pushed to all configured remotes!"
 
 # Quick release check: format, check, test, and build
 release-check: fmt clippy test build-release
@@ -148,9 +151,31 @@ release-check: fmt clippy test build-release
 publish-dry:
     cargo publish --dry-run
 
-# Publish to crates.io
+# Publish to crates.io from configured target
 publish:
+    @echo "Publishing from {{PUBLISH_TARGET}}..."
+    @just publish-from-{{PUBLISH_TARGET}}
+
+# Publish from GitHub (default)
+publish-from-github:
+    @echo "Publishing to crates.io from GitHub..."
     cargo publish
+
+# Publish from Gitea (if you have Gitea Actions set up)
+publish-from-gitea:
+    @echo "Publishing to crates.io from Gitea..."
+    @echo "⚠️  Make sure CRATES_IO_TOKEN is set in Gitea secrets"
+    cargo publish
+
+# Publish from secondary Gitea
+publish-from-gitea2:
+    @echo "Publishing to crates.io from {{GITEA_REMOTE_2}}..."
+    @echo "⚠️  Make sure CRATES_IO_TOKEN is set in {{GITEA_REMOTE_2}} secrets"
+    cargo publish
+
+# Dry-run publish to test
+publish-dry:
+    cargo publish --dry-run
 
 # Push release to GitHub only
 push-release:
@@ -159,14 +184,23 @@ push-release:
     git push origin --tags
     @echo "✅ Release pushed to GitHub!"
 
-# Push release to both GitHub and Gitea
+# Push release to all configured remotes
 push-release-all:
-    @echo "Pushing release to both GitHub and Gitea..."
+    @just push-release-configured
+
+# Internal: Push release based on configuration
+push-release-configured:
+    #!/usr/bin/env bash
+    echo "Pushing release to configured remotes..."
     git push origin main
-    git push gitea main
     git push origin --tags
-    git push gitea --tags
-    @echo "✅ Release pushed to both remotes!"
+    git push {{GITEA_REMOTE}} main
+    git push {{GITEA_REMOTE}} --tags
+    if git remote | grep -q "^{{GITEA_REMOTE_2}}$"; then
+        git push {{GITEA_REMOTE_2}} main
+        git push {{GITEA_REMOTE_2}} --tags
+    fi
+    echo "✅ Release pushed to all remotes!"
 
 # Full release workflow: check, bump version, and push
 release version: release-check (bump version)
@@ -179,13 +213,20 @@ release version: release-check (bump version)
 
 # Complete release workflow including push and publish
 release-full version: (release version)
-    @echo "Pushing to remote..."
-    @just push-release
     @echo ""
-    @echo "Publishing to crates.io..."
+    @echo "Publishing to crates.io from {{PUBLISH_TARGET}}..."
     @just publish
     @echo ""
-    @echo "✅ Release v{{version}} complete!"
+    @echo "✅ Release v{{version}} complete on all platforms!"
+
+# Release to specific platform
+release-to platform version: release-check (bump version)
+    @echo ""
+    @echo "🎉 Release v{{version}} prepared!"
+    @echo "Publishing to {{platform}}..."
+    @just publish-from-{{platform}}
+    @echo ""
+    @echo "✅ Release v{{version}} complete on {{platform}}!"
 
 # Update dependencies
 update:
@@ -220,25 +261,43 @@ commit message:
 push:
     git push origin main
 
-# Git: push to Gitea
+# Git: push to primary Gitea
 push-gitea:
-    git push gitea main
+    git push {{GITEA_REMOTE}} main
 
-# Git: push to both GitHub and Gitea
+# Git: push to secondary Gitea (if configured)
+push-gitea2:
+    #!/usr/bin/env bash
+    if git remote | grep -q "^{{GITEA_REMOTE_2}}$"; then
+        git push {{GITEA_REMOTE_2}} main
+        echo "✅ Pushed to {{GITEA_REMOTE_2}}!"
+    else
+        echo "⚠️  Remote {{GITEA_REMOTE_2}} not configured"
+    fi
+
+# Git: push to both GitHub and all Gitea instances
 push-all:
+    #!/usr/bin/env bash
     git push origin main
-    git push gitea main
-    @echo "✅ Pushed to both GitHub and Gitea!"
+    git push {{GITEA_REMOTE}} main
+    if git remote | grep -q "^{{GITEA_REMOTE_2}}$"; then
+        git push {{GITEA_REMOTE_2}} main
+    fi
+    echo "✅ Pushed to all configured remotes!"
 
 # Git: push tags to origin
 push-tags:
     git push --tags
 
-# Git: push tags to both remotes
+# Git: push tags to all remotes
 push-tags-all:
+    #!/usr/bin/env bash
     git push origin --tags
-    git push gitea --tags
-    @echo "✅ Tags pushed to both GitHub and Gitea!"
+    git push {{GITEA_REMOTE}} --tags
+    if git remote | grep -q "^{{GITEA_REMOTE_2}}$"; then
+        git push {{GITEA_REMOTE_2}} --tags
+    fi
+    echo "✅ Tags pushed to all configured remotes!"
 
 # Show current version
 version:
@@ -258,26 +317,53 @@ info:
     @echo "Author: Sorin Irimies <sorinirimies@gmail.com>"
     @echo "License: MIT"
     @echo "Repository (GitHub): https://github.com/sorinirimies/tui-slider"
-    @echo "Repository (Gitea): Configure with 'git remote add gitea <url>'"
+    @echo "Publish Target: {{PUBLISH_TARGET}}"
+    @echo ""
+    @echo "Configured Gitea remotes:"
+    @git remote -v | grep gitea || echo "  No Gitea remotes configured"
 
 # Show configured remotes
 remotes:
     @echo "Configured git remotes:"
     @git remote -v
 
-# Setup Gitea remote (provide your Gitea URL)
+# Setup primary Gitea remote
 setup-gitea url:
-    @echo "Adding Gitea remote..."
-    git remote add gitea {{url}}
-    @echo "✅ Gitea remote added!"
-    @echo "Test with: git push gitea main"
+    @echo "Adding primary Gitea remote ({{GITEA_REMOTE}})..."
+    git remote add {{GITEA_REMOTE}} {{url}}
+    @echo "✅ {{GITEA_REMOTE}} remote added!"
+    @echo "Test with: just push-gitea"
 
-# Sync Gitea with GitHub (force)
+# Setup secondary Gitea remote
+setup-gitea2 url:
+    @echo "Adding secondary Gitea remote ({{GITEA_REMOTE_2}})..."
+    git remote add {{GITEA_REMOTE_2}} {{url}}
+    @echo "✅ {{GITEA_REMOTE_2}} remote added!"
+    @echo "Test with: just push-gitea2"
+
+# Sync primary Gitea with GitHub (force)
 sync-gitea:
-    @echo "Syncing Gitea with GitHub..."
-    git push gitea main --force
-    git push gitea --tags --force
-    @echo "✅ Gitea synced!"
+    @echo "Syncing {{GITEA_REMOTE}} with GitHub..."
+    git push {{GITEA_REMOTE}} main --force
+    git push {{GITEA_REMOTE}} --tags --force
+    @echo "✅ {{GITEA_REMOTE}} synced!"
+
+# Sync secondary Gitea with GitHub (force)
+sync-gitea2:
+    #!/usr/bin/env bash
+    if git remote | grep -q "^{{GITEA_REMOTE_2}}$"; then
+        echo "Syncing {{GITEA_REMOTE_2}} with GitHub..."
+        git push {{GITEA_REMOTE_2}} main --force
+        git push {{GITEA_REMOTE_2}} --tags --force
+        echo "✅ {{GITEA_REMOTE_2}} synced!"
+    else
+        echo "⚠️  Remote {{GITEA_REMOTE_2}} not configured"
+    fi
+
+# Sync all Gitea instances with GitHub
+sync-all-gitea:
+    @just sync-gitea
+    @just sync-gitea2
 
 # View changelog
 view-changelog:
@@ -323,17 +409,52 @@ ci: check-all build-release examples
 help-release:
     @echo "Release Workflow:"
     @echo ""
-    @echo "1. Prepare release (checks, version bump, changelog):"
+    @echo "1. Prepare and push release (all remotes):"
     @echo "   just release 0.2.0"
     @echo ""
-    @echo "2. Review changes and push:"
-    @echo "   just push-release"
-    @echo ""
-    @echo "3. Publish to crates.io:"
+    @echo "2. Publish to crates.io from configured target ({{PUBLISH_TARGET}}):"
     @echo "   just publish"
     @echo ""
     @echo "Or do everything in one step:"
     @echo "   just release-full 0.2.0"
     @echo ""
+    @echo "Release to specific platform:"
+    @echo "   just release-to github 0.2.0"
+    @echo "   just release-to gitea 0.2.0"
+    @echo ""
+    @echo "Multiple Gitea instances:"
+    @echo "   just setup-gitea <url>      # Primary Gitea"
+    @echo "   just setup-gitea2 <url>     # Secondary Gitea"
+    @echo "   just push-all               # Push to all"
+    @echo "   just sync-all-gitea         # Sync all with GitHub"
+    @echo ""
+    @echo "Configure publish target by editing PUBLISH_TARGET in justfile"
     @echo "Preview unreleased changes:"
     @echo "   just changelog-preview-unreleased"
+
+# Show Gitea configuration help
+help-gitea:
+    @echo "Gitea Multi-Instance Setup:"
+    @echo ""
+    @echo "Configuration (edit justfile):"
+    @echo "  GITEA_REMOTE := \"gitea\"      # Primary Gitea"
+    @echo "  GITEA_REMOTE_2 := \"gitea2\"    # Secondary Gitea (optional)"
+    @echo "  PUBLISH_TARGET := \"github\"    # Where to publish from"
+    @echo ""
+    @echo "Setup remotes:"
+    @echo "  just setup-gitea git@gitea1.com:user/repo.git"
+    @echo "  just setup-gitea2 git@gitea2.com:user/repo.git"
+    @echo ""
+    @echo "Push commands:"
+    @echo "  just push-gitea       # Push to primary Gitea"
+    @echo "  just push-gitea2      # Push to secondary Gitea"
+    @echo "  just push-all         # Push to all remotes"
+    @echo ""
+    @echo "Sync commands:"
+    @echo "  just sync-gitea       # Sync primary with GitHub"
+    @echo "  just sync-gitea2      # Sync secondary with GitHub"
+    @echo "  just sync-all-gitea   # Sync all Gitea instances"
+    @echo ""
+    @echo "View configuration:"
+    @echo "  just info             # Show current setup"
+    @echo "  just remotes          # List all remotes"
