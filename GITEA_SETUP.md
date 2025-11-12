@@ -6,20 +6,70 @@ This guide helps you set up dual hosting for tui-slider on GitHub and your Gitea
 
 - ✅ Existing GitHub repository (already set up)
 - ✅ Access to your Gitea instance
-- ✅ SSH keys configured (recommended) or HTTPS credentials
+- ✅ **SSH keys configured** (required for password-free workflow)
+
+## SSH Key Setup (Required First)
+
+Before setting up Gitea, you need SSH keys configured for password-free access.
+
+### Check if You Have SSH Keys
+
+```bash
+# Check for existing SSH keys
+ls -la ~/.ssh/
+
+# You should see id_ed25519 or id_rsa files
+```
+
+### Generate SSH Keys (if needed)
+
+```bash
+# Generate a new SSH key (Ed25519 is recommended)
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# Or RSA if Ed25519 is not available
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+
+# Press Enter to accept default location
+# Optionally set a passphrase (or press Enter for none)
+```
+
+### Add SSH Key to Gitea
+
+```bash
+# Copy your public key
+cat ~/.ssh/id_ed25519.pub
+# Or for RSA: cat ~/.ssh/id_rsa.pub
+
+# Then add to Gitea:
+# 1. Log in to your Gitea instance
+# 2. Click your avatar → Settings
+# 3. Go to "SSH / GPG Keys" tab
+# 4. Click "Add Key"
+# 5. Paste your public key
+# 6. Give it a name (e.g., "work-laptop")
+# 7. Click "Add Key"
+```
+
+### Test SSH Connection
+
+```bash
+# Test connection to your Gitea instance
+ssh -T git@gitea.yourdomain.com
+
+# You should see a success message like:
+# "Hi there, username! You've successfully authenticated..."
+```
 
 ## Quick Setup
 
 ### Option 1: Automated Setup (Recommended)
 
-Run the setup script:
+Run the setup script with SSH URL:
 
 ```bash
-# With SSH (recommended)
+# Always use SSH format (git@hostname:path)
 ./scripts/setup-gitea.sh git@gitea.yourdomain.com:username/tui-slider.git
-
-# Or with HTTPS
-./scripts/setup-gitea.sh https://gitea.yourdomain.com/username/tui-slider.git
 ```
 
 The script will:
@@ -31,16 +81,19 @@ The script will:
 ### Option 2: Manual Setup
 
 ```bash
-# 1. Add Gitea remote
+# 1. Add Gitea remote (SSH format)
 git remote add gitea git@gitea.yourdomain.com:username/tui-slider.git
 
-# 2. Push all branches
+# 2. Test connection
+ssh -T git@gitea.yourdomain.com
+
+# 3. Push all branches
 git push gitea --all
 
-# 3. Push all tags
+# 4. Push all tags
 git push gitea --tags
 
-# 4. Verify
+# 5. Verify
 git remote -v
 ```
 
@@ -93,17 +146,27 @@ just remotes        # Show configured remotes
 6. **Do NOT** initialize with README (we'll push from local)
 7. Click "Create Repository"
 
-### 2. Configure SSH Keys (Recommended)
+### 2. Verify SSH Keys
+
+SSH keys should already be configured (see Prerequisites above).
 
 ```bash
-# Generate SSH key if you don't have one
-ssh-keygen -t ed25519 -C "your_email@example.com"
+# Verify SSH connection
+ssh -T git@gitea.yourdomain.com
 
-# Copy public key
-cat ~/.ssh/id_ed25519.pub
+# Should show: "Hi there, username! You've successfully authenticated..."
+```
 
-# Add to Gitea:
-# Settings → SSH/GPG Keys → Add Key
+If not working, check:
+```bash
+# Check SSH keys exist
+ls -la ~/.ssh/
+
+# View public key (add this to Gitea)
+cat ~/.ssh/id_ed25519.pub  # or id_rsa.pub
+
+# Test with verbose output
+ssh -Tv git@gitea.yourdomain.com
 ```
 
 ### 3. Configure Gitea Actions (Optional)
@@ -199,22 +262,44 @@ pipeline:
 ### Permission Denied (SSH)
 
 ```bash
-# Test SSH connection
-ssh -T git@gitea.yourdomain.com
+# Test SSH connection with verbose output
+ssh -Tv git@gitea.yourdomain.com
 
-# If fails, add SSH key to Gitea
+# Check if SSH key exists
+ls -la ~/.ssh/id_ed25519* ~/.ssh/id_rsa*
+
+# If no keys, generate one
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# Copy public key
 cat ~/.ssh/id_ed25519.pub
-# Copy and add in Gitea Settings → SSH Keys
+
+# Add to Gitea:
+# 1. Log in to Gitea
+# 2. Settings → SSH/GPG Keys → Add Key
+# 3. Paste the public key content
+# 4. Save
+
+# Test again
+ssh -T git@gitea.yourdomain.com
 ```
 
-### Authentication Failed (HTTPS)
+### Switch from HTTPS to SSH
+
+HTTPS requires passwords. Use SSH instead:
 
 ```bash
-# Use token authentication
-git remote set-url gitea https://username:token@gitea.yourdomain.com/username/tui-slider.git
+# Check current remote URL
+git remote get-url gitea
 
-# Generate token in Gitea:
-# Settings → Applications → Generate New Token
+# If it's HTTPS, switch to SSH
+git remote set-url gitea git@gitea.yourdomain.com:username/tui-slider.git
+
+# Verify
+git remote -v
+
+# Test SSH
+ssh -T git@gitea.yourdomain.com
 ```
 
 ### Push Failed - Repository Not Found
@@ -276,6 +361,12 @@ git remote remove gitea
 ## Quick Reference
 
 ```bash
+# Prerequisites (first time only)
+ssh-keygen -t ed25519 -C "your_email@example.com"  # Generate key
+cat ~/.ssh/id_ed25519.pub                           # Copy public key
+# Add to Gitea: Settings → SSH/GPG Keys → Add Key
+ssh -T git@gitea.example.com                        # Test connection
+
 # Setup
 ./scripts/setup-gitea.sh git@gitea.example.com:user/tui-slider.git
 
@@ -296,8 +387,10 @@ git push gitea main          # Gitea only
 
 You've successfully set up Gitea when:
 
+- ✅ SSH key added to Gitea (Settings → SSH Keys)
+- ✅ `ssh -T git@gitea.example.com` shows success message
 - ✅ `just remotes` shows both origin and gitea
-- ✅ `git push gitea main` works without errors
+- ✅ `git push gitea main` works **without password prompt**
 - ✅ `just push-all` pushes to both remotes
 - ✅ Repository is visible on your Gitea instance
 - ✅ `just release X.Y.Z` pushes to both GitHub and Gitea
