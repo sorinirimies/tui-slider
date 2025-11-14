@@ -14,6 +14,7 @@ rust-version = "1.74.0"
 [dependencies]
 ratatui = "0.28"
 crossterm = "0.28"
+unicode-width = "0.1"
 
 [dev-dependencies]
 anyhow = "1.0"
@@ -34,6 +35,26 @@ path = "examples/custom.rs"
 [[example]]
 name = "thumb_toggle"
 path = "examples/thumb_toggle.rs"
+
+[[example]]
+name = "width_test"
+path = "examples/width_test.rs"
+
+[[example]]
+name = "handle_toggle"
+path = "examples/handle_toggle.rs"
+
+[[example]]
+name = "progress_bars"
+path = "examples/progress_bars.rs"
+
+[[example]]
+name = "status_bars"
+path = "examples/status_bars.rs"
+
+[[example]]
+name = "step_sizes"
+path = "examples/step_sizes.rs"
 
 [profile.dev]
 opt-level = 1

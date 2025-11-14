@@ -79,6 +79,8 @@ pub struct SliderState {
     min: f64,
     /// Maximum value
     max: f64,
+    /// Step size for increment/decrement operations
+    step: f64,
 }
 
 impl SliderState {
@@ -118,6 +120,7 @@ impl SliderState {
             value: clamped_value,
             min,
             max,
+            step: 1.0, // Default step size
         }
     }
 
@@ -286,6 +289,24 @@ impl SliderState {
         self.set_value(self.value + step);
     }
 
+    /// Increases the value by the configured step size
+    ///
+    /// This is a convenience method that uses the step size set via `set_step()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let mut state = SliderState::new(50.0, 0.0, 100.0);
+    /// state.set_step(5.0);
+    /// state.step_up();
+    /// assert_eq!(state.value(), 55.0);
+    /// ```
+    pub fn step_up(&mut self) {
+        self.increase(self.step);
+    }
+
     /// Decreases the value by a step
     ///
     /// The result is automatically clamped to the minimum value.
@@ -305,6 +326,112 @@ impl SliderState {
     /// ```
     pub fn decrease(&mut self, step: f64) {
         self.set_value(self.value - step);
+    }
+
+    /// Decreases the value by the configured step size
+    ///
+    /// This is a convenience method that uses the step size set via `set_step()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let mut state = SliderState::new(50.0, 0.0, 100.0);
+    /// state.set_step(5.0);
+    /// state.step_down();
+    /// assert_eq!(state.value(), 45.0);
+    /// ```
+    pub fn step_down(&mut self) {
+        self.decrease(self.step);
+    }
+
+    /// Gets the current step size
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(50.0, 0.0, 100.0);
+    /// assert_eq!(state.step(), 1.0);
+    /// ```
+    pub fn step(&self) -> f64 {
+        self.step
+    }
+
+    /// Sets the step size for increment/decrement operations
+    ///
+    /// The step size determines how much the value changes when using
+    /// `step_up()` and `step_down()` methods.
+    ///
+    /// # Arguments
+    ///
+    /// * `step` - The step size (must be positive)
+    ///
+    /// # Panics
+    ///
+    /// Panics if step is not positive (step <= 0.0)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let mut state = SliderState::new(50.0, 0.0, 100.0);
+    /// state.set_step(5.0);
+    /// state.step_up();
+    /// assert_eq!(state.value(), 55.0);
+    ///
+    /// state.set_step(10.0);
+    /// state.step_up();
+    /// assert_eq!(state.value(), 65.0);
+    /// ```
+    ///
+    /// ```should_panic
+    /// use tui_slider::SliderState;
+    ///
+    /// let mut state = SliderState::new(50.0, 0.0, 100.0);
+    /// state.set_step(-1.0); // Panics!
+    /// ```
+    pub fn set_step(&mut self, step: f64) {
+        assert!(step > 0.0, "step must be positive");
+        self.step = step;
+    }
+
+    /// Creates a new slider state with a custom step size
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - Initial value
+    /// * `min` - Minimum value
+    /// * `max` - Maximum value
+    /// * `step` - Step size for increment/decrement operations
+    ///
+    /// # Panics
+    ///
+    /// Panics if min >= max or if step <= 0.0
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let mut state = SliderState::with_step(50.0, 0.0, 100.0, 5.0);
+    /// assert_eq!(state.step(), 5.0);
+    /// state.step_up();
+    /// assert_eq!(state.value(), 55.0);
+    /// ```
+    pub fn with_step(value: f64, min: f64, max: f64, step: f64) -> Self {
+        assert!(min < max, "min must be less than max");
+        assert!(step > 0.0, "step must be positive");
+        let clamped_value = value.clamp(min, max);
+        Self {
+            value: clamped_value,
+            min,
+            max,
+            step,
+        }
     }
 
     /// Sets the value from a position within a given length
@@ -622,5 +749,119 @@ mod tests {
     #[should_panic(expected = "min must be less than max")]
     fn test_invalid_bounds() {
         SliderState::new(50.0, 100.0, 0.0);
+    }
+
+    #[test]
+    fn test_default_step() {
+        let state = SliderState::new(50.0, 0.0, 100.0);
+        assert_eq!(state.step(), 1.0);
+    }
+
+    #[test]
+    fn test_set_step() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_step(5.0);
+        assert_eq!(state.step(), 5.0);
+
+        state.set_step(10.0);
+        assert_eq!(state.step(), 10.0);
+    }
+
+    #[test]
+    #[should_panic(expected = "step must be positive")]
+    fn test_invalid_step_negative() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_step(-1.0);
+    }
+
+    #[test]
+    #[should_panic(expected = "step must be positive")]
+    fn test_invalid_step_zero() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_step(0.0);
+    }
+
+    #[test]
+    fn test_step_up() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_step(5.0);
+
+        state.step_up();
+        assert_eq!(state.value(), 55.0);
+
+        state.step_up();
+        assert_eq!(state.value(), 60.0);
+    }
+
+    #[test]
+    fn test_step_down() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_step(5.0);
+
+        state.step_down();
+        assert_eq!(state.value(), 45.0);
+
+        state.step_down();
+        assert_eq!(state.value(), 40.0);
+    }
+
+    #[test]
+    fn test_step_up_clamping() {
+        let mut state = SliderState::new(95.0, 0.0, 100.0);
+        state.set_step(10.0);
+
+        state.step_up();
+        assert_eq!(state.value(), 100.0); // Clamped to max
+    }
+
+    #[test]
+    fn test_step_down_clamping() {
+        let mut state = SliderState::new(5.0, 0.0, 100.0);
+        state.set_step(10.0);
+
+        state.step_down();
+        assert_eq!(state.value(), 0.0); // Clamped to min
+    }
+
+    #[test]
+    fn test_with_step() {
+        let state = SliderState::with_step(50.0, 0.0, 100.0, 5.0);
+        assert_eq!(state.value(), 50.0);
+        assert_eq!(state.min(), 0.0);
+        assert_eq!(state.max(), 100.0);
+        assert_eq!(state.step(), 5.0);
+    }
+
+    #[test]
+    fn test_with_step_operations() {
+        let mut state = SliderState::with_step(50.0, 0.0, 100.0, 2.5);
+
+        state.step_up();
+        assert_eq!(state.value(), 52.5);
+
+        state.step_down();
+        assert_eq!(state.value(), 50.0);
+    }
+
+    #[test]
+    #[should_panic(expected = "step must be positive")]
+    fn test_with_step_invalid() {
+        SliderState::with_step(50.0, 0.0, 100.0, -1.0);
+    }
+
+    #[test]
+    fn test_different_step_sizes() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+
+        // Step by 0.1
+        state.set_step(0.1);
+        state.step_up();
+        assert!((state.value() - 50.1).abs() < 0.0001);
+
+        // Step by 25
+        state.set_value(50.0);
+        state.set_step(25.0);
+        state.step_up();
+        assert_eq!(state.value(), 75.0);
     }
 }

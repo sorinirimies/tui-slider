@@ -30,107 +30,107 @@ impl App {
             sliders: vec![
                 (
                     "Volume".to_string(),
-                    SliderState::new(75.0, 0.0, 100.0),
+                    SliderState::with_step(75.0, 0.0, 100.0, 1.0),
                     SliderStyle::default_style(),
                 ),
                 (
                     "Bass".to_string(),
-                    SliderState::new(60.0, 0.0, 100.0),
+                    SliderState::with_step(60.0, 0.0, 100.0, 1.0),
                     SliderStyle::blocks(),
                 ),
                 (
                     "Treble".to_string(),
-                    SliderState::new(55.0, 0.0, 100.0),
+                    SliderState::with_step(55.0, 0.0, 100.0, 1.0),
                     SliderStyle::dots(),
                 ),
                 (
                     "Balance".to_string(),
-                    SliderState::new(50.0, 0.0, 100.0),
+                    SliderState::with_step(50.0, 0.0, 100.0, 1.0),
                     SliderStyle::arrows(),
                 ),
                 (
                     "Gain".to_string(),
-                    SliderState::new(35.0, 0.0, 100.0),
+                    SliderState::with_step(35.0, 0.0, 100.0, 1.0),
                     SliderStyle::minimal(),
                 ),
                 (
                     "Reverb".to_string(),
-                    SliderState::new(45.0, 0.0, 100.0),
+                    SliderState::with_step(45.0, 0.0, 100.0, 1.0),
                     SliderStyle::double_line(),
                 ),
                 (
                     "Delay".to_string(),
-                    SliderState::new(30.0, 0.0, 100.0),
+                    SliderState::with_step(30.0, 0.0, 100.0, 1.0),
                     SliderStyle::wave(),
                 ),
                 (
                     "Chorus".to_string(),
-                    SliderState::new(65.0, 0.0, 100.0),
+                    SliderState::with_step(65.0, 0.0, 100.0, 1.0),
                     SliderStyle::progress(),
                 ),
                 (
                     "Distortion".to_string(),
-                    SliderState::new(40.0, 0.0, 100.0),
+                    SliderState::with_step(40.0, 0.0, 100.0, 1.0),
                     SliderStyle::thick(),
                 ),
                 (
                     "Compression".to_string(),
-                    SliderState::new(70.0, 0.0, 100.0),
+                    SliderState::with_step(70.0, 0.0, 100.0, 1.0),
                     SliderStyle::gradient(),
                 ),
                 (
                     "Flanger".to_string(),
-                    SliderState::new(25.0, 0.0, 100.0),
+                    SliderState::with_step(25.0, 0.0, 100.0, 1.0),
                     SliderStyle::rounded(),
                 ),
                 (
                     "Phaser".to_string(),
-                    SliderState::new(55.0, 0.0, 100.0),
+                    SliderState::with_step(55.0, 0.0, 100.0, 1.0),
                     SliderStyle::retro(),
                 ),
                 (
                     "Mix".to_string(),
-                    SliderState::new(70.0, 0.0, 100.0),
+                    SliderState::with_step(70.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented(),
                 ),
                 (
                     "Attack".to_string(),
-                    SliderState::new(45.0, 0.0, 100.0),
+                    SliderState::with_step(45.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_blocks(),
                 ),
                 (
                     "Release".to_string(),
-                    SliderState::new(60.0, 0.0, 100.0),
+                    SliderState::with_step(60.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_dots(),
                 ),
                 (
                     "Sustain".to_string(),
-                    SliderState::new(80.0, 0.0, 100.0),
+                    SliderState::with_step(80.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_bars(),
                 ),
                 (
                     "Decay".to_string(),
-                    SliderState::new(35.0, 0.0, 100.0),
+                    SliderState::with_step(35.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_squares(),
                 ),
                 (
                     "Resonance".to_string(),
-                    SliderState::new(55.0, 0.0, 100.0),
+                    SliderState::with_step(55.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_diamonds(),
                 ),
                 (
                     "Cutoff".to_string(),
-                    SliderState::new(75.0, 0.0, 100.0),
+                    SliderState::with_step(75.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_stars(),
                 ),
                 (
                     "Drive".to_string(),
-                    SliderState::new(40.0, 0.0, 100.0),
+                    SliderState::with_step(40.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_arrows(),
                 ),
                 (
                     "Presence".to_string(),
-                    SliderState::new(85.0, 0.0, 100.0),
+                    SliderState::with_step(85.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_thick(),
                 ),
             ],
@@ -152,13 +152,12 @@ impl App {
 
     fn increase(&mut self) {
         if let Some((_, state, _)) = self.sliders.get_mut(self.selected) {
-            state.increase(5.0);
+            state.step_up();
         }
     }
-
     fn decrease(&mut self) {
         if let Some((_, state, _)) = self.sliders.get_mut(self.selected) {
-            state.decrease(5.0);
+            state.step_down();
         }
     }
 }
@@ -315,19 +314,28 @@ fn render_segmented_slider(
         return;
     }
 
-    // Calculate segments
-    let segment_count = 20;
-    let segment_width = 3; // dash + space + space
+    // Calculate segments to fill the entire width
     let available_width = inner.width as usize;
-    let max_segments = available_width / segment_width;
-    let actual_segments = segment_count.min(max_segments);
+    let value_str = format!("{:.1}", state.value());
+    let value_width = value_str.len() + 2; // "  " + value
+    let bar_width = available_width.saturating_sub(value_width);
+
+    // Each segment is: symbol (1 width) + space (1 width) = 2 total
+    // Use half the bar width as segment count to ensure we fill the space
+    let segment_count = (bar_width / 2).max(1);
 
     let percentage = state.percentage();
-    let filled_segments = (actual_segments as f64 * percentage).round() as usize;
+    let filled_segments = (segment_count as f64 * percentage).round() as usize;
 
-    // Build the segmented bar
+    // Build the segmented bar - fill exactly bar_width
     let mut segments = Vec::new();
-    for i in 0..actual_segments {
+    let mut current_width = 0;
+
+    for i in 0..segment_count {
+        if current_width >= bar_width {
+            break;
+        }
+
         if i < filled_segments {
             segments.push(Span::styled(
                 style.filled_symbol,
@@ -339,24 +347,33 @@ fn render_segmented_slider(
                 Style::default().fg(style.empty_color),
             ));
         }
+        current_width += 1;
+
+        // Add space between segments if there's room
+        if current_width < bar_width {
+            segments.push(Span::raw(" "));
+            current_width += 1;
+        }
+    }
+
+    // Fill any remaining width with spaces to ensure consistent length
+    while current_width < bar_width {
         segments.push(Span::raw(" "));
+        current_width += 1;
     }
 
     // Add handle at the correct position
-    let handle_pos = (actual_segments as f64 * percentage).round() as usize;
-    if handle_pos > 0 && handle_pos <= actual_segments {
-        let insert_pos = (handle_pos * 2).saturating_sub(1);
+    let handle_pos = (segment_count as f64 * percentage).round() as usize;
+    if handle_pos > 0 && handle_pos <= segment_count {
+        let insert_pos = (handle_pos * 2).saturating_sub(1).min(segments.len());
         if insert_pos < segments.len() {
-            segments.insert(
-                insert_pos,
-                Span::styled(
-                    style.handle_symbol,
-                    Style::default().fg(if is_selected {
-                        Color::White
-                    } else {
-                        style.handle_color
-                    }),
-                ),
+            segments[insert_pos] = Span::styled(
+                style.handle_symbol,
+                Style::default().fg(if is_selected {
+                    Color::White
+                } else {
+                    style.handle_color
+                }),
             );
         }
     }
@@ -364,7 +381,7 @@ fn render_segmented_slider(
     // Add value display
     segments.push(Span::raw("  "));
     segments.push(Span::styled(
-        format!("{:.1}", state.value()),
+        value_str,
         Style::default().fg(if is_selected {
             Color::Cyan
         } else {
