@@ -31,108 +31,43 @@ impl App {
             sliders: vec![
                 (
                     "Volume".to_string(),
-                    SliderState::new(75.0, 0.0, 100.0),
+                    SliderState::with_step(75.0, 0.0, 100.0, 1.0),
                     SliderStyle::default_style(),
                 ),
                 (
                     "Bass".to_string(),
-                    SliderState::new(60.0, 0.0, 100.0),
+                    SliderState::with_step(60.0, 0.0, 100.0, 1.0),
                     SliderStyle::blocks(),
                 ),
                 (
-                    "Treble".to_string(),
-                    SliderState::new(55.0, 0.0, 100.0),
-                    SliderStyle::dots(),
-                ),
-                (
-                    "Balance".to_string(),
-                    SliderState::new(50.0, 0.0, 100.0),
-                    SliderStyle::arrows(),
-                ),
-                (
-                    "Gain".to_string(),
-                    SliderState::new(35.0, 0.0, 100.0),
-                    SliderStyle::minimal(),
-                ),
-                (
-                    "Reverb".to_string(),
-                    SliderState::new(45.0, 0.0, 100.0),
-                    SliderStyle::double_line(),
-                ),
-                (
                     "Delay".to_string(),
-                    SliderState::new(30.0, 0.0, 100.0),
+                    SliderState::with_step(30.0, 0.0, 100.0, 1.0),
                     SliderStyle::wave(),
                 ),
                 (
                     "Chorus".to_string(),
-                    SliderState::new(65.0, 0.0, 100.0),
+                    SliderState::with_step(65.0, 0.0, 100.0, 1.0),
                     SliderStyle::progress(),
                 ),
                 (
-                    "Distortion".to_string(),
-                    SliderState::new(40.0, 0.0, 100.0),
-                    SliderStyle::thick(),
-                ),
-                (
                     "Compression".to_string(),
-                    SliderState::new(70.0, 0.0, 100.0),
+                    SliderState::with_step(70.0, 0.0, 100.0, 1.0),
                     SliderStyle::gradient(),
                 ),
                 (
-                    "Flanger".to_string(),
-                    SliderState::new(25.0, 0.0, 100.0),
-                    SliderStyle::rounded(),
-                ),
-                (
                     "Phaser".to_string(),
-                    SliderState::new(55.0, 0.0, 100.0),
+                    SliderState::with_step(55.0, 0.0, 100.0, 1.0),
                     SliderStyle::retro(),
                 ),
                 (
-                    "Mix".to_string(),
-                    SliderState::new(70.0, 0.0, 100.0),
-                    SliderStyle::segmented(),
-                ),
-                (
                     "Attack".to_string(),
-                    SliderState::new(45.0, 0.0, 100.0),
+                    SliderState::with_step(45.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_blocks(),
                 ),
                 (
-                    "Release".to_string(),
-                    SliderState::new(60.0, 0.0, 100.0),
-                    SliderStyle::segmented_dots(),
-                ),
-                (
-                    "Sustain".to_string(),
-                    SliderState::new(80.0, 0.0, 100.0),
-                    SliderStyle::segmented_bars(),
-                ),
-                (
                     "Decay".to_string(),
-                    SliderState::new(35.0, 0.0, 100.0),
+                    SliderState::with_step(35.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_squares(),
-                ),
-                (
-                    "Resonance".to_string(),
-                    SliderState::new(55.0, 0.0, 100.0),
-                    SliderStyle::segmented_diamonds(),
-                ),
-                (
-                    "Cutoff".to_string(),
-                    SliderState::new(75.0, 0.0, 100.0),
-                    SliderStyle::segmented_stars(),
-                ),
-                (
-                    "Drive".to_string(),
-                    SliderState::new(40.0, 0.0, 100.0),
-                    SliderStyle::segmented_arrows(),
-                ),
-                (
-                    "Presence".to_string(),
-                    SliderState::new(85.0, 0.0, 100.0),
-                    SliderStyle::segmented_thick(),
                 ),
             ],
             selected: 0,
@@ -153,13 +88,13 @@ impl App {
 
     fn increase(&mut self) {
         if let Some((_, state, _)) = self.sliders.get_mut(self.selected) {
-            state.increase(5.0);
+            state.step_up();
         }
     }
 
     fn decrease(&mut self) {
         if let Some((_, state, _)) = self.sliders.get_mut(self.selected) {
-            state.decrease(5.0);
+            state.step_down();
         }
     }
 }

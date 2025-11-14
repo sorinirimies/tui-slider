@@ -97,28 +97,6 @@ impl App {
                         .handle_color(Color::Rgb(200, 240, 255)),
                 ),
                 (
-                    "Neon Pink".to_string(),
-                    SliderState::new(70.0, 0.0, 100.0),
-                    SliderStyle::custom("Neon")
-                        .filled_symbol(symbols::FILLED_LOWER_BAR)
-                        .empty_symbol(symbols::EMPTY_LOWER_BAR)
-                        .handle_symbol(symbols::HANDLE_LOWER_BAR)
-                        .filled_color(Color::Rgb(255, 0, 150))
-                        .empty_color(Color::Rgb(80, 0, 60))
-                        .handle_color(Color::Rgb(0, 255, 200)),
-                ),
-                (
-                    "Gold Rush".to_string(),
-                    SliderState::new(55.0, 0.0, 100.0),
-                    SliderStyle::custom("Gold")
-                        .filled_symbol(symbols::FILLED_STAR)
-                        .empty_symbol(symbols::EMPTY_STAR)
-                        .handle_symbol(symbols::HANDLE_FILLED_STAR)
-                        .filled_color(Color::Rgb(255, 200, 0))
-                        .empty_color(Color::Rgb(100, 80, 0))
-                        .handle_color(Color::Rgb(255, 255, 150)),
-                ),
-                (
                     "Cyber Segmented".to_string(),
                     SliderState::new(65.0, 0.0, 100.0),
                     SliderStyle::custom("Cyber")
@@ -140,30 +118,6 @@ impl App {
                         .filled_color(Color::Rgb(255, 80, 0))
                         .empty_color(Color::Rgb(100, 30, 0))
                         .handle_color(Color::Rgb(255, 255, 0))
-                        .with_segments(true),
-                ),
-                (
-                    "Electric Blue".to_string(),
-                    SliderState::new(40.0, 0.0, 100.0),
-                    SliderStyle::custom("Electric")
-                        .filled_symbol("━")
-                        .empty_symbol("╌")
-                        .handle_symbol(symbols::HANDLE_LARGE_CIRCLE)
-                        .filled_color(Color::Rgb(0, 150, 255))
-                        .empty_color(Color::Rgb(0, 50, 100))
-                        .handle_color(Color::Rgb(150, 220, 255))
-                        .with_segments(true),
-                ),
-                (
-                    "Rainbow Dots".to_string(),
-                    SliderState::new(50.0, 0.0, 100.0),
-                    SliderStyle::custom("Rainbow")
-                        .filled_symbol("●")
-                        .empty_symbol("○")
-                        .handle_symbol(symbols::HANDLE_DIAMOND)
-                        .filled_color(Color::Rgb(200, 100, 255))
-                        .empty_color(Color::Rgb(60, 40, 80))
-                        .handle_color(Color::Rgb(255, 200, 100))
                         .with_segments(true),
                 ),
             ],

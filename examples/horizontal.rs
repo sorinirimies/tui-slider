@@ -39,26 +39,6 @@ impl App {
                     SliderStyle::blocks(),
                 ),
                 (
-                    "Treble".to_string(),
-                    SliderState::with_step(55.0, 0.0, 100.0, 1.0),
-                    SliderStyle::dots(),
-                ),
-                (
-                    "Balance".to_string(),
-                    SliderState::with_step(50.0, 0.0, 100.0, 1.0),
-                    SliderStyle::arrows(),
-                ),
-                (
-                    "Gain".to_string(),
-                    SliderState::with_step(35.0, 0.0, 100.0, 1.0),
-                    SliderStyle::minimal(),
-                ),
-                (
-                    "Reverb".to_string(),
-                    SliderState::with_step(45.0, 0.0, 100.0, 1.0),
-                    SliderStyle::double_line(),
-                ),
-                (
                     "Delay".to_string(),
                     SliderState::with_step(30.0, 0.0, 100.0, 1.0),
                     SliderStyle::wave(),
@@ -77,11 +57,6 @@ impl App {
                     "Compression".to_string(),
                     SliderState::with_step(70.0, 0.0, 100.0, 1.0),
                     SliderStyle::gradient(),
-                ),
-                (
-                    "Flanger".to_string(),
-                    SliderState::with_step(25.0, 0.0, 100.0, 1.0),
-                    SliderStyle::rounded(),
                 ),
                 (
                     "Phaser".to_string(),
@@ -104,34 +79,14 @@ impl App {
                     SliderStyle::segmented_dots(),
                 ),
                 (
-                    "Sustain".to_string(),
-                    SliderState::with_step(80.0, 0.0, 100.0, 1.0),
-                    SliderStyle::segmented_bars(),
-                ),
-                (
                     "Decay".to_string(),
                     SliderState::with_step(35.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_squares(),
                 ),
                 (
-                    "Resonance".to_string(),
-                    SliderState::with_step(55.0, 0.0, 100.0, 1.0),
-                    SliderStyle::segmented_diamonds(),
-                ),
-                (
                     "Cutoff".to_string(),
                     SliderState::with_step(75.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_stars(),
-                ),
-                (
-                    "Drive".to_string(),
-                    SliderState::with_step(40.0, 0.0, 100.0, 1.0),
-                    SliderStyle::segmented_arrows(),
-                ),
-                (
-                    "Presence".to_string(),
-                    SliderState::with_step(85.0, 0.0, 100.0, 1.0),
-                    SliderStyle::segmented_thick(),
                 ),
             ],
             selected: 0,
