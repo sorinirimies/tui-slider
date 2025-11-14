@@ -24,6 +24,7 @@ use ratatui::{
     style::{Color, Style},
     widgets::{Block, Widget},
 };
+use unicode_width::UnicodeWidthStr;
 
 /// A simple slider widget for ratatui
 ///
@@ -401,6 +402,11 @@ impl<'a> Slider<'a> {
     }
 
     /// Renders a horizontal slider
+    ///
+    /// This method ensures that all sliders have consistent visual length by:
+    /// - Measuring the display width of each symbol (some Unicode chars take 2+ columns)
+    /// - Tracking column positions rather than character counts
+    /// - Always filling exactly `area.width` columns
     fn render_horizontal(&self, area: Rect, buf: &mut Buffer) {
         if area.width < 1 {
             return;
@@ -408,30 +414,73 @@ impl<'a> Slider<'a> {
 
         let percentage = self.percentage();
         let bar_width = area.width as usize;
-        let filled_width = (bar_width as f64 * percentage) as usize;
 
-        // Render bar
-        for i in 0..bar_width {
-            let x = area.x + i as u16;
-            if x >= area.x + area.width {
+        // Get display widths of symbols using unicode-width
+        // Most symbols are 1 column wide, but some (like emojis) can be 2 or more
+        let filled_width = self.filled_symbol.width().max(1);
+        let empty_width = self.empty_symbol.width().max(1);
+        let handle_width = self.handle_symbol.width().max(1);
+
+        // Calculate how many columns should be filled based on percentage
+        let filled_columns = (bar_width as f64 * percentage) as usize;
+
+        // Render bar - track column position to ensure we fill exactly bar_width columns
+        let mut current_x = area.x;
+        let mut col = 0;
+
+        while col < bar_width {
+            let remaining_cols = bar_width - col;
+
+            // Determine which symbol to use based on current position
+            let (symbol, color, symbol_width) = if col < filled_columns {
+                (&self.filled_symbol, self.filled_color, filled_width)
+            } else {
+                (&self.empty_symbol, self.empty_color, empty_width)
+            };
+
+            // If this symbol would exceed the bar width, fill remaining space
+            if symbol_width > remaining_cols {
+                for _ in 0..remaining_cols {
+                    buf.set_string(current_x, area.y, " ", Style::default());
+                    current_x += 1;
+                }
                 break;
             }
 
-            let (symbol, color) = if i < filled_width {
-                (&self.filled_symbol, self.filled_color)
-            } else {
-                (&self.empty_symbol, self.empty_color)
-            };
-
-            buf.set_string(x, area.y, symbol, Style::default().fg(color));
+            // Render the symbol
+            buf.set_string(current_x, area.y, symbol, Style::default().fg(color));
+            current_x += symbol_width as u16;
+            col += symbol_width;
         }
 
         // Render handle if enabled
         if self.show_handle && bar_width > 0 {
-            let handle_pos = area.x + (bar_width as f64 * percentage) as u16;
-            if handle_pos >= area.x && handle_pos < area.x + area.width {
+            // Calculate the x position where the handle should be placed
+            // This represents the transition point between filled and empty
+            let mut handle_x = area.x;
+            let mut accumulated_cols = 0;
+
+            // Walk through to find where filled_columns falls
+            while accumulated_cols < filled_columns && accumulated_cols < bar_width {
+                let symbol_width = if accumulated_cols < filled_columns {
+                    filled_width
+                } else {
+                    empty_width
+                };
+
+                // Stop if adding this symbol would overshoot the target
+                if accumulated_cols + symbol_width > filled_columns {
+                    break;
+                }
+
+                handle_x += symbol_width as u16;
+                accumulated_cols += symbol_width;
+            }
+
+            // Only render handle if it fits within the area
+            if handle_x >= area.x && handle_x + handle_width as u16 <= area.x + area.width {
                 buf.set_string(
-                    handle_pos,
+                    handle_x,
                     area.y,
                     &self.handle_symbol,
                     Style::default().fg(self.handle_color),
@@ -450,7 +499,8 @@ impl<'a> Slider<'a> {
         let bar_height = area.height as usize;
         let filled_height = (bar_height as f64 * percentage) as usize;
 
-        // Render bar from bottom to top
+        // For vertical, we don't need to worry as much about width since each row is independent
+        // But we still render consistently
         for i in 0..bar_height {
             let y = area.y + area.height - 1 - i as u16;
             if y < area.y {

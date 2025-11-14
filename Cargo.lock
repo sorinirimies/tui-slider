@@ -504,6 +504,7 @@ dependencies = [
  "crossterm",
  "rand",
  "ratatui",
+ "unicode-width",
 ]
 
 [[package]]
