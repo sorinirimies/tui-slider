@@ -1,11 +1,17 @@
 # tui-slider - A simple TUI slider component library for ratatui
-# Install just: cargo install just
-# Install git-cliff: cargo install git-cliff
-# Usage: just <task>
+#
+# Setup: Run './scripts/setup-just.sh' for interactive installation
+# Or install manually: cargo install just
+# Usage: just <task> or just --list
+# Patterns: See docs/JUSTFILE_PATTERNS.md for best practices
 
 # Default task - show available commands
 default:
     @just --list
+
+# Setup just command runner with interactive installer
+setup-just:
+    @./scripts/setup-just.sh
 
 # Install required tools (just, git-cliff)
 install-tools:
@@ -120,6 +126,7 @@ changelog-update: check-git-cliff
     @echo "✅ Changelog updated from all git history!"
 
 # Bump version (usage: just bump 0.2.0)
+# Note: Runs check-all first to ensure code quality before version bump (fail early)
 bump version: check-all check-git-cliff
     @echo "Bumping version to {{version}}..."
     @./scripts/bump_version.sh {{version}}
