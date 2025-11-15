@@ -245,7 +245,6 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
                     style.handle_color
                 })
                 .show_value(true)
-                .show_handle(true)
                 .block(block);
 
             f.render_widget(slider, chunks[i + 1]);

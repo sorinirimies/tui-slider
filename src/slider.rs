@@ -424,6 +424,7 @@ impl<'a> Slider<'a> {
         // Calculate how many columns should be filled based on percentage
         let filled_columns = (bar_width as f64 * percentage) as usize;
 
+        // Horizontal sliders don't use alignment - they fill the width
         // Render bar - track column position to ensure we fill exactly bar_width columns
         let mut current_x = area.x;
         let mut col = 0;
@@ -499,6 +500,10 @@ impl<'a> Slider<'a> {
         let bar_height = area.height as usize;
         let filled_height = (bar_height as f64 * percentage) as usize;
 
+        // Use fixed left offset for consistent vertical slider positioning
+        // All vertical sliders render at the same horizontal position
+        let slider_x = area.x + 1;
+
         // For vertical, render from bottom to top
         for i in 0..bar_height {
             let y = area.y + area.height - 1 - i as u16;
@@ -512,15 +517,18 @@ impl<'a> Slider<'a> {
                 (&self.empty_symbol, self.empty_color)
             };
 
-            buf.set_string(area.x, y, symbol, Style::default().fg(color));
+            buf.set_string(slider_x, y, symbol, Style::default().fg(color));
         }
 
         // Render handle if enabled
         if self.show_handle && bar_height > 0 {
             let handle_y = area.y + area.height - 1 - (bar_height as f64 * percentage) as u16;
             if handle_y >= area.y && handle_y < area.y + area.height {
+                // Use same fixed left offset for handle
+                let handle_x = slider_x;
+
                 buf.set_string(
-                    area.x,
+                    handle_x,
                     handle_y,
                     &self.handle_symbol,
                     Style::default().fg(self.handle_color),
