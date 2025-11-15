@@ -157,6 +157,20 @@ commit message:
     git add .
     git commit -m "{{message}}"
 
+# Git: pull from GitHub (origin)
+pull:
+    git pull origin main
+
+# Git: pull from Gitea
+pull-gitea:
+    git pull gitea main
+
+# Git: pull from both (Gitea first, then GitHub)
+pull-all:
+    git pull gitea main
+    git pull origin main
+    @echo "✅ Pulled from both Gitea and GitHub!"
+
 # Git: push to GitHub (origin)
 push:
     git push origin main
