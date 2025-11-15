@@ -56,6 +56,14 @@ path = "examples/status_bars.rs"
 name = "step_sizes"
 path = "examples/step_sizes.rs"
 
+[[example]]
+name = "border_styles"
+path = "examples/border_styles.rs"
+
+[[example]]
+name = "border_colors"
+path = "examples/border_colors.rs"
+
 [profile.dev]
 opt-level = 1
 

@@ -499,8 +499,7 @@ impl<'a> Slider<'a> {
         let bar_height = area.height as usize;
         let filled_height = (bar_height as f64 * percentage) as usize;
 
-        // For vertical, we don't need to worry as much about width since each row is independent
-        // But we still render consistently
+        // For vertical, render from bottom to top
         for i in 0..bar_height {
             let y = area.y + area.height - 1 - i as u16;
             if y < area.y {
