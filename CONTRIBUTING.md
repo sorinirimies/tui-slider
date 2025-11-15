@@ -32,39 +32,57 @@ For feature requests:
 
 ### Pull Requests
 
-1. **Fork and Clone**
+All contributions must be submitted through GitHub using the forking workflow:
+
+1. **Fork the Repository**
+   - Visit https://github.com/sorinirimies/tui-slider
+   - Click the "Fork" button to create your own copy of the repository
+
+2. **Clone Your Fork**
    ```bash
-   git clone https://github.com/sorinirimies/tui-slider.git
+   git clone https://github.com/YOUR-USERNAME/tui-slider.git
    cd tui-slider
    ```
 
-2. **Create a Branch**
+3. **Add Upstream Remote**
+   ```bash
+   git remote add upstream https://github.com/sorinirimies/tui-slider.git
+   ```
+
+4. **Create a Branch**
    ```bash
    git checkout -b feature/my-new-feature
    ```
 
-3. **Make Changes**
+5. **Make Changes**
    - Write clear, idiomatic Rust code
    - Follow existing code style
    - Add tests for new functionality
    - Update documentation as needed
 
-4. **Run Tests**
+6. **Run Tests**
    ```bash
    cargo test
    cargo clippy -- -D warnings
    cargo fmt --check
    ```
 
-5. **Commit Changes**
+7. **Commit Changes**
    - Use conventional commit messages
    - Examples: `feat: add gradient color support`, `fix: handle edge case in animation`
 
-6. **Push and Create PR**
+8. **Push to Your Fork**
    ```bash
    git push origin feature/my-new-feature
    ```
-   Then create a PR on GitHub
+
+9. **Create Pull Request**
+   - Go to your fork on GitHub
+   - Click "Compare & pull request"
+   - Fill in the PR description with details about your changes
+   - Submit the PR to the main repository
+
+**Note**: Do not submit patches or contributions through email or other channels. All contributions must go through GitHub's pull request system on your forked repository.
 
 ## Development Setup
 
