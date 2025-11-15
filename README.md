@@ -201,6 +201,61 @@ The library consists of three main components:
 - **SliderState** - Manages value, bounds, and state
 - **SliderOrientation** - Horizontal or Vertical orientation
 
+## 🛠️ Development
+
+This project uses [just](https://github.com/casey/just) as a command runner for common development tasks.
+
+### Quick Setup
+
+Run the interactive setup script to install `just` and configure your environment:
+
+```bash
+./scripts/setup-just.sh
+```
+
+This script will:
+- Install `just` command runner (if not already installed)
+- Install optional tools like `git-cliff` for changelog generation
+- Set up shell completion
+- Offer to add useful commands to your justfile
+
+### Manual Setup
+
+If you prefer manual installation:
+
+```bash
+# Install just
+cargo install just
+
+# Install git-cliff (optional, for changelogs)
+cargo install git-cliff
+
+# View available commands
+just --list
+```
+
+### Common Commands
+
+```bash
+just build              # Build the project
+just test               # Run tests
+just check-all          # Run all checks (fmt, clippy, test)
+just run                # Run horizontal slider example
+just examples           # Run all examples
+just bump <version>     # Bump version (runs checks first)
+```
+
+For a complete list of available commands, run `just --list` or see the [justfile](justfile).
+
+### Justfile Patterns
+
+This project follows the "fail early" pattern for version bumps and releases:
+- **`just bump <version>`** runs all checks (fmt, clippy, test) before bumping
+- **`just release <version>`** depends on `bump`, ensuring quality before release
+- All destructive operations have quality gates
+
+See [Justfile Best Practices & Patterns](docs/JUSTFILE_PATTERNS.md) for detailed documentation.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
