@@ -68,7 +68,7 @@ fn ui(f: &mut Frame) {
         .split(f.area());
 
     // Test different symbol combinations
-    let test_cases = vec![
+    let test_cases = [
         ("Thick Line", "━", "─", "●", 50.0, Color::Cyan),
         ("Wave", "≈", "˜", "◆", 50.0, Color::Green),
         ("Hash/Dot", "#", ".", "@", 50.0, Color::Yellow),
