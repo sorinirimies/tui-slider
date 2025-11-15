@@ -13,7 +13,7 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, BorderType, Borders, Paragraph},
     Frame, Terminal,
 };
 use std::io;
@@ -235,6 +235,7 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
 
         let block = Block::default()
             .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
             .border_style(if is_selected {
                 Style::default()
                     .fg(Color::Yellow)

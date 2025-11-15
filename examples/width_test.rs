@@ -10,7 +10,7 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
     style::Color,
-    widgets::{Block, Borders},
+    widgets::{Block, BorderType, Borders},
     Frame, Terminal,
 };
 use std::io;
@@ -92,6 +92,7 @@ fn ui(f: &mut Frame) {
             .block(
                 Block::default()
                     .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded)
                     .title(format!(" {} ", name)),
             );
 

@@ -14,7 +14,7 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, BorderType, Borders, Paragraph},
     Frame, Terminal,
 };
 use std::io;
@@ -263,6 +263,7 @@ fn ui(f: &mut Frame, app: &App) {
 fn render_characters(f: &mut Frame, app: &App, area: Rect) {
     let block = Block::default()
         .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
         .title(" Characters ")
         .border_style(Style::default().fg(Color::Cyan));
 
@@ -291,6 +292,7 @@ fn render_characters(f: &mut Frame, app: &App, area: Rect) {
 fn render_character_stats(f: &mut Frame, character: &Character, is_selected: bool, area: Rect) {
     let block = Block::default()
         .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
         .border_style(if is_selected {
             Style::default()
                 .fg(Color::Yellow)
@@ -374,6 +376,7 @@ fn render_character_stats(f: &mut Frame, character: &Character, is_selected: boo
 fn render_system_stats(f: &mut Frame, app: &App, area: Rect) {
     let block = Block::default()
         .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
         .title(" System Monitor ")
         .border_style(Style::default().fg(Color::Green));
 
@@ -523,6 +526,7 @@ fn render_help(f: &mut Frame, app: &App, area: Rect) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
+                .border_type(BorderType::Rounded)
                 .border_style(Style::default().fg(Color::DarkGray))
                 .title(" Controls "),
         );
