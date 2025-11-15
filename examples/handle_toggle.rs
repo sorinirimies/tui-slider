@@ -191,7 +191,7 @@ fn ui(f: &mut Frame, app: &App) {
     f.render_widget(title, main_chunks[0]);
 
     // Help text
-    let help_text = vec![
+    let help_text = [
         "↑/↓ or j/k: Select slider",
         "←/→ or h/l: Adjust value",
         "SHIFT+H or SPACE: Toggle handle visibility",
