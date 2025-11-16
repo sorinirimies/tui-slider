@@ -1,7 +1,21 @@
 #!/usr/bin/env bash
 # Setup script for installing and configuring just command runner
 # This is a general-purpose script that works with any project
+#
+# Features:
+#   - Installs just via cargo or system package managers (apt, brew, pacman, dnf)
+#   - Creates a new justfile if one doesn't exist (interactive)
+#   - Enhances existing justfile with missing common commands (optional)
+#   - Detects and installs optional tools (git-cliff, VHS, cargo-watch)
+#   - Sets up shell completion (bash, zsh, fish, PowerShell)
+#   - Creates backups before modifying files
+#   - Implements "fail early" pattern for version bumping
+#
 # Usage: ./scripts/setup-just.sh
+#
+# Examples:
+#   ./scripts/setup-just.sh              # Interactive setup
+#   just setup-just                      # If you already have just installed
 
 set -e
 
@@ -41,13 +55,35 @@ header() {
 # Detect project name from current directory
 PROJECT_NAME=$(basename "$(pwd)")
 
-# Check if we're in a directory with a justfile
-if [ ! -f "justfile" ]; then
-    error "justfile not found. Please run this script from a directory containing a justfile."
-fi
-
 header "Just Command Runner Setup"
 info "Project: $PROJECT_NAME"
+echo ""
+
+# Check if justfile exists
+JUSTFILE_EXISTS=false
+if [ -f "justfile" ]; then
+    JUSTFILE_EXISTS=true
+    success "Found existing justfile"
+    echo ""
+    read -p "Do you want to add missing commands to your justfile? (Y/n) " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+        info "Skipping justfile enhancement. Will only install just."
+        SKIP_JUSTFILE_ENHANCEMENT=true
+    fi
+else
+    warning "No justfile found in current directory"
+    echo ""
+    read -p "Do you want to create a new justfile with common commands? (Y/n) " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+        info "Creating new justfile..."
+        CREATE_NEW_JUSTFILE=true
+    else
+        info "Skipping justfile creation. Will only install just."
+        SKIP_JUSTFILE_ENHANCEMENT=true
+    fi
+fi
 echo ""
 
 # Check if just is already installed
@@ -164,9 +200,11 @@ if grep -q "cargo-watch" justfile 2>/dev/null || grep -q "watch" justfile 2>/dev
 fi
 
 # Display justfile commands
-header "Available Commands"
-just --list
-echo ""
+if [ "$JUSTFILE_EXISTS" = true ] || [ "$CREATE_NEW_JUSTFILE" = true ]; then
+    header "Available Commands"
+    just --list
+    echo ""
+fi
 
 # Show quick start based on common command patterns
 header "Quick Start Guide"
@@ -276,11 +314,134 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 fi
 echo ""
 
-# Offer to add common useful commands to justfile
-header "Enhance Justfile (Optional)"
-echo ""
-info "Would you like to add commonly useful commands to your justfile?"
-echo ""
+# Create new justfile if requested
+if [ "$CREATE_NEW_JUSTFILE" = true ]; then
+    header "Creating New Justfile"
+    echo ""
+
+    # Detect project type
+    IS_RUST_PROJECT=false
+    if [ -f "Cargo.toml" ]; then
+        IS_RUST_PROJECT=true
+        PROJECT_NAME_FROM_TOML=$(grep '^name = ' Cargo.toml | head -1 | sed 's/name = "\(.*\)"/\1/' 2>/dev/null || echo "$PROJECT_NAME")
+        info "Detected Rust project: $PROJECT_NAME_FROM_TOML"
+    else
+        info "Creating generic justfile"
+    fi
+    echo ""
+
+    # Create the justfile
+    cat > justfile << 'EOF'
+# Justfile for project automation
+#
+# Setup: Run './scripts/setup-just.sh' for interactive installation
+# Or install manually: cargo install just
+# Usage: just <task> or just --list
+# Patterns: See https://just.systems/man/en/ for documentation
+
+# Default task - show available commands
+default:
+    @just --list
+
+EOF
+
+    if [ "$IS_RUST_PROJECT" = true ]; then
+        cat >> justfile << 'EOF'
+# Build the project
+build:
+    cargo build
+
+# Build release version
+build-release:
+    cargo build --release
+
+# Run tests
+test:
+    cargo test
+
+# Format code
+fmt:
+    cargo fmt
+
+# Check if code is formatted
+fmt-check:
+    cargo fmt --check
+
+# Run clippy linter
+clippy:
+    cargo clippy -- -D warnings
+
+# Run all checks (fmt-check, clippy, test) - fail early pattern
+check-all: fmt-check clippy test
+    @echo "✅ All checks passed!"
+
+# Clean build artifacts
+clean:
+    cargo clean
+
+# Show current version
+version:
+    @grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/'
+
+# Show project information
+info:
+    @echo "Project: $(grep '^name = ' Cargo.toml | head -1 | sed 's/name = "\(.*\)"/\1/')"
+    @grep '^version = ' Cargo.toml | head -1 | sed 's/version = /Version: /' | tr -d '"'
+    @grep '^description = ' Cargo.toml | head -1 | sed 's/description = /Description: /' | tr -d '"' 2>/dev/null || true
+
+# Install common development tools
+install-tools:
+    @echo "Installing development tools..."
+    @command -v just >/dev/null 2>&1 || cargo install just
+    @command -v git-cliff >/dev/null 2>&1 || cargo install git-cliff
+    @echo "✅ Tools installed!"
+
+# Check if git-cliff is installed
+check-git-cliff:
+    @command -v git-cliff >/dev/null 2>&1 || { echo "❌ git-cliff not found. Install with: cargo install git-cliff"; exit 1; }
+
+# Bump version (usage: just bump 0.2.0) - runs all checks first
+bump version: check-all check-git-cliff
+    @echo "Bumping version to {{version}}..."
+    @sed -i 's/^version = ".*"/version = "{{version}}"/' Cargo.toml
+    @cargo update -p $(grep '^name = ' Cargo.toml | head -1 | sed 's/name = "\(.*\)"/\1/')
+    @git add Cargo.toml Cargo.lock
+    @git commit -m "chore: bump version to {{version}}"
+    @git tag -a "v{{version}}" -m "Release v{{version}}"
+    @echo "✅ Version bumped to {{version}}"
+    @echo "Next: git push origin main && git push origin v{{version}}"
+
+# Generate documentation
+doc:
+    cargo doc --no-deps --open
+EOF
+    else
+        cat >> justfile << 'EOF'
+# Install common development tools
+install-tools:
+    @echo "Installing development tools..."
+    @command -v just >/dev/null 2>&1 || cargo install just
+    @echo "✅ Tools installed!"
+
+# Show project information
+info:
+    @echo "Project: $(basename $(pwd))"
+EOF
+    fi
+
+    success "Created justfile with common commands"
+    info "Review the file: ${CYAN}cat justfile${NC}"
+    info "Customize it for your project's needs"
+    JUSTFILE_EXISTS=true
+    echo ""
+fi
+
+# Offer to add common useful commands to existing justfile
+if [ "$SKIP_JUSTFILE_ENHANCEMENT" != true ] && [ "$JUSTFILE_EXISTS" = true ] && [ "$CREATE_NEW_JUSTFILE" != true ]; then
+    header "Enhance Justfile (Optional)"
+    echo ""
+    info "Checking for commonly useful commands that might be missing..."
+    echo ""
 
 # Check what's already in the justfile
 HAS_DEFAULT=$(grep -q "^default:" justfile && echo "yes" || echo "no")
@@ -480,19 +641,22 @@ else
     success "All common commands already present in justfile"
 fi
 echo ""
+fi
 
 # Show justfile location and documentation
-header "Documentation"
-echo ""
-info "Justfile location: $(pwd)/justfile"
-info "View all commands: ${CYAN}just --list${NC} or ${CYAN}just${NC}"
-info "View justfile source: ${CYAN}cat justfile${NC}"
-info "Edit justfile: ${CYAN}\$EDITOR justfile${NC}"
-echo ""
-info "Official documentation:"
-echo "  • just manual: https://just.systems/man/en/"
-echo "  • GitHub repo: https://github.com/casey/just"
-echo ""
+if [ "$JUSTFILE_EXISTS" = true ] || [ "$CREATE_NEW_JUSTFILE" = true ]; then
+    header "Documentation"
+    echo ""
+    info "Justfile location: $(pwd)/justfile"
+    info "View all commands: ${CYAN}just --list${NC} or ${CYAN}just${NC}"
+    info "View justfile source: ${CYAN}cat justfile${NC}"
+    info "Edit justfile: ${CYAN}\$EDITOR justfile${NC}"
+    echo ""
+    info "Official documentation:"
+    echo "  • just manual: https://just.systems/man/en/"
+    echo "  • GitHub repo: https://github.com/casey/just"
+    echo ""
+fi
 
 # Final summary
 header "Setup Complete!"

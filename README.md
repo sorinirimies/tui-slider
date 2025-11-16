@@ -318,9 +318,11 @@ Run the interactive setup script to install `just` and configure your environmen
 
 This script will:
 - Install `just` command runner (if not already installed)
+- Create a new justfile if one doesn't exist (with common commands)
+- Enhance existing justfile with missing commands (optional)
 - Install optional tools like `git-cliff` for changelog generation
 - Set up shell completion
-- Offer to add useful commands to your justfile
+- Create backups before modifying files
 
 ### Manual Setup
 
