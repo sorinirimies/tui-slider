@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 ### Features
 - Add border styles, title/value alignment, and spacing collision detection
 
+### Miscellaneous
+- Bump version to 0.1.9
+
 ## [0.1.8] - 2025-11-15
 
 ### Miscellaneous
