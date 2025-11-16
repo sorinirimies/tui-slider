@@ -225,6 +225,14 @@ fi
 # Update or create justfile
 heading "Updating Justfile"
 
+# Check if setup-just.sh exists
+SETUP_JUST_SCRIPT=""
+if [ -f "$PROJECT_DIR/scripts/setup-just.sh" ]; then
+    SETUP_JUST_SCRIPT="$PROJECT_DIR/scripts/setup-just.sh"
+elif [ -f "$(dirname "$0")/setup-just.sh" ]; then
+    SETUP_JUST_SCRIPT="$(dirname "$0")/setup-just.sh"
+fi
+
 if [ -f "$PROJECT_DIR/justfile" ]; then
     info "Justfile exists, checking for Gitea commands..."
 
@@ -266,11 +274,11 @@ push-all:
     git push gitea main
     @echo "✅ Pushed to both GitHub and Gitea!"
 
-# Git: pull from Gitea (fetch and merge)
-pull-from-gitea:
-    @echo "Pulling from Gitea..."
+# Git: pull from both remotes (Gitea first, then GitHub)
+pull-all:
     git pull gitea main
-    @echo "✅ Pulled from Gitea!"
+    git pull origin main
+    @echo "✅ Pulled from both remotes!"
 
 # Git: push tags to GitHub
 push-tags:
@@ -338,9 +346,96 @@ JUSTFILE_APPEND
         info "Run 'just --list' to see new commands"
     fi
 else
-    warning "No justfile found, creating comprehensive one..."
+    warning "No justfile found"
 
-    cat > "$PROJECT_DIR/justfile" << 'JUSTFILE_CREATE'
+    # Try to use setup-just.sh if available
+    if [ -n "$SETUP_JUST_SCRIPT" ] && [ -x "$SETUP_JUST_SCRIPT" ]; then
+        info "Using setup-just.sh to create justfile..."
+        cd "$PROJECT_DIR"
+        # Run setup-just.sh in non-interactive mode by answering 'y' to create justfile
+        echo "y" | "$SETUP_JUST_SCRIPT" || {
+            warning "setup-just.sh failed, falling back to manual creation"
+            SETUP_JUST_FAILED=true
+        }
+        cd - > /dev/null
+
+        if [ "$SETUP_JUST_FAILED" != true ]; then
+            success "Created justfile using setup-just.sh"
+
+            # Now add Gitea-specific commands if not already present
+            if ! grep -q "push-gitea" "$PROJECT_DIR/justfile"; then
+                info "Adding Gitea-specific commands..."
+                cat >> "$PROJECT_DIR/justfile" << 'JUSTFILE_GITEA_ADDON'
+
+# ============================================================================
+# Gitea Dual-Hosting Commands (added by migrate-to-gitea.sh)
+# ============================================================================
+
+# Git: push to Gitea
+push-gitea:
+    git push gitea main
+
+# Git: pull from Gitea
+pull-gitea:
+    git pull gitea main
+
+# Git: push to both GitHub and Gitea
+push-all:
+    git push origin main
+    git push gitea main
+    @echo "✅ Pushed to both GitHub and Gitea!"
+
+# Git: pull from both remotes (Gitea first, then GitHub)
+pull-all:
+    git pull gitea main
+    git pull origin main
+    @echo "✅ Pulled from both remotes!"
+
+# Full release workflow: bump version and push to Gitea
+release-gitea version: (bump version)
+    @echo "Pushing to Gitea..."
+    git push gitea main
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on Gitea!"
+
+# Full release workflow: bump version and push to both GitHub and Gitea
+release-all version: (bump version)
+    @echo "Pushing to both GitHub and Gitea..."
+    git push origin main
+    git push gitea main
+    git push origin v{{version}}
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on both remotes!"
+
+# Sync Gitea with GitHub (force)
+sync-gitea:
+    @echo "Syncing Gitea with GitHub..."
+    git push gitea main --force
+    git push gitea --tags --force
+    @echo "✅ Gitea synced!"
+
+# Show configured remotes
+remotes:
+    @echo "Configured git remotes:"
+    @git remote -v
+
+# Setup Gitea remote (provide your Gitea URL)
+setup-gitea url:
+    @echo "Adding Gitea remote..."
+    git remote add gitea {{url}}
+    @echo "✅ Gitea remote added!"
+    @echo "Test with: git push gitea main"
+JUSTFILE_GITEA_ADDON
+                success "Added Gitea commands to justfile"
+            fi
+        fi
+    fi
+
+    # Fallback: create comprehensive justfile manually
+    if [ ! -f "$PROJECT_DIR/justfile" ] || [ "$SETUP_JUST_FAILED" = true ]; then
+        warning "Creating justfile manually..."
+
+        cat > "$PROJECT_DIR/justfile" << 'JUSTFILE_CREATE'
 # $PROJECT_NAME - Project automation with dual GitHub/Gitea hosting
 # Install just: cargo install just
 # Install git-cliff: cargo install git-cliff
@@ -444,7 +539,8 @@ changelog-update: check-git-cliff
     @echo "✅ Changelog updated from all git history!"
 
 # Bump version (usage: just bump 0.2.0)
-bump version: check-git-cliff
+# Note: Runs check-all first to ensure code quality before version bump (fail early)
+bump version: check-all check-git-cliff
     @echo "Bumping version to {{version}}..."
     @./scripts/bump_version.sh {{version}}
 
@@ -503,11 +599,11 @@ push-all:
     git push gitea main
     @echo "✅ Pushed to both GitHub and Gitea!"
 
-# Git: pull from Gitea (fetch and merge)
-pull-from-gitea:
-    @echo "Pulling from Gitea..."
+# Git: pull from both remotes (Gitea first, then GitHub)
+pull-all:
     git pull gitea main
-    @echo "✅ Pulled from Gitea!"
+    git pull origin main
+    @echo "✅ Pulled from both remotes!"
 
 # Git: push tags to GitHub
 push-tags:
@@ -592,11 +688,12 @@ view-changelog:
     @cat CHANGELOG.md
 JUSTFILE_CREATE
 
-    # Replace $PROJECT_NAME with actual project name
-    sed -i "s/\$PROJECT_NAME/$PROJECT_NAME/g" "$PROJECT_DIR/justfile"
+        # Replace $PROJECT_NAME with actual project name
+        sed -i "s/\$PROJECT_NAME/$PROJECT_NAME/g" "$PROJECT_DIR/justfile"
 
-    success "Created comprehensive justfile with all commands"
-    info "Customize the 'run' command and other project-specific settings"
+        success "Created comprehensive justfile with all commands"
+        info "Customize the 'run' command and other project-specific settings"
+    fi
 fi
 
 # Create bump_version.sh script if it doesn't exist
