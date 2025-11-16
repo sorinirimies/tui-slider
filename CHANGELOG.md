@@ -1,6 +1,22 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2025-11-16
+
+### Features
+- Hide thumb/handle for Release and Decay segmented sliders
+
+### Miscellaneous
+- Reduce horizontal example sliders - remove Phaser, Delay, Distortion
+
+### Refactor
+- Use show_handle boolean instead of hardcoded style checks
+
+## [0.2.0] - 2025-11-16
+
+### Miscellaneous
+- Bump version to 0.2.0
+
 ## [0.1.9] - 2025-11-16
 
 ### Features
