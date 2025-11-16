@@ -7,12 +7,161 @@
 [![Release](https://github.com/sorinirimies/tui-slider/actions/workflows/release.yml/badge.svg)](https://github.com/sorinirimies/tui-slider/actions/workflows/release.yml)
 [![CI](https://github.com/sorinirimies/tui-slider/actions/workflows/ci.yml/badge.svg)](https://github.com/sorinirimies/tui-slider/actions/workflows/ci.yml)
 
-A simple TUI slider component library for [ratatui](https://github.com/ratatui-org/ratatui).
-
-Perfect for building music players, audio controls, equalizers, and any terminal UI that needs simple, clean sliders.
-
 ![Horizontal Sliders](examples/vhs/target/horizontal.gif)
 ![Vertical Sliders](examples/vhs/target/vertical.gif)
+![Border Styles](examples/vhs/target/border_styles.gif)
+![Title Alignment](examples/vhs/target/title_alignment.gif)
+![Value Alignment](examples/vhs/target/value_alignment.gif)
+![Progress Bars](examples/vhs/target/progress_bars.gif)
+
+A highly customizable and configurable slider widget for [ratatui](https://github.com/ratatui-org/ratatui) that puts you in full control of every visual aspect.
+
+Whether you're building music players, audio mixers, settings panels, or progress indicators, `tui-slider` adapts to your needs with extensive customization options. Configure colors, symbols, orientations, alignments, borders, and behavior—all through a clean, intuitive API. From minimalist progress bars to feature-rich interactive sliders, you decide exactly how your UI looks and feels.
+
+## 📖 Examples
+
+### Horizontal Sliders
+
+Basic horizontal slider:
+
+```rust
+use ratatui::style::Color;
+use tui_slider::{Slider, SliderState, SliderOrientation};
+
+let state = SliderState::new(75.0, 0.0, 100.0);
+
+let slider = Slider::from_state(&state)
+    .orientation(SliderOrientation::Horizontal)
+    .label("Volume")
+    .show_value(true)
+    .filled_symbol("━")
+    .empty_symbol("─")
+    .handle_symbol("●")
+    .filled_color(Color::Cyan)
+    .empty_color(Color::DarkGray)
+    .handle_color(Color::White);
+```
+
+### Vertical Sliders
+
+Basic vertical slider:
+
+```rust
+use ratatui::style::Color;
+use tui_slider::{Slider, SliderState, SliderOrientation};
+
+let state = SliderState::new(60.0, 0.0, 100.0);
+
+let slider = Slider::from_state(&state)
+    .orientation(SliderOrientation::Vertical)
+    .label("Bass")
+    .show_value(true)
+    .filled_symbol("│")
+    .empty_symbol("│")
+    .handle_symbol("━")
+    .filled_color(Color::Green)
+    .empty_color(Color::DarkGray)
+    .handle_color(Color::White);
+```
+
+### Border Styles
+
+Multiple border styles available (Plain, Rounded, Double, Thick, Segmented):
+
+```rust
+use tui_slider::border::BorderStyle;
+use ratatui::widgets::{Block, Borders};
+
+let block = Block::default()
+    .borders(Borders::ALL)
+    .border_set(BorderStyle::Rounded.border_set())
+    .title("Slider");
+
+let slider = Slider::from_state(&state).block(block);
+```
+
+### Title Alignment
+
+Control where titles appear on borders:
+
+```rust
+use tui_slider::border::{title_left, title_center, title_right, title_right_with_spacing};
+use ratatui::widgets::{Block, Borders};
+
+// Left-aligned title
+let title = title_left("Volume");
+let block = Block::default().borders(Borders::ALL).title(title);
+
+// Center-aligned title
+let title = title_center("Settings");
+let block = Block::default().borders(Borders::ALL).title(title);
+
+// Right-aligned title (use title_right_with_spacing if value is also right-aligned)
+let title = title_right_with_spacing("Status");
+let block = Block::default().borders(Borders::ALL).title(title);
+```
+
+### Value Alignment
+
+Control where values appear above/beside the slider:
+
+```rust
+use ratatui::layout::Alignment;
+
+// Left-aligned value
+let slider = Slider::from_state(&state)
+    .show_value(true)
+    .value_alignment(Alignment::Left);
+
+// Center-aligned value
+let slider = Slider::from_state(&state)
+    .show_value(true)
+    .value_alignment(Alignment::Center);
+
+// Right-aligned value (default)
+let slider = Slider::from_state(&state)
+    .show_value(true)
+    .value_alignment(Alignment::Right);
+```
+
+### Progress Bars
+
+Use sliders as progress indicators by hiding the handle:
+
+```rust
+let slider = Slider::from_state(&state)
+    .filled_symbol("▓")
+    .empty_symbol("░")
+    .show_handle(false)  // Hide handle for progress bar style
+    .show_value(true);
+```
+
+### Custom Symbols
+
+```rust
+let slider = Slider::from_state(&state)
+    .filled_symbol("█")
+    .empty_symbol("░")
+    .handle_symbol("▐")
+    .filled_color(Color::Yellow)
+    .show_handle(true);
+```
+
+### Toggle Thumb/Handle Visibility
+
+```rust
+// Show the thumb indicator (default)
+let slider = Slider::from_state(&state)
+    .show_thumb(true);
+
+// Hide the thumb for a progress bar style
+let slider = Slider::from_state(&state)
+    .show_thumb(false);
+
+// show_handle() is an alias for show_thumb()
+let slider = Slider::from_state(&state)
+    .show_handle(false);
+```
 
 ## ✨ Features
 
@@ -57,163 +206,6 @@ fn main() {
     // Update the value
     state.set_value(75.0);
 }
-```
-
-## 📖 Examples
-
-### Horizontal Sliders
-
-![Horizontal Sliders](examples/vhs/target/horizontal.gif)
-
-Basic horizontal slider:
-
-```rust
-use ratatui::style::Color;
-use tui_slider::{Slider, SliderState, SliderOrientation};
-
-let state = SliderState::new(75.0, 0.0, 100.0);
-
-let slider = Slider::from_state(&state)
-    .orientation(SliderOrientation::Horizontal)
-    .label("Volume")
-    .show_value(true)
-    .filled_symbol("━")
-    .empty_symbol("─")
-    .handle_symbol("●")
-    .filled_color(Color::Cyan)
-    .empty_color(Color::DarkGray)
-    .handle_color(Color::White);
-```
-
-### Vertical Sliders
-
-![Vertical Sliders](examples/vhs/target/vertical.gif)
-
-Basic vertical slider:
-
-```rust
-use ratatui::style::Color;
-use tui_slider::{Slider, SliderState, SliderOrientation};
-
-let state = SliderState::new(60.0, 0.0, 100.0);
-
-let slider = Slider::from_state(&state)
-    .orientation(SliderOrientation::Vertical)
-    .label("Bass")
-    .show_value(true)
-    .filled_symbol("│")
-    .empty_symbol("│")
-    .handle_symbol("━")
-    .filled_color(Color::Green)
-    .empty_color(Color::DarkGray)
-    .handle_color(Color::White);
-```
-
-### Border Styles
-
-![Border Styles](examples/vhs/target/border_styles.gif)
-
-Multiple border styles available (Plain, Rounded, Double, Thick, Segmented):
-
-```rust
-use tui_slider::border::BorderStyle;
-use ratatui::widgets::{Block, Borders};
-
-let block = Block::default()
-    .borders(Borders::ALL)
-    .border_set(BorderStyle::Rounded.border_set())
-    .title("Slider");
-
-let slider = Slider::from_state(&state).block(block);
-```
-
-### Title Alignment
-
-![Title Alignment](examples/vhs/target/title_alignment.gif)
-
-Control where titles appear on borders:
-
-```rust
-use tui_slider::border::{title_left, title_center, title_right, title_right_with_spacing};
-use ratatui::widgets::{Block, Borders};
-
-// Left-aligned title
-let title = title_left("Volume");
-let block = Block::default().borders(Borders::ALL).title(title);
-
-// Center-aligned title
-let title = title_center("Settings");
-let block = Block::default().borders(Borders::ALL).title(title);
-
-// Right-aligned title (use title_right_with_spacing if value is also right-aligned)
-let title = title_right_with_spacing("Status");
-let block = Block::default().borders(Borders::ALL).title(title);
-```
-
-### Value Alignment
-
-![Value Alignment](examples/vhs/target/value_alignment.gif)
-
-Control where values appear above/beside the slider:
-
-```rust
-use ratatui::layout::Alignment;
-
-// Left-aligned value
-let slider = Slider::from_state(&state)
-    .show_value(true)
-    .value_alignment(Alignment::Left);
-
-// Center-aligned value
-let slider = Slider::from_state(&state)
-    .show_value(true)
-    .value_alignment(Alignment::Center);
-
-// Right-aligned value (default)
-let slider = Slider::from_state(&state)
-    .show_value(true)
-    .value_alignment(Alignment::Right);
-```
-
-### Progress Bars
-
-![Progress Bars](examples/vhs/target/progress_bars.gif)
-
-Use sliders as progress indicators by hiding the handle:
-
-```rust
-let slider = Slider::from_state(&state)
-    .filled_symbol("▓")
-    .empty_symbol("░")
-    .show_handle(false)  // Hide handle for progress bar style
-    .show_value(true);
-```
-
-### Custom Symbols
-
-```rust
-let slider = Slider::from_state(&state)
-    .filled_symbol("█")
-    .empty_symbol("░")
-    .handle_symbol("▐")
-    .filled_color(Color::Yellow)
-    .show_handle(true);
-```
-
-### Toggle Thumb/Handle Visibility
-
-```rust
-// Show the thumb indicator (default)
-let slider = Slider::from_state(&state)
-    .show_thumb(true);
-
-// Hide the thumb for a progress bar style
-let slider = Slider::from_state(&state)
-    .show_thumb(false);
-
-// show_handle() is an alias for show_thumb()
-let slider = Slider::from_state(&state)
-    .show_handle(false);
 ```
 
 ## 🎮 Interactive Usage

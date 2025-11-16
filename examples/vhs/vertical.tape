@@ -4,7 +4,7 @@ Output examples/vhs/target/vertical.gif
 
 Set Shell "bash"
 Set FontSize 14
-Set Width 1400
+Set Width 1200
 Set Height 600
 Set PlaybackSpeed 1.0
 Set Theme "Catppuccin Mocha"
