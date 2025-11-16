@@ -302,19 +302,22 @@ fn render_segmented_slider(
         current_width += 1;
     }
 
-    // Add handle at the correct position
-    let handle_pos = (segment_count as f64 * percentage).round() as usize;
-    if handle_pos > 0 && handle_pos <= segment_count {
-        let insert_pos = (handle_pos * 2).saturating_sub(1).min(segments.len());
-        if insert_pos < segments.len() {
-            segments[insert_pos] = Span::styled(
-                style.handle_symbol,
-                Style::default().fg(if is_selected {
-                    Color::White
-                } else {
-                    style.handle_color
-                }),
-            );
+    // Add handle at the correct position (skip for dots and squares styles)
+    let show_handle = style.name != "Segmented Dots" && style.name != "Segmented Squares";
+    if show_handle {
+        let handle_pos = (segment_count as f64 * percentage).round() as usize;
+        if handle_pos > 0 && handle_pos <= segment_count {
+            let insert_pos = (handle_pos * 2).saturating_sub(1).min(segments.len());
+            if insert_pos < segments.len() {
+                segments[insert_pos] = Span::styled(
+                    style.handle_symbol,
+                    Style::default().fg(if is_selected {
+                        Color::White
+                    } else {
+                        style.handle_color
+                    }),
+                );
+            }
         }
     }
 
