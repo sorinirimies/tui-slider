@@ -1,11 +1,25 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.1.9] - 2025-11-16
+
+### Features
+- Add border styles, title/value alignment, and spacing collision detection
+
 ## [0.1.8] - 2025-11-15
 
 ### Miscellaneous
-- Bump version to 0.1.6
+- Bump version to 0.1.8
+
+## [0.1.7] - 2025-11-14
+
+### Miscellaneous
 - Bump version to 0.1.7
+
+## [0.1.6] - 2025-11-14
+
+### Miscellaneous
+- Bump version to 0.1.6
 
 ## [0.1.5] - 2025-11-12
 
