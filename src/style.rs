@@ -426,6 +426,123 @@ impl SliderStyle {
     }
 }
 
+/// Progress bar style presets
+///
+/// These styles are specifically designed for progress bars (sliders without handles)
+impl SliderStyle {
+    /// Download progress bar style
+    pub fn progress_download() -> Self {
+        Self {
+            name: "Download",
+            filled_symbol: "█",
+            empty_symbol: "░",
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::Green,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Upload progress bar style
+    pub fn progress_upload() -> Self {
+        Self {
+            name: "Upload",
+            filled_symbol: "▰",
+            empty_symbol: "▱",
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::Blue,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Health bar style (gaming UI)
+    pub fn progress_health() -> Self {
+        Self {
+            name: "Health",
+            filled_symbol: "▓",
+            empty_symbol: "░",
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::Red,
+            empty_color: Color::Rgb(40, 40, 40),
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Mana bar style (gaming UI)
+    pub fn progress_mana() -> Self {
+        Self {
+            name: "Mana",
+            filled_symbol: "▓",
+            empty_symbol: "░",
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::Cyan,
+            empty_color: Color::Rgb(40, 40, 40),
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Experience bar style (gaming UI)
+    pub fn progress_experience() -> Self {
+        Self {
+            name: "Experience",
+            filled_symbol: "━",
+            empty_symbol: "─",
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::Yellow,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Loading bar style
+    pub fn progress_loading() -> Self {
+        Self {
+            name: "Loading",
+            filled_symbol: "═",
+            empty_symbol: "─",
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::Magenta,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Installation progress bar style
+    pub fn progress_installation() -> Self {
+        Self {
+            name: "Installation",
+            filled_symbol: "▬",
+            empty_symbol: "▭",
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::LightGreen,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Battery level bar style
+    pub fn progress_battery() -> Self {
+        Self {
+            name: "Battery",
+            filled_symbol: "■",
+            empty_symbol: "□",
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::LightYellow,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+}
+
 impl Default for SliderStyle {
     fn default() -> Self {
         Self::default_style()

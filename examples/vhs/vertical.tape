@@ -1,11 +1,11 @@
-# VHS tape for vertical slider/equalizer demo
+# VHS tape for vertical slider demo
 
 Output examples/vhs/target/vertical.gif
 
 Set Shell "bash"
 Set FontSize 14
 Set Width 1400
-Set Height 900
+Set Height 600
 Set PlaybackSpeed 1.0
 Set Theme "Catppuccin Mocha"
 
@@ -16,43 +16,15 @@ Sleep 2s
 # Show the interface
 Sleep 1s
 
-# Navigate through bands
-Type "l"
-Sleep 400ms
-Type "l"
-Sleep 400ms
-Type "l"
-Sleep 400ms
+# Navigate through sliders
+Type "Right"
+Sleep 500ms
+Type "Right"
+Sleep 500ms
+Type "Right"
+Sleep 500ms
 
-# Adjust some bands up
-Type "k"
-Sleep 200ms
-Type "k"
-Sleep 200ms
-Type "k"
-Sleep 200ms
-Type "k"
-Sleep 200ms
-
-Sleep 800ms
-
-# Move to next band
-Type "l"
-Sleep 400ms
-
-# Adjust down
-Type "j"
-Sleep 200ms
-Type "j"
-Sleep 200ms
-Type "j"
-Sleep 200ms
-
-Sleep 800ms
-
-# Navigate and adjust creating EQ curve
-Type "l"
-Sleep 400ms
+# Adjust some values
 Type "k"
 Sleep 200ms
 Type "k"
@@ -64,10 +36,27 @@ Sleep 200ms
 Type "k"
 Sleep 200ms
 
-Sleep 800ms
+Sleep 1s
 
-Type "l"
-Sleep 400ms
+# Move to another slider
+Type "Left"
+Sleep 500ms
+Type "Left"
+Sleep 500ms
+
+# Adjust values
+Type "j"
+Sleep 200ms
+Type "j"
+Sleep 200ms
+Type "j"
+Sleep 200ms
+
+Sleep 1s
+
+# Show different vertical sliders
+Type "Right"
+Sleep 500ms
 Type "k"
 Sleep 200ms
 Type "k"
@@ -75,38 +64,13 @@ Sleep 200ms
 Type "k"
 Sleep 200ms
 
-Sleep 800ms
+Sleep 1s
 
-Type "l"
-Sleep 400ms
-Type "j"
+Type "Right"
+Sleep 500ms
+Type "k"
 Sleep 200ms
-Type "j"
-Sleep 200ms
-
-Sleep 800ms
-
-# Move through remaining bands
-Type "l"
-Sleep 400ms
-Type "j"
-Sleep 200ms
-Type "j"
-Sleep 200ms
-Type "j"
-Sleep 200ms
-
-Sleep 800ms
-
-Type "l"
-Sleep 400ms
-Type "j"
-Sleep 200ms
-Type "j"
-Sleep 200ms
-Type "j"
-Sleep 200ms
-Type "j"
+Type "k"
 Sleep 200ms
 
 Sleep 2s

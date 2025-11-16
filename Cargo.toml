@@ -64,6 +64,14 @@ path = "examples/border_styles.rs"
 name = "border_colors"
 path = "examples/border_colors.rs"
 
+[[example]]
+name = "title_alignment"
+path = "examples/title_alignment.rs"
+
+[[example]]
+name = "value_alignment"
+path = "examples/value_alignment.rs"
+
 [profile.dev]
 opt-level = 1
 
