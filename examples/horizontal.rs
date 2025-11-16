@@ -20,7 +20,7 @@ use tui_slider::style::SliderStyle;
 use tui_slider::{Slider, SliderOrientation, SliderState};
 
 struct App {
-    sliders: Vec<(String, SliderState, SliderStyle)>,
+    sliders: Vec<(String, SliderState, SliderStyle, bool)>, // Added bool for show_handle
     selected: usize,
 }
 
@@ -32,46 +32,55 @@ impl App {
                     "Volume".to_string(),
                     SliderState::with_step(75.0, 0.0, 100.0, 1.0),
                     SliderStyle::default_style(),
+                    true, // show_handle
                 ),
                 (
                     "Bass".to_string(),
                     SliderState::with_step(60.0, 0.0, 100.0, 1.0),
                     SliderStyle::blocks(),
+                    true, // show_handle
                 ),
                 (
                     "Chorus".to_string(),
                     SliderState::with_step(65.0, 0.0, 100.0, 1.0),
                     SliderStyle::progress(),
+                    true, // show_handle
                 ),
                 (
                     "Compression".to_string(),
                     SliderState::with_step(70.0, 0.0, 100.0, 1.0),
                     SliderStyle::gradient(),
+                    true, // show_handle
                 ),
                 (
                     "Mix".to_string(),
                     SliderState::with_step(70.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented(),
+                    true, // show_handle
                 ),
                 (
                     "Attack".to_string(),
                     SliderState::with_step(45.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_blocks(),
+                    true, // show_handle
                 ),
                 (
                     "Release".to_string(),
                     SliderState::with_step(60.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_dots(),
+                    false, // show_handle - hidden for dots style
                 ),
                 (
                     "Decay".to_string(),
                     SliderState::with_step(35.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_squares(),
+                    false, // show_handle - hidden for squares style
                 ),
                 (
                     "Cutoff".to_string(),
                     SliderState::with_step(75.0, 0.0, 100.0, 1.0),
                     SliderStyle::segmented_stars(),
+                    true, // show_handle
                 ),
             ],
             selected: 0,
@@ -91,12 +100,12 @@ impl App {
     }
 
     fn increase(&mut self) {
-        if let Some((_, state, _)) = self.sliders.get_mut(self.selected) {
+        if let Some((_, state, _, _)) = self.sliders.get_mut(self.selected) {
             state.step_up();
         }
     }
     fn decrease(&mut self) {
-        if let Some((_, state, _)) = self.sliders.get_mut(self.selected) {
+        if let Some((_, state, _, _)) = self.sliders.get_mut(self.selected) {
             state.step_down();
         }
     }
@@ -194,7 +203,7 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
         .constraints(constraints)
         .split(area);
 
-    for (i, (label, state, style)) in app.sliders.iter().enumerate() {
+    for (i, (label, state, style, show_handle)) in app.sliders.iter().enumerate() {
         if i + 1 >= chunks.len() {
             break;
         }
@@ -215,7 +224,15 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
 
         if style.segmented {
             // Render segmented slider with custom logic
-            render_segmented_slider(f, state, style, is_selected, block, chunks[i + 1]);
+            render_segmented_slider(
+                f,
+                state,
+                style,
+                is_selected,
+                *show_handle,
+                block,
+                chunks[i + 1],
+            );
         } else {
             let slider = Slider::from_state(state)
                 .orientation(SliderOrientation::Horizontal)
@@ -230,6 +247,7 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
                     style.handle_color
                 })
                 .show_value(true)
+                .show_handle(*show_handle)
                 .block(block);
 
             f.render_widget(slider, chunks[i + 1]);
@@ -242,6 +260,7 @@ fn render_segmented_slider(
     state: &SliderState,
     style: &SliderStyle,
     is_selected: bool,
+    show_handle: bool,
     block: Block,
     area: ratatui::layout::Rect,
 ) {
@@ -302,8 +321,7 @@ fn render_segmented_slider(
         current_width += 1;
     }
 
-    // Add handle at the correct position (skip for dots and squares styles)
-    let show_handle = style.name != "Segmented Dots" && style.name != "Segmented Squares";
+    // Add handle at the correct position (only if show_handle is true)
     if show_handle {
         let handle_pos = (segment_count as f64 * percentage).round() as usize;
         if handle_pos > 0 && handle_pos <= segment_count {
