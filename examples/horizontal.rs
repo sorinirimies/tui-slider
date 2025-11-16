@@ -39,29 +39,14 @@ impl App {
                     SliderStyle::blocks(),
                 ),
                 (
-                    "Delay".to_string(),
-                    SliderState::with_step(30.0, 0.0, 100.0, 1.0),
-                    SliderStyle::wave(),
-                ),
-                (
                     "Chorus".to_string(),
                     SliderState::with_step(65.0, 0.0, 100.0, 1.0),
                     SliderStyle::progress(),
                 ),
                 (
-                    "Distortion".to_string(),
-                    SliderState::with_step(40.0, 0.0, 100.0, 1.0),
-                    SliderStyle::thick(),
-                ),
-                (
                     "Compression".to_string(),
                     SliderState::with_step(70.0, 0.0, 100.0, 1.0),
                     SliderStyle::gradient(),
-                ),
-                (
-                    "Phaser".to_string(),
-                    SliderState::with_step(55.0, 0.0, 100.0, 1.0),
-                    SliderStyle::retro(),
                 ),
                 (
                     "Mix".to_string(),
