@@ -63,6 +63,7 @@
 //!     .label("Bass");
 //! ```
 
+pub mod border;
 pub mod orientation;
 pub mod slider;
 pub mod state;
@@ -76,6 +77,7 @@ pub use state::SliderState;
 
 /// Prelude module for convenient imports
 pub mod prelude {
+    pub use crate::border;
     pub use crate::orientation::SliderOrientation;
     pub use crate::slider::Slider;
     pub use crate::state::SliderState;

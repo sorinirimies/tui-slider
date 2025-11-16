@@ -1,6 +1,6 @@
-# VHS tape for horizontal slider demo
+# VHS tape for title alignment demo
 
-Output examples/vhs/target/horizontal.gif
+Output examples/vhs/target/title_alignment.gif
 
 Set Shell "bash"
 Set FontSize 14
@@ -9,20 +9,22 @@ Set Height 600
 Set PlaybackSpeed 1.0
 Set Theme "Catppuccin Mocha"
 
-Type "cargo run --example horizontal"
+Type "cargo run --example title_alignment"
 Enter
 Sleep 2s
 
-# Show the interface
+# Show the interface with different title alignments
 Sleep 1s
 
-# Navigate through sliders
+# Navigate through sliders to show title positions
 Type "j"
-Sleep 500ms
+Sleep 800ms
 Type "j"
-Sleep 500ms
+Sleep 800ms
+Type "j"
+Sleep 800ms
 
-# Adjust some values
+# Adjust some values to show the alignment
 Type "l"
 Sleep 200ms
 Type "l"
@@ -34,11 +36,11 @@ Sleep 200ms
 
 Sleep 1s
 
-# Move to another slider
+# Move back up
 Type "k"
-Sleep 500ms
+Sleep 800ms
 
-# Adjust values
+# Adjust this one
 Type "h"
 Sleep 200ms
 Type "h"
@@ -48,20 +50,13 @@ Sleep 200ms
 
 Sleep 1s
 
-# Move through all sliders
+# Navigate to show all examples
 Type "j"
-Sleep 500ms
-Type "l"
-Sleep 200ms
-Type "l"
-Sleep 200ms
-Type "l"
-Sleep 200ms
-
-Sleep 1s
-
+Sleep 800ms
 Type "j"
-Sleep 500ms
+Sleep 800ms
+
+# Adjust
 Type "l"
 Sleep 200ms
 Type "l"

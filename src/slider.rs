@@ -20,7 +20,7 @@
 use crate::{orientation::SliderOrientation, state::SliderState};
 use ratatui::{
     buffer::Buffer,
-    layout::Rect,
+    layout::{Alignment, Rect},
     style::{Color, Style},
     widgets::{Block, Widget},
 };
@@ -97,6 +97,8 @@ pub struct Slider<'a> {
     label: Option<String>,
     /// Whether to show the value
     show_value: bool,
+    /// Alignment of the value display
+    value_alignment: Alignment,
     /// Filled bar symbol
     filled_symbol: String,
     /// Empty bar symbol
@@ -138,6 +140,7 @@ impl<'a> Slider<'a> {
             max,
             label: None,
             show_value: false,
+            value_alignment: Alignment::Right,
             filled_symbol: "━".to_string(),
             empty_symbol: "─".to_string(),
             handle_symbol: "●".to_string(),
@@ -262,6 +265,23 @@ impl<'a> Slider<'a> {
     /// ```
     pub fn show_value(mut self, show: bool) -> Self {
         self.show_value = show;
+        self
+    }
+
+    /// Sets the alignment for the value display
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ratatui::layout::Alignment;
+    /// use tui_slider::Slider;
+    ///
+    /// let slider = Slider::default()
+    ///     .show_value(true)
+    ///     .value_alignment(Alignment::Center);
+    /// ```
+    pub fn value_alignment(mut self, alignment: Alignment) -> Self {
+        self.value_alignment = alignment;
         self
     }
 
@@ -539,38 +559,159 @@ impl<'a> Slider<'a> {
 
     /// Renders label and value
     fn render_label_and_value(&self, area: Rect, buf: &mut Buffer) {
+        let is_horizontal = self.orientation.is_horizontal();
+
+        // Calculate label information
+        let label_info = self.calculate_label_info(area);
+
+        // Calculate value information
+        let value_info = self.calculate_value_info(area, is_horizontal);
+
+        // Resolve positions to avoid overlap
+        let (label_x, value_x) =
+            self.resolve_positions(area, is_horizontal, &label_info, &value_info);
+
+        // Render label and value
+        self.render_label(buf, area, is_horizontal, label_x);
+        self.render_value(buf, area, is_horizontal, value_x, value_info);
+    }
+
+    fn calculate_label_info(&self, area: Rect) -> Option<(u16, u16)> {
+        self.label.as_ref().map(|label| {
+            let label_width = label.width() as u16;
+            (area.x, label_width)
+        })
+    }
+
+    fn calculate_value_info(&self, area: Rect, is_horizontal: bool) -> Option<(u16, u16, String)> {
+        if !self.show_value {
+            return None;
+        }
+
+        let value_str = format!("{:.1}", self.value);
+        let value_width = value_str.len() as u16;
+
+        let x_pos = if is_horizontal {
+            // If we have a label and value alignment is Left, add spacing after the label
+            if self.value_alignment == Alignment::Left && self.label.is_some() {
+                let label_width = self.label.as_ref().map(|l| l.width() as u16).unwrap_or(0);
+                let spacing = 2;
+                area.x + label_width + spacing
+            } else {
+                self.calculate_horizontal_value_position(area, value_width)
+            }
+        } else {
+            area.x + 2
+        };
+
+        Some((x_pos, value_width, value_str))
+    }
+
+    fn calculate_horizontal_value_position(&self, area: Rect, value_width: u16) -> u16 {
+        match self.value_alignment {
+            Alignment::Left => area.x,
+            Alignment::Center => area.x + (area.width.saturating_sub(value_width)) / 2,
+            Alignment::Right => area.x + area.width.saturating_sub(value_width),
+        }
+    }
+
+    fn resolve_positions(
+        &self,
+        area: Rect,
+        is_horizontal: bool,
+        label_info: &Option<(u16, u16)>,
+        value_info: &Option<(u16, u16, String)>,
+    ) -> (u16, u16) {
+        match (label_info, value_info) {
+            (Some((label_x, label_w)), Some((value_x, value_w, _))) => {
+                if is_horizontal && self.has_overlap(*label_x, *label_w, *value_x, *value_w) {
+                    self.adjust_for_overlap(area, *label_x, *label_w, *value_w)
+                } else {
+                    (*label_x, *value_x)
+                }
+            }
+            _ => (
+                label_info.map(|(x, _)| x).unwrap_or(area.x),
+                value_info.as_ref().map(|(x, _, _)| *x).unwrap_or(area.x),
+            ),
+        }
+    }
+
+    fn has_overlap(&self, label_x: u16, label_w: u16, value_x: u16, value_w: u16) -> bool {
+        let label_end = label_x + label_w;
+        let value_end = value_x + value_w;
+        !(label_end <= value_x || value_end <= label_x)
+    }
+
+    fn adjust_for_overlap(
+        &self,
+        area: Rect,
+        label_x: u16,
+        label_w: u16,
+        value_w: u16,
+    ) -> (u16, u16) {
+        match self.value_alignment {
+            Alignment::Center | Alignment::Right => {
+                // Keep label on left, move value to right
+                (label_x, area.x + area.width.saturating_sub(value_w))
+            }
+            Alignment::Left => {
+                // Try to add spacing between label and value
+                let spacing = 2;
+                let label_end = label_x + label_w;
+
+                if label_end + spacing + value_w <= area.x + area.width {
+                    (label_x, label_end + spacing)
+                } else {
+                    // Not enough space, put value on right edge
+                    (label_x, area.x + area.width.saturating_sub(value_w))
+                }
+            }
+        }
+    }
+
+    /// Renders the label text at the specified position
+    fn render_label(&self, buf: &mut Buffer, area: Rect, is_horizontal: bool, label_x: u16) {
         if let Some(ref label) = self.label {
-            let y = if self.orientation.is_horizontal() {
+            let label_y = if is_horizontal {
                 area.y.saturating_sub(1)
             } else {
                 area.y
             };
 
-            if y >= buf.area.y && y < buf.area.y + buf.area.height {
-                buf.set_string(area.x, y, label, Style::default());
+            if self.is_within_buffer(buf, label_x, label_y) {
+                buf.set_string(label_x, label_y, label, Style::default());
             }
         }
+    }
 
-        if self.show_value {
-            let value_str = format!("{:.1}", self.value);
-
-            let (x, y) = if self.orientation.is_horizontal() {
-                (
-                    area.x + area.width.saturating_sub(value_str.len() as u16),
-                    area.y.saturating_sub(1),
-                )
+    /// Renders the value text at the specified position
+    fn render_value(
+        &self,
+        buf: &mut Buffer,
+        area: Rect,
+        is_horizontal: bool,
+        value_x: u16,
+        value_info: Option<(u16, u16, String)>,
+    ) {
+        if let Some((_, _, value_str)) = value_info {
+            let value_y = if is_horizontal {
+                area.y.saturating_sub(1)
             } else {
-                (area.x + 2, area.y + area.height)
+                area.y + area.height
             };
 
-            if x >= buf.area.x
-                && x < buf.area.x + buf.area.width
-                && y >= buf.area.y
-                && y < buf.area.y + buf.area.height
-            {
-                buf.set_string(x, y, &value_str, Style::default());
+            if self.is_within_buffer(buf, value_x, value_y) {
+                buf.set_string(value_x, value_y, &value_str, Style::default());
             }
         }
+    }
+
+    fn is_within_buffer(&self, buf: &Buffer, x: u16, y: u16) -> bool {
+        x >= buf.area.x
+            && x < buf.area.x + buf.area.width
+            && y >= buf.area.y
+            && y < buf.area.y + buf.area.height
     }
 }
 
@@ -678,10 +819,172 @@ mod tests {
 
     #[test]
     fn test_show_thumb_alias() {
-        let slider = Slider::default().show_thumb(true);
-        assert!(slider.show_handle);
-
         let slider = Slider::default().show_thumb(false);
         assert!(!slider.show_handle);
+
+        let slider = Slider::default().show_thumb(true);
+        assert!(slider.show_handle);
+    }
+
+    #[test]
+    fn test_value_alignment() {
+        use ratatui::layout::Alignment;
+
+        let slider = Slider::default().value_alignment(Alignment::Left);
+        assert_eq!(slider.value_alignment, Alignment::Left);
+
+        let slider = Slider::default().value_alignment(Alignment::Center);
+        assert_eq!(slider.value_alignment, Alignment::Center);
+
+        let slider = Slider::default().value_alignment(Alignment::Right);
+        assert_eq!(slider.value_alignment, Alignment::Right);
+    }
+
+    #[test]
+    fn test_colors() {
+        let slider = Slider::default()
+            .filled_color(Color::Red)
+            .empty_color(Color::Blue)
+            .handle_color(Color::Green);
+
+        assert_eq!(slider.filled_color, Color::Red);
+        assert_eq!(slider.empty_color, Color::Blue);
+        assert_eq!(slider.handle_color, Color::Green);
+    }
+
+    #[test]
+    fn test_symbols() {
+        let slider = Slider::default()
+            .filled_symbol("█")
+            .empty_symbol("░")
+            .handle_symbol("▐");
+
+        assert_eq!(slider.filled_symbol, "█");
+        assert_eq!(slider.empty_symbol, "░");
+        assert_eq!(slider.handle_symbol, "▐");
+    }
+
+    #[test]
+    fn test_min_max_clamping() {
+        let slider = Slider::default().min(10.0).max(90.0).value(100.0);
+        assert_eq!(slider.value, 90.0);
+
+        let slider = Slider::default().min(10.0).max(90.0).value(5.0);
+        assert_eq!(slider.value, 10.0);
+
+        let slider = Slider::default().min(10.0).max(90.0).value(50.0);
+        assert_eq!(slider.value, 50.0);
+    }
+
+    #[test]
+    fn test_label() {
+        let slider = Slider::default().label("Volume");
+        assert_eq!(slider.label, Some("Volume".to_string()));
+
+        let slider = Slider::default();
+        assert_eq!(slider.label, None);
+    }
+
+    #[test]
+    fn test_show_value() {
+        let slider = Slider::default().show_value(true);
+        assert!(slider.show_value);
+
+        let slider = Slider::default();
+        assert!(!slider.show_value);
+    }
+
+    #[test]
+    fn test_orientation() {
+        let slider = Slider::default().orientation(SliderOrientation::Horizontal);
+        assert_eq!(slider.orientation, SliderOrientation::Horizontal);
+
+        let slider = Slider::default().orientation(SliderOrientation::Vertical);
+        assert_eq!(slider.orientation, SliderOrientation::Vertical);
+    }
+
+    #[test]
+    fn test_block() {
+        use ratatui::widgets::{Block, Borders};
+
+        let block = Block::default().borders(Borders::ALL);
+        let slider = Slider::default().block(block);
+        assert!(slider.block.is_some());
+
+        let slider = Slider::default();
+        assert!(slider.block.is_none());
+    }
+
+    #[test]
+    fn test_percentage_calculation() {
+        let slider = Slider::new(50.0, 0.0, 100.0);
+        assert_eq!(slider.percentage(), 0.5);
+
+        let slider = Slider::new(0.0, 0.0, 100.0);
+        assert_eq!(slider.percentage(), 0.0);
+
+        let slider = Slider::new(100.0, 0.0, 100.0);
+        assert_eq!(slider.percentage(), 1.0);
+
+        let slider = Slider::new(25.0, 0.0, 100.0);
+        assert_eq!(slider.percentage(), 0.25);
+    }
+
+    #[test]
+    fn test_default_values() {
+        let slider = Slider::default();
+        assert_eq!(slider.value, 0.0);
+        assert_eq!(slider.min, 0.0);
+        assert_eq!(slider.max, 100.0);
+        assert_eq!(slider.orientation, SliderOrientation::Horizontal);
+        assert!(!slider.show_value);
+        assert!(slider.show_handle);
+        assert_eq!(slider.filled_symbol, "━");
+        assert_eq!(slider.empty_symbol, "─");
+        assert_eq!(slider.handle_symbol, "●");
+    }
+
+    #[test]
+    fn test_chaining() {
+        let slider = Slider::default()
+            .value(75.0)
+            .min(0.0)
+            .max(100.0)
+            .label("Test")
+            .show_value(true)
+            .value_alignment(ratatui::layout::Alignment::Center)
+            .filled_symbol("█")
+            .empty_symbol("░")
+            .handle_symbol("▐")
+            .filled_color(Color::Red)
+            .empty_color(Color::Blue)
+            .handle_color(Color::Green)
+            .show_handle(true)
+            .orientation(SliderOrientation::Vertical);
+
+        assert_eq!(slider.value, 75.0);
+        assert_eq!(slider.min, 0.0);
+        assert_eq!(slider.max, 100.0);
+        assert_eq!(slider.label, Some("Test".to_string()));
+        assert!(slider.show_value);
+        assert_eq!(slider.value_alignment, ratatui::layout::Alignment::Center);
+        assert_eq!(slider.filled_symbol, "█");
+        assert_eq!(slider.empty_symbol, "░");
+        assert_eq!(slider.handle_symbol, "▐");
+        assert_eq!(slider.filled_color, Color::Red);
+        assert_eq!(slider.empty_color, Color::Blue);
+        assert_eq!(slider.handle_color, Color::Green);
+        assert!(slider.show_handle);
+        assert_eq!(slider.orientation, SliderOrientation::Vertical);
+    }
+
+    #[test]
+    fn test_from_state_preserves_values() {
+        let state = SliderState::new(42.0, 10.0, 90.0);
+        let slider = Slider::from_state(&state);
+
+        assert_eq!(slider.value, 42.0);
+        assert_eq!(slider.min, 10.0);
+        assert_eq!(slider.max, 90.0);
     }
 }

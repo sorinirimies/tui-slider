@@ -11,10 +11,16 @@ A simple TUI slider component library for [ratatui](https://github.com/ratatui-o
 
 Perfect for building music players, audio controls, equalizers, and any terminal UI that needs simple, clean sliders.
 
+![Horizontal Sliders](examples/vhs/target/horizontal.gif)
+![Vertical Sliders](examples/vhs/target/vertical.gif)
+
 ## ✨ Features
 
-- 🎚️ **Horizontal and Vertical sliders** - Support for both orientations
-- 🎨 **Simple customization** - Easily customize colors and symbols
+- 🎚️ **[Horizontal](#horizontal-sliders) and [Vertical](#vertical-sliders) sliders** - Support for both orientations
+- 🎨 **[Border styles](#border-styles)** - Multiple border style options with customizable symbols
+- 🎯 **[Title alignment](#title-alignment)** - Left, center, and right title positioning
+- 📊 **[Value alignment](#value-alignment)** - Flexible value display positioning
+- 🎨 **[Progress bars](#progress-bars)** - Use as progress indicators without handles
 - 🔧 **Easy to use** - Minimal configuration required
 - 📊 **State management** - Built-in state for value tracking
 - ⚡ **Lightweight** - No complex dependencies
@@ -55,7 +61,11 @@ fn main() {
 
 ## 📖 Examples
 
-### Horizontal Slider
+### Horizontal Sliders
+
+![Horizontal Sliders](examples/vhs/target/horizontal.gif)
+
+Basic horizontal slider:
 
 ```rust
 use ratatui::style::Color;
@@ -75,7 +85,11 @@ let slider = Slider::from_state(&state)
     .handle_color(Color::White);
 ```
 
-### Vertical Slider
+### Vertical Sliders
+
+![Vertical Sliders](examples/vhs/target/vertical.gif)
+
+Basic vertical slider:
 
 ```rust
 use ratatui::style::Color;
@@ -93,6 +107,86 @@ let slider = Slider::from_state(&state)
     .filled_color(Color::Green)
     .empty_color(Color::DarkGray)
     .handle_color(Color::White);
+```
+
+### Border Styles
+
+![Border Styles](examples/vhs/target/border_styles.gif)
+
+Multiple border styles available (Plain, Rounded, Double, Thick, Segmented):
+
+```rust
+use tui_slider::border::BorderStyle;
+use ratatui::widgets::{Block, Borders};
+
+let block = Block::default()
+    .borders(Borders::ALL)
+    .border_set(BorderStyle::Rounded.border_set())
+    .title("Slider");
+
+let slider = Slider::from_state(&state).block(block);
+```
+
+### Title Alignment
+
+![Title Alignment](examples/vhs/target/title_alignment.gif)
+
+Control where titles appear on borders:
+
+```rust
+use tui_slider::border::{title_left, title_center, title_right, title_right_with_spacing};
+use ratatui::widgets::{Block, Borders};
+
+// Left-aligned title
+let title = title_left("Volume");
+let block = Block::default().borders(Borders::ALL).title(title);
+
+// Center-aligned title
+let title = title_center("Settings");
+let block = Block::default().borders(Borders::ALL).title(title);
+
+// Right-aligned title (use title_right_with_spacing if value is also right-aligned)
+let title = title_right_with_spacing("Status");
+let block = Block::default().borders(Borders::ALL).title(title);
+```
+
+### Value Alignment
+
+![Value Alignment](examples/vhs/target/value_alignment.gif)
+
+Control where values appear above/beside the slider:
+
+```rust
+use ratatui::layout::Alignment;
+
+// Left-aligned value
+let slider = Slider::from_state(&state)
+    .show_value(true)
+    .value_alignment(Alignment::Left);
+
+// Center-aligned value
+let slider = Slider::from_state(&state)
+    .show_value(true)
+    .value_alignment(Alignment::Center);
+
+// Right-aligned value (default)
+let slider = Slider::from_state(&state)
+    .show_value(true)
+    .value_alignment(Alignment::Right);
+```
+
+### Progress Bars
+
+![Progress Bars](examples/vhs/target/progress_bars.gif)
+
+Use sliders as progress indicators by hiding the handle:
+
+```rust
+let slider = Slider::from_state(&state)
+    .filled_symbol("▓")
+    .empty_symbol("░")
+    .show_handle(false)  // Hide handle for progress bar style
+    .show_value(true);
 ```
 
 ### Custom Symbols
@@ -185,6 +279,18 @@ cargo run --example horizontal
 
 # Vertical sliders (equalizer style)
 cargo run --example vertical
+
+# Border styles demonstration
+cargo run --example border_styles
+
+# Title alignment examples
+cargo run --example title_alignment
+
+# Value alignment examples
+cargo run --example value_alignment
+
+# Progress bar styles
+cargo run --example progress_bars
 
 # Custom slider configurations
 cargo run --example custom
