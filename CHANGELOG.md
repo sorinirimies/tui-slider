@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Miscellaneous
 - Reduce horizontal example sliders - remove Phaser, Delay, Distortion
+- Bump version to 0.2.1
 
 ### Refactor
 - Use show_handle boolean instead of hardcoded style checks
