@@ -1,7 +1,8 @@
-//! Progress bars example - sliders without thumb indicators
+//! Progress bars example - sliders with and without thumb indicators
 //!
-//! This example demonstrates how to use sliders as progress bars by hiding
-//! the thumb/handle indicator. Perfect for loading screens, downloads, health bars, etc.
+//! This example demonstrates how to use sliders as progress bars, both with and without
+//! thumb/handle indicators. Includes standard progress bars and segmented progress bars
+//! that snap to specific intervals. Perfect for loading screens, downloads, health bars, etc.
 
 use anyhow::Result;
 use crossterm::{
@@ -18,6 +19,7 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::io;
+use tui_slider::symbols;
 use tui_slider::{Slider, SliderOrientation, SliderState};
 
 struct ProgressBar {
@@ -28,6 +30,7 @@ struct ProgressBar {
     filled_color: Color,
     empty_color: Color,
     description: String,
+    show_handle: bool,
 }
 
 struct App {
@@ -42,74 +45,72 @@ impl App {
                 ProgressBar {
                     label: "Download".to_string(),
                     state: SliderState::with_step(65.0, 0.0, 100.0, 2.0),
-                    filled_symbol: "█",
-                    empty_symbol: "░",
+                    filled_symbol: symbols::FILLED_BLOCK,
+                    empty_symbol: symbols::FILLED_LIGHT_SHADE,
                     filled_color: Color::Green,
                     empty_color: Color::DarkGray,
                     description: "File download progress".to_string(),
+                    show_handle: false,
                 },
                 ProgressBar {
                     label: "Upload".to_string(),
                     state: SliderState::with_step(45.0, 0.0, 100.0, 1.0),
-                    filled_symbol: "▰",
-                    empty_symbol: "▱",
+                    filled_symbol: symbols::FILLED_PROGRESS,
+                    empty_symbol: symbols::EMPTY_PROGRESS,
                     filled_color: Color::Blue,
                     empty_color: Color::DarkGray,
                     description: "Cloud upload status".to_string(),
+                    show_handle: false,
                 },
                 ProgressBar {
                     label: "Health".to_string(),
                     state: SliderState::with_step(85.0, 0.0, 100.0, 5.0),
-                    filled_symbol: "▓",
-                    empty_symbol: "░",
+                    filled_symbol: symbols::FILLED_DARK_SHADE,
+                    empty_symbol: symbols::FILLED_LIGHT_SHADE,
                     filled_color: Color::Red,
                     empty_color: Color::Rgb(40, 40, 40),
                     description: "Player health bar".to_string(),
+                    show_handle: false,
                 },
                 ProgressBar {
-                    label: "Mana".to_string(),
-                    state: SliderState::with_step(60.0, 0.0, 100.0, 3.0),
-                    filled_symbol: "▓",
-                    empty_symbol: "░",
-                    filled_color: Color::Cyan,
-                    empty_color: Color::Rgb(40, 40, 40),
-                    description: "Magic power reserves".to_string(),
-                },
-                ProgressBar {
-                    label: "Experience".to_string(),
-                    state: SliderState::with_step(78.0, 0.0, 100.0, 1.0),
-                    filled_symbol: "━",
-                    empty_symbol: "─",
-                    filled_color: Color::Yellow,
+                    label: "Mix".to_string(),
+                    state: SliderState::with_step(70.0, 0.0, 100.0, 1.0),
+                    filled_symbol: symbols::FILLED_THIN_LINE,
+                    empty_symbol: symbols::EMPTY_THIN_LINE,
+                    filled_color: Color::White,
                     empty_color: Color::DarkGray,
-                    description: "XP until next level".to_string(),
+                    description: "Segmented Style".to_string(),
+                    show_handle: true,
                 },
                 ProgressBar {
-                    label: "Loading".to_string(),
-                    state: SliderState::with_step(30.0, 0.0, 100.0, 2.5),
-                    filled_symbol: "═",
-                    empty_symbol: "─",
-                    filled_color: Color::Magenta,
-                    empty_color: Color::DarkGray,
-                    description: "Application startup".to_string(),
-                },
-                ProgressBar {
-                    label: "Installation".to_string(),
-                    state: SliderState::with_step(92.0, 0.0, 100.0, 1.5),
-                    filled_symbol: "▬",
-                    empty_symbol: "▭",
+                    label: "Attack".to_string(),
+                    state: SliderState::with_step(45.0, 0.0, 100.0, 1.0),
+                    filled_symbol: symbols::FILLED_VERTICAL_BAR,
+                    empty_symbol: symbols::EMPTY_VERTICAL_BAR,
                     filled_color: Color::LightGreen,
                     empty_color: Color::DarkGray,
-                    description: "Package installation".to_string(),
+                    description: "Segmented Blocks Style".to_string(),
+                    show_handle: true,
                 },
                 ProgressBar {
-                    label: "Battery".to_string(),
-                    state: SliderState::with_step(42.0, 0.0, 100.0, 5.0),
-                    filled_symbol: "■",
-                    empty_symbol: "□",
-                    filled_color: Color::LightYellow,
-                    empty_color: Color::DarkGray,
-                    description: "Device battery level".to_string(),
+                    label: "Release".to_string(),
+                    state: SliderState::with_step(55.0, 0.0, 100.0, 1.0),
+                    filled_symbol: symbols::FILLED_CIRCLE,
+                    empty_symbol: symbols::EMPTY_CIRCLE,
+                    filled_color: Color::Cyan,
+                    empty_color: Color::Rgb(60, 60, 60),
+                    description: "Segmented Dots Style".to_string(),
+                    show_handle: false,
+                },
+                ProgressBar {
+                    label: "Decay".to_string(),
+                    state: SliderState::with_step(40.0, 0.0, 100.0, 1.0),
+                    filled_symbol: symbols::FILLED_SQUARE,
+                    empty_symbol: symbols::EMPTY_SQUARE,
+                    filled_color: Color::Blue,
+                    empty_color: Color::Rgb(50, 50, 50),
+                    description: "Segmented Squares Style".to_string(),
+                    show_handle: false,
                 },
             ],
             auto_progress: false,
@@ -195,7 +196,7 @@ fn ui(f: &mut Frame, app: &App) {
         .split(f.area());
 
     // Title
-    let title = Paragraph::new("Progress Bars - No Thumb Indicators")
+    let title = Paragraph::new("Progress Bars - With & Without Thumb Indicators")
         .style(
             Style::default()
                 .fg(Color::Cyan)
@@ -276,7 +277,9 @@ fn render_progress_bars(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
             .filled_color(filled_color)
             .empty_color(bar.empty_color)
             .show_value(true)
-            .show_handle(false) // This is the key - no thumb indicator!
+            .show_handle(bar.show_handle)
+            .handle_symbol(symbols::HANDLE_CIRCLE)
+            .handle_color(Color::White)
             .block(block);
 
         f.render_widget(slider, chunks[i]);

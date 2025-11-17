@@ -5,7 +5,7 @@ Output examples/vhs/target/progress_bars.gif
 Set Shell "bash"
 Set FontSize 14
 Set Width 1200
-Set Height 600
+Set Height 900
 Set PlaybackSpeed 1.0
 Set Theme "Catppuccin Mocha"
 

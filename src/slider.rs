@@ -17,7 +17,11 @@
 //! - Optional handle/thumb display
 //! - State management with bounds checking
 
-use crate::{orientation::SliderOrientation, state::SliderState};
+use crate::{
+    orientation::SliderOrientation,
+    position::{VerticalLabelPosition, VerticalValueAlignment, VerticalValuePosition},
+    state::SliderState,
+};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -113,6 +117,12 @@ pub struct Slider<'a> {
     handle_color: Color,
     /// Whether to show handle
     show_handle: bool,
+    /// Label position for vertical sliders
+    vertical_label_position: VerticalLabelPosition,
+    /// Value position for vertical sliders
+    vertical_value_position: VerticalValuePosition,
+    /// Value alignment for vertical sliders
+    vertical_value_alignment: VerticalValueAlignment,
 }
 
 impl<'a> Slider<'a> {
@@ -148,6 +158,9 @@ impl<'a> Slider<'a> {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             show_handle: true,
+            vertical_label_position: VerticalLabelPosition::default(),
+            vertical_value_position: VerticalValuePosition::default(),
+            vertical_value_alignment: VerticalValueAlignment::default(),
         }
     }
 
@@ -413,6 +426,66 @@ impl<'a> Slider<'a> {
         self.show_handle(show)
     }
 
+    /// Sets the label position for vertical sliders
+    ///
+    /// For vertical sliders, the label can be positioned at the top or bottom.
+    /// This setting only affects vertical sliders; horizontal sliders ignore this.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::{Slider, SliderOrientation, VerticalLabelPosition};
+    ///
+    /// let slider = Slider::default()
+    ///     .orientation(SliderOrientation::Vertical)
+    ///     .label("Volume")
+    ///     .vertical_label_position(VerticalLabelPosition::Bottom);
+    /// ```
+    pub fn vertical_label_position(mut self, position: VerticalLabelPosition) -> Self {
+        self.vertical_label_position = position;
+        self
+    }
+
+    /// Sets the value position for vertical sliders
+    ///
+    /// For vertical sliders, the numeric value can be positioned at the top, middle, or bottom.
+    /// This setting only affects vertical sliders; horizontal sliders ignore this.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::{Slider, SliderOrientation, VerticalValuePosition};
+    ///
+    /// let slider = Slider::default()
+    ///     .orientation(SliderOrientation::Vertical)
+    ///     .show_value(true)
+    ///     .vertical_value_position(VerticalValuePosition::Top);
+    /// ```
+    pub fn vertical_value_position(mut self, position: VerticalValuePosition) -> Self {
+        self.vertical_value_position = position;
+        self
+    }
+
+    /// Sets the value alignment for vertical sliders
+    ///
+    /// For vertical sliders, the numeric value can be aligned left, center, or right.
+    /// This setting only affects vertical sliders; horizontal sliders use `value_alignment`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::{Slider, SliderOrientation, VerticalValueAlignment};
+    ///
+    /// let slider = Slider::default()
+    ///     .orientation(SliderOrientation::Vertical)
+    ///     .show_value(true)
+    ///     .vertical_value_alignment(VerticalValueAlignment::Left);
+    /// ```
+    pub fn vertical_value_alignment(mut self, alignment: VerticalValueAlignment) -> Self {
+        self.vertical_value_alignment = alignment;
+        self
+    }
+
     /// Calculates the percentage (0.0 to 1.0) of the current value
     fn percentage(&self) -> f64 {
         if (self.max - self.min).abs() < f64::EPSILON {
@@ -520,9 +593,8 @@ impl<'a> Slider<'a> {
         let bar_height = area.height as usize;
         let filled_height = (bar_height as f64 * percentage) as usize;
 
-        // Use fixed left offset for consistent vertical slider positioning
-        // All vertical sliders render at the same horizontal position
-        let slider_x = area.x + 1;
+        // Center the slider in the available width
+        let slider_x = area.x + (area.width / 2);
 
         // For vertical, render from bottom to top
         for i in 0..bar_height {
@@ -544,7 +616,7 @@ impl<'a> Slider<'a> {
         if self.show_handle && bar_height > 0 {
             let handle_y = area.y + area.height - 1 - (bar_height as f64 * percentage) as u16;
             if handle_y >= area.y && handle_y < area.y + area.height {
-                // Use same fixed left offset for handle
+                // Center handle at same position as slider
                 let handle_x = slider_x;
 
                 buf.set_string(
@@ -557,23 +629,139 @@ impl<'a> Slider<'a> {
         }
     }
 
-    /// Renders label and value
+    /// Renders label and value for horizontal sliders
     fn render_label_and_value(&self, area: Rect, buf: &mut Buffer) {
-        let is_horizontal = self.orientation.is_horizontal();
-
-        // Calculate label information
+        // This is only used for horizontal sliders now
         let label_info = self.calculate_label_info(area);
+        let value_info = self.calculate_value_info(area, true);
+        let (label_x, value_x) = self.resolve_positions(area, true, &label_info, &value_info);
+        self.render_label(buf, area, true, label_x);
+        self.render_value(buf, area, true, value_x, value_info);
+    }
 
-        // Calculate value information
-        let value_info = self.calculate_value_info(area, is_horizontal);
+    /// Renders vertical slider with labels and values, properly allocating space
+    ///
+    /// This method calculates the space needed for labels and values at the top/bottom,
+    /// then allocates a consistent slider area in the middle. This ensures all vertical
+    /// sliders have the same length regardless of label/value positioning.
+    ///
+    /// Layout:
+    /// ```text
+    /// ┌─────────────┐
+    /// │ Label/Value │ ← Top space (if needed)
+    /// ├─────────────┤
+    /// │   Slider    │ ← Consistent slider area
+    /// │    Bar      │
+    /// ├─────────────┤
+    /// │ Label/Value │ ← Bottom space (if needed)
+    /// └─────────────┘
+    /// ```
+    fn render_vertical_with_labels(&self, area: Rect, buf: &mut Buffer) {
+        // Calculate space needed for labels and values
+        let mut top_space = 0u16;
+        let mut bottom_space = 0u16;
 
-        // Resolve positions to avoid overlap
-        let (label_x, value_x) =
-            self.resolve_positions(area, is_horizontal, &label_info, &value_info);
+        // Check if label is at top or bottom
+        if self.label.is_some() {
+            match self.vertical_label_position {
+                VerticalLabelPosition::Top => top_space += 2, // 1 for label + 1 for spacing
+                VerticalLabelPosition::Bottom => bottom_space += 2,
+            }
+        }
 
-        // Render label and value
-        self.render_label(buf, area, is_horizontal, label_x);
-        self.render_value(buf, area, is_horizontal, value_x, value_info);
+        // Check if value is at top, middle, or bottom (middle doesn't take extra space)
+        if self.show_value {
+            match self.vertical_value_position {
+                VerticalValuePosition::Top => {
+                    if !matches!(self.vertical_label_position, VerticalLabelPosition::Top)
+                        || self.label.is_none()
+                    {
+                        top_space += 2;
+                    }
+                }
+                VerticalValuePosition::Bottom => {
+                    if !matches!(self.vertical_label_position, VerticalLabelPosition::Bottom)
+                        || self.label.is_none()
+                    {
+                        bottom_space += 2;
+                    }
+                }
+                VerticalValuePosition::Middle => {
+                    // Middle position renders on top of the slider, no space needed
+                }
+            }
+        }
+
+        // Calculate slider area
+        let slider_y = area.y + top_space;
+        let slider_height = area.height.saturating_sub(top_space + bottom_space);
+        let slider_area = Rect {
+            x: area.x,
+            y: slider_y,
+            width: area.width,
+            height: slider_height,
+        };
+
+        // Render the slider bar
+        self.render_vertical(slider_area, buf);
+
+        // Render label if present
+        if let Some(ref label) = self.label {
+            let label_y = match self.vertical_label_position {
+                VerticalLabelPosition::Top => area.y,
+                VerticalLabelPosition::Bottom => area.y + area.height.saturating_sub(1),
+            };
+
+            // Center the label horizontally
+            let label_width = label.width() as u16;
+            let label_x = area.x + (area.width.saturating_sub(label_width)) / 2;
+
+            if self.is_within_buffer(buf, label_x, label_y) {
+                buf.set_string(label_x, label_y, label, Style::default());
+            }
+        }
+
+        // Render value if enabled
+        if self.show_value {
+            let value_str = format!("{:.0}", self.value);
+            let value_width = value_str.len() as u16;
+
+            // Calculate Y position based on vertical position setting
+            let value_y = match self.vertical_value_position {
+                VerticalValuePosition::Top => {
+                    if matches!(self.vertical_label_position, VerticalLabelPosition::Top)
+                        && self.label.is_some()
+                    {
+                        area.y + 1
+                    } else {
+                        area.y
+                    }
+                }
+                VerticalValuePosition::Middle => slider_area.y + slider_area.height / 2,
+                VerticalValuePosition::Bottom => {
+                    if matches!(self.vertical_label_position, VerticalLabelPosition::Bottom)
+                        && self.label.is_some()
+                    {
+                        area.y + area.height.saturating_sub(2)
+                    } else {
+                        area.y + area.height.saturating_sub(1)
+                    }
+                }
+            };
+
+            // Calculate X position based on alignment setting
+            let value_x = match self.vertical_value_alignment {
+                VerticalValueAlignment::Left => area.x,
+                VerticalValueAlignment::Center => {
+                    area.x + (area.width.saturating_sub(value_width)) / 2
+                }
+                VerticalValueAlignment::Right => area.x + area.width.saturating_sub(value_width),
+            };
+
+            if self.is_within_buffer(buf, value_x, value_y) {
+                buf.set_string(value_x, value_y, &value_str, Style::default());
+            }
+        }
     }
 
     fn calculate_label_info(&self, area: Rect) -> Option<(u16, u16)> {
@@ -736,13 +924,17 @@ impl<'a> Widget for Slider<'a> {
             return;
         }
 
-        // Render label and value if needed
-        self.render_label_and_value(area, buf);
-
-        // Render the slider based on orientation
+        // Render based on orientation
         match self.orientation {
-            SliderOrientation::Horizontal => self.render_horizontal(area, buf),
-            SliderOrientation::Vertical => self.render_vertical(area, buf),
+            SliderOrientation::Horizontal => {
+                // Horizontal: render label/value above, then slider
+                self.render_label_and_value(area, buf);
+                self.render_horizontal(area, buf);
+            }
+            SliderOrientation::Vertical => {
+                // Vertical: calculate areas and render with proper spacing
+                self.render_vertical_with_labels(area, buf);
+            }
         }
     }
 }
@@ -976,6 +1168,48 @@ mod tests {
         assert_eq!(slider.handle_color, Color::Green);
         assert!(slider.show_handle);
         assert_eq!(slider.orientation, SliderOrientation::Vertical);
+    }
+
+    #[test]
+    fn test_vertical_positioning() {
+        use crate::position::{
+            VerticalLabelPosition, VerticalValueAlignment, VerticalValuePosition,
+        };
+
+        let slider = Slider::default()
+            .orientation(SliderOrientation::Vertical)
+            .vertical_label_position(VerticalLabelPosition::Bottom)
+            .vertical_value_position(VerticalValuePosition::Top)
+            .vertical_value_alignment(VerticalValueAlignment::Left);
+
+        assert_eq!(
+            slider.vertical_label_position,
+            VerticalLabelPosition::Bottom
+        );
+        assert_eq!(slider.vertical_value_position, VerticalValuePosition::Top);
+        assert_eq!(
+            slider.vertical_value_alignment,
+            VerticalValueAlignment::Left
+        );
+    }
+
+    #[test]
+    fn test_vertical_positioning_defaults() {
+        use crate::position::{
+            VerticalLabelPosition, VerticalValueAlignment, VerticalValuePosition,
+        };
+
+        let slider = Slider::default();
+
+        assert_eq!(slider.vertical_label_position, VerticalLabelPosition::Top);
+        assert_eq!(
+            slider.vertical_value_position,
+            VerticalValuePosition::Bottom
+        );
+        assert_eq!(
+            slider.vertical_value_alignment,
+            VerticalValueAlignment::Center
+        );
     }
 
     #[test]

@@ -19,7 +19,7 @@ use ratatui::{
 };
 use std::io;
 use tui_slider::border::{title_center, BorderStyle};
-use tui_slider::{Slider, SliderOrientation, SliderState};
+use tui_slider::{symbols, Slider, SliderOrientation, SliderState};
 
 struct BorderExample {
     label: String,
@@ -338,9 +338,9 @@ fn render_examples(f: &mut Frame, app: &App, area: Rect) {
 
             let slider = Slider::from_state(&example.state)
                 .orientation(SliderOrientation::Horizontal)
-                .filled_symbol("━")
-                .empty_symbol("─")
-                .handle_symbol("●")
+                .filled_symbol(symbols::FILLED_THICK_LINE)
+                .empty_symbol(symbols::EMPTY_THIN_LINE)
+                .handle_symbol(symbols::HANDLE_CIRCLE)
                 .filled_color(example.color)
                 .empty_color(Color::DarkGray)
                 .handle_color(if is_selected {
@@ -521,9 +521,9 @@ fn render_segmented_border(f: &mut Frame, example: &BorderExample, is_selected: 
 
     let slider = Slider::from_state(&example.state)
         .orientation(SliderOrientation::Horizontal)
-        .filled_symbol("━")
-        .empty_symbol("─")
-        .handle_symbol("●")
+        .filled_symbol(symbols::FILLED_THICK_LINE)
+        .empty_symbol(symbols::EMPTY_THIN_LINE)
+        .handle_symbol(symbols::HANDLE_CIRCLE)
         .filled_color(example.color)
         .empty_color(Color::DarkGray)
         .handle_color(if is_selected {
@@ -618,9 +618,9 @@ fn render_sides_only_border(f: &mut Frame, example: &BorderExample, is_selected:
 
     let slider = Slider::from_state(&example.state)
         .orientation(SliderOrientation::Horizontal)
-        .filled_symbol("━")
-        .empty_symbol("─")
-        .handle_symbol("●")
+        .filled_symbol(symbols::FILLED_THICK_LINE)
+        .empty_symbol(symbols::EMPTY_THIN_LINE)
+        .handle_symbol(symbols::HANDLE_CIRCLE)
         .filled_color(example.color)
         .empty_color(Color::DarkGray)
         .handle_color(if is_selected {

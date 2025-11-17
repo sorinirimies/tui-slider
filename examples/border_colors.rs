@@ -17,7 +17,7 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::io;
-use tui_slider::{Slider, SliderOrientation, SliderState};
+use tui_slider::{symbols, Slider, SliderOrientation, SliderState};
 
 struct ColorExample {
     label: String,
@@ -308,9 +308,9 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
 
         let slider = Slider::from_state(&example.state)
             .orientation(SliderOrientation::Horizontal)
-            .filled_symbol("━")
-            .empty_symbol("─")
-            .handle_symbol("●")
+            .filled_symbol(symbols::FILLED_THICK_LINE)
+            .empty_symbol(symbols::EMPTY_THIN_LINE)
+            .handle_symbol(symbols::HANDLE_CIRCLE)
             .filled_color(example.filled_color)
             .empty_color(Color::DarkGray)
             .handle_color(if is_selected {

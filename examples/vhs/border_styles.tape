@@ -4,9 +4,9 @@ Output examples/vhs/target/border_styles.gif
 
 Set Shell "bash"
 Set FontSize 14
-Set Width 1400
-Set Height 600
-Set PlaybackSpeed 1.0
+Set Width 1200
+Set Height 700
+Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
 Type "cargo run --example border_styles"

@@ -543,6 +543,198 @@ impl SliderStyle {
     }
 }
 
+/// Vertical slider style presets
+///
+/// These styles are specifically designed for vertical sliders (like audio mixers, equalizers)
+impl SliderStyle {
+    /// Vertical slider style - clean vertical lines
+    pub fn vertical() -> Self {
+        Self {
+            name: "Vertical",
+            filled_symbol: symbols::FILLED_VERTICAL_LINE,
+            empty_symbol: symbols::EMPTY_VERTICAL_LINE,
+            handle_symbol: symbols::HANDLE_HORIZONTAL_LINE,
+            filled_color: Color::Cyan,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Vertical slider style - bold blocks
+    pub fn vertical_blocks() -> Self {
+        Self {
+            name: "Vertical Blocks",
+            filled_symbol: symbols::FILLED_BLOCK,
+            empty_symbol: symbols::EMPTY_VERTICAL_BAR,
+            handle_symbol: symbols::HANDLE_HORIZONTAL_LINE,
+            filled_color: Color::Green,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Vertical slider style - shaded gradient
+    pub fn vertical_gradient() -> Self {
+        Self {
+            name: "Vertical Gradient",
+            filled_symbol: symbols::FILLED_DARK_SHADE,
+            empty_symbol: symbols::FILLED_LIGHT_SHADE,
+            handle_symbol: symbols::HANDLE_HORIZONTAL_LINE,
+            filled_color: Color::Magenta,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Vertical slider style - dots/circles
+    pub fn vertical_dots() -> Self {
+        Self {
+            name: "Vertical Dots",
+            filled_symbol: symbols::FILLED_CIRCLE,
+            empty_symbol: symbols::EMPTY_CIRCLE,
+            handle_symbol: symbols::HANDLE_HORIZONTAL_LINE,
+            filled_color: Color::Yellow,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Vertical slider style - squares
+    pub fn vertical_squares() -> Self {
+        Self {
+            name: "Vertical Squares",
+            filled_symbol: symbols::FILLED_SQUARE,
+            empty_symbol: symbols::EMPTY_SQUARE,
+            handle_symbol: symbols::HANDLE_HORIZONTAL_LINE,
+            filled_color: Color::Blue,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Vertical slider style - equalizer bars
+    pub fn vertical_equalizer() -> Self {
+        Self {
+            name: "Equalizer",
+            filled_symbol: symbols::FILLED_VERTICAL_BAR,
+            empty_symbol: symbols::EMPTY_VERTICAL_BAR,
+            handle_symbol: symbols::HANDLE_HORIZONTAL_LINE,
+            filled_color: Color::LightGreen,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+}
+
+/// Horizontal slider style presets
+///
+/// These styles are specifically designed for horizontal sliders (like volume controls, seekbars)
+impl SliderStyle {
+    /// Horizontal slider style - clean horizontal lines
+    pub fn horizontal() -> Self {
+        Self {
+            name: "Horizontal",
+            filled_symbol: symbols::FILLED_HORIZONTAL_LINE,
+            empty_symbol: symbols::EMPTY_HORIZONTAL_LINE,
+            handle_symbol: symbols::HANDLE_VERTICAL_LINE,
+            filled_color: Color::Cyan,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Horizontal slider style - thick lines
+    pub fn horizontal_thick() -> Self {
+        Self {
+            name: "Horizontal Thick",
+            filled_symbol: symbols::FILLED_THICK_LINE,
+            empty_symbol: symbols::EMPTY_THIN_LINE,
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::Cyan,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Horizontal slider style - bold blocks
+    pub fn horizontal_blocks() -> Self {
+        Self {
+            name: "Horizontal Blocks",
+            filled_symbol: symbols::FILLED_BLOCK,
+            empty_symbol: symbols::FILLED_LIGHT_SHADE,
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::Green,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Horizontal slider style - shaded gradient
+    pub fn horizontal_gradient() -> Self {
+        Self {
+            name: "Horizontal Gradient",
+            filled_symbol: symbols::FILLED_DARK_SHADE,
+            empty_symbol: symbols::FILLED_LIGHT_SHADE,
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::Magenta,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Horizontal slider style - dots/circles
+    pub fn horizontal_dots() -> Self {
+        Self {
+            name: "Horizontal Dots",
+            filled_symbol: symbols::FILLED_CIRCLE,
+            empty_symbol: symbols::EMPTY_CIRCLE,
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::Yellow,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Horizontal slider style - squares
+    pub fn horizontal_squares() -> Self {
+        Self {
+            name: "Horizontal Squares",
+            filled_symbol: symbols::FILLED_SQUARE,
+            empty_symbol: symbols::EMPTY_SQUARE,
+            handle_symbol: symbols::HANDLE_CIRCLE,
+            filled_color: Color::Blue,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+
+    /// Horizontal slider style - double lines
+    pub fn horizontal_double() -> Self {
+        Self {
+            name: "Horizontal Double",
+            filled_symbol: symbols::FILLED_DOUBLE_LINE,
+            empty_symbol: symbols::EMPTY_THIN_LINE,
+            handle_symbol: symbols::HANDLE_DOUBLE_CIRCLE,
+            filled_color: Color::LightCyan,
+            empty_color: Color::DarkGray,
+            handle_color: Color::White,
+            segmented: false,
+        }
+    }
+}
+
 impl Default for SliderStyle {
     fn default() -> Self {
         Self::default_style()

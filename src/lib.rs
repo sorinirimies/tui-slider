@@ -65,6 +65,7 @@
 
 pub mod border;
 pub mod orientation;
+pub mod position;
 pub mod slider;
 pub mod state;
 pub mod style;
@@ -72,6 +73,7 @@ pub mod symbols;
 
 // Re-export main types
 pub use orientation::SliderOrientation;
+pub use position::{VerticalLabelPosition, VerticalValueAlignment, VerticalValuePosition};
 pub use slider::Slider;
 pub use state::SliderState;
 
@@ -79,6 +81,9 @@ pub use state::SliderState;
 pub mod prelude {
     pub use crate::border;
     pub use crate::orientation::SliderOrientation;
+    pub use crate::position::{
+        VerticalLabelPosition, VerticalValueAlignment, VerticalValuePosition,
+    };
     pub use crate::slider::Slider;
     pub use crate::state::SliderState;
     pub use crate::style;

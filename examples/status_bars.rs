@@ -1,7 +1,8 @@
 //! Status bars example - Game-style displays without thumb indicators
+//! Status bars example - Character and system status monitoring
 //!
-//! This example demonstrates using sliders as status bars in a game-like interface,
-//! with no thumb indicators for a clean, immersive appearance.
+//! This example demonstrates using sliders as status bars for monitoring
+//! various metrics like health, mana, CPU, memory, etc.
 
 use anyhow::Result;
 use crossterm::{
@@ -18,7 +19,7 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::io;
-use tui_slider::{Slider, SliderOrientation, SliderState};
+use tui_slider::{symbols, Slider, SliderOrientation, SliderState};
 
 struct Character {
     name: String,
@@ -327,8 +328,8 @@ fn render_character_stats(f: &mut Frame, character: &Character, is_selected: boo
 
     let health = Slider::from_state(&character.health)
         .orientation(SliderOrientation::Horizontal)
-        .filled_symbol("▓")
-        .empty_symbol("░")
+        .filled_symbol(symbols::FILLED_DARK_SHADE)
+        .empty_symbol(symbols::FILLED_LIGHT_SHADE)
         .filled_color(health_color)
         .empty_color(Color::Rgb(40, 40, 40))
         .show_value(true)
@@ -339,8 +340,8 @@ fn render_character_stats(f: &mut Frame, character: &Character, is_selected: boo
     // Mana bar
     let mana = Slider::from_state(&character.mana)
         .orientation(SliderOrientation::Horizontal)
-        .filled_symbol("▓")
-        .empty_symbol("░")
+        .filled_symbol(symbols::FILLED_DARK_SHADE)
+        .empty_symbol(symbols::FILLED_LIGHT_SHADE)
         .filled_color(Color::Cyan)
         .empty_color(Color::Rgb(40, 40, 40))
         .show_value(true)
@@ -351,8 +352,8 @@ fn render_character_stats(f: &mut Frame, character: &Character, is_selected: boo
     // Stamina bar
     let stamina = Slider::from_state(&character.stamina)
         .orientation(SliderOrientation::Horizontal)
-        .filled_symbol("▓")
-        .empty_symbol("░")
+        .filled_symbol(symbols::FILLED_DARK_SHADE)
+        .empty_symbol(symbols::FILLED_LIGHT_SHADE)
         .filled_color(Color::LightGreen)
         .empty_color(Color::Rgb(40, 40, 40))
         .show_value(true)
@@ -363,8 +364,8 @@ fn render_character_stats(f: &mut Frame, character: &Character, is_selected: boo
     // Experience bar
     let exp = Slider::from_state(&character.experience)
         .orientation(SliderOrientation::Horizontal)
-        .filled_symbol("━")
-        .empty_symbol("─")
+        .filled_symbol(symbols::FILLED_THICK_LINE)
+        .empty_symbol(symbols::EMPTY_THIN_LINE)
         .filled_color(Color::Yellow)
         .empty_color(Color::DarkGray)
         .show_value(true)
@@ -404,8 +405,8 @@ fn render_system_stats(f: &mut Frame, app: &App, area: Rect) {
     };
 
     let cpu = Slider::from_state(&app.system.cpu)
-        .filled_symbol("█")
-        .empty_symbol("░")
+        .filled_symbol(symbols::FILLED_BLOCK)
+        .empty_symbol(symbols::FILLED_LIGHT_SHADE)
         .filled_color(cpu_color)
         .empty_color(Color::DarkGray)
         .show_value(false)
@@ -432,8 +433,8 @@ fn render_system_stats(f: &mut Frame, app: &App, area: Rect) {
     };
 
     let memory = Slider::from_state(&app.system.memory)
-        .filled_symbol("█")
-        .empty_symbol("░")
+        .filled_symbol(symbols::FILLED_BLOCK)
+        .empty_symbol(symbols::FILLED_LIGHT_SHADE)
         .filled_color(mem_color)
         .empty_color(Color::DarkGray)
         .show_value(false)
@@ -452,8 +453,8 @@ fn render_system_stats(f: &mut Frame, app: &App, area: Rect) {
 
     // Disk
     let disk = Slider::from_state(&app.system.disk)
-        .filled_symbol("▰")
-        .empty_symbol("▱")
+        .filled_symbol(symbols::FILLED_PROGRESS)
+        .empty_symbol(symbols::EMPTY_PROGRESS)
         .filled_color(Color::Magenta)
         .empty_color(Color::DarkGray)
         .show_value(false)
@@ -472,8 +473,8 @@ fn render_system_stats(f: &mut Frame, app: &App, area: Rect) {
 
     // Network
     let network = Slider::from_state(&app.system.network)
-        .filled_symbol("▰")
-        .empty_symbol("▱")
+        .filled_symbol(symbols::FILLED_PROGRESS)
+        .empty_symbol(symbols::EMPTY_PROGRESS)
         .filled_color(Color::Cyan)
         .empty_color(Color::DarkGray)
         .show_value(false)

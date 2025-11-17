@@ -100,8 +100,8 @@ impl App {
                     "Cyber Segmented".to_string(),
                     SliderState::new(65.0, 0.0, 100.0),
                     SliderStyle::custom("Cyber")
-                        .filled_symbol("▰")
-                        .empty_symbol("▱")
+                        .filled_symbol(symbols::FILLED_PROGRESS)
+                        .empty_symbol(symbols::EMPTY_PROGRESS)
                         .handle_symbol(symbols::HANDLE_BULLSEYE)
                         .filled_color(Color::Rgb(0, 255, 150))
                         .empty_color(Color::Rgb(20, 80, 60))
@@ -112,8 +112,8 @@ impl App {
                     "Lava Segmented".to_string(),
                     SliderState::new(85.0, 0.0, 100.0),
                     SliderStyle::custom("Lava")
-                        .filled_symbol("█")
-                        .empty_symbol("░")
+                        .filled_symbol(symbols::FILLED_BLOCK)
+                        .empty_symbol(symbols::FILLED_LIGHT_SHADE)
                         .handle_symbol(symbols::HANDLE_SQUARE)
                         .filled_color(Color::Rgb(255, 80, 0))
                         .empty_color(Color::Rgb(100, 30, 0))

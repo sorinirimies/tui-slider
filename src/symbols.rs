@@ -85,8 +85,17 @@ pub const FILLED_SQUARE: &str = "■";
 /// Filled symbol - circle
 pub const FILLED_CIRCLE: &str = "●";
 
+/// Filled symbol - vertical bar (for segmented blocks)
+pub const FILLED_VERTICAL_BAR: &str = "│";
+
 /// Filled symbol - segment dash (for segmented style)
 pub const FILLED_SEGMENT: &str = "─";
+
+/// Filled symbol - vertical line (for vertical sliders)
+pub const FILLED_VERTICAL_LINE: &str = "│";
+
+/// Filled symbol - horizontal line (for horizontal sliders)
+pub const FILLED_HORIZONTAL_LINE: &str = "─";
 
 // ============================================================================
 // EMPTY SYMBOLS - Used for the unfilled portion of the slider
@@ -149,8 +158,17 @@ pub const EMPTY_SQUARE: &str = "□";
 /// Empty symbol - white circle
 pub const EMPTY_CIRCLE: &str = "○";
 
+/// Empty symbol - vertical bar (for segmented blocks)
+pub const EMPTY_VERTICAL_BAR: &str = "│";
+
 /// Empty symbol - colon
 pub const EMPTY_COLON: &str = ":";
+
+/// Empty symbol - vertical line (for vertical sliders)
+pub const EMPTY_VERTICAL_LINE: &str = "│";
+
+/// Empty symbol - horizontal line (for horizontal sliders)
+pub const EMPTY_HORIZONTAL_LINE: &str = "─";
 
 // ============================================================================
 // HANDLE SYMBOLS - Used for the slider handle/thumb
@@ -248,6 +266,12 @@ pub const HANDLE_ARROW_LEFT: &str = "←";
 
 /// Handle symbol - arrow right
 pub const HANDLE_ARROW_RIGHT: &str = "→";
+
+/// Handle symbol - horizontal line (for vertical sliders)
+pub const HANDLE_HORIZONTAL_LINE: &str = "━";
+
+/// Handle symbol - vertical line (for horizontal sliders)
+pub const HANDLE_VERTICAL_LINE: &str = "│";
 
 // ============================================================================
 // PREDEFINED STYLE SETS
@@ -380,9 +404,115 @@ pub const STYLE_ARROW: SymbolSet = SymbolSet {
     handle: HANDLE_DIAMOND,
 };
 
-/// Segmented style - discrete segments with spaces
+/// Segmented style - discrete segments with dashes
 pub const STYLE_SEGMENTED: SymbolSet = SymbolSet {
     filled: FILLED_SEGMENT,
     empty: EMPTY_SPACE,
+    handle: HANDLE_CIRCLE,
+};
+
+/// Segmented blocks style - vertical bars
+pub const STYLE_SEGMENTED_BLOCKS: SymbolSet = SymbolSet {
+    filled: FILLED_VERTICAL_BAR,
+    empty: EMPTY_VERTICAL_BAR,
+    handle: HANDLE_CIRCLE,
+};
+
+/// Segmented dots style - filled and empty circles
+pub const STYLE_SEGMENTED_DOTS: SymbolSet = SymbolSet {
+    filled: FILLED_CIRCLE,
+    empty: EMPTY_CIRCLE,
+    handle: HANDLE_CIRCLE,
+};
+
+/// Segmented squares style - filled and empty squares
+pub const STYLE_SEGMENTED_SQUARES: SymbolSet = SymbolSet {
+    filled: FILLED_SQUARE,
+    empty: EMPTY_SQUARE,
+    handle: HANDLE_CIRCLE,
+};
+
+// ============================================================================
+// VERTICAL SLIDER STYLES
+// ============================================================================
+
+/// Vertical slider style - clean vertical lines
+pub const STYLE_VERTICAL: SymbolSet = SymbolSet {
+    filled: FILLED_VERTICAL_LINE,
+    empty: EMPTY_VERTICAL_LINE,
+    handle: HANDLE_HORIZONTAL_LINE,
+};
+
+/// Vertical slider style - bold blocks
+pub const STYLE_VERTICAL_BLOCKS: SymbolSet = SymbolSet {
+    filled: FILLED_BLOCK,
+    empty: EMPTY_VERTICAL_BAR,
+    handle: HANDLE_HORIZONTAL_LINE,
+};
+
+/// Vertical slider style - shaded gradient
+pub const STYLE_VERTICAL_GRADIENT: SymbolSet = SymbolSet {
+    filled: FILLED_DARK_SHADE,
+    empty: FILLED_LIGHT_SHADE,
+    handle: HANDLE_HORIZONTAL_LINE,
+};
+
+/// Vertical slider style - dots/circles
+pub const STYLE_VERTICAL_DOTS: SymbolSet = SymbolSet {
+    filled: FILLED_CIRCLE,
+    empty: EMPTY_CIRCLE,
+    handle: HANDLE_HORIZONTAL_LINE,
+};
+
+/// Vertical slider style - squares
+pub const STYLE_VERTICAL_SQUARES: SymbolSet = SymbolSet {
+    filled: FILLED_SQUARE,
+    empty: EMPTY_SQUARE,
+    handle: HANDLE_HORIZONTAL_LINE,
+};
+
+// ============================================================================
+// HORIZONTAL SLIDER STYLES
+// ============================================================================
+
+/// Horizontal slider style - clean horizontal lines
+pub const STYLE_HORIZONTAL: SymbolSet = SymbolSet {
+    filled: FILLED_HORIZONTAL_LINE,
+    empty: EMPTY_HORIZONTAL_LINE,
+    handle: HANDLE_VERTICAL_LINE,
+};
+
+/// Horizontal slider style - thick lines
+pub const STYLE_HORIZONTAL_THICK: SymbolSet = SymbolSet {
+    filled: FILLED_THICK_LINE,
+    empty: EMPTY_THIN_LINE,
+    handle: HANDLE_CIRCLE,
+};
+
+/// Horizontal slider style - bold blocks
+pub const STYLE_HORIZONTAL_BLOCKS: SymbolSet = SymbolSet {
+    filled: FILLED_BLOCK,
+    empty: FILLED_LIGHT_SHADE,
+    handle: HANDLE_CIRCLE,
+};
+
+/// Horizontal slider style - shaded gradient
+pub const STYLE_HORIZONTAL_GRADIENT: SymbolSet = SymbolSet {
+    filled: FILLED_DARK_SHADE,
+    empty: FILLED_LIGHT_SHADE,
+    handle: HANDLE_CIRCLE,
+};
+
+/// Horizontal slider style - dots/circles
+pub const STYLE_HORIZONTAL_DOTS: SymbolSet = SymbolSet {
+    filled: FILLED_CIRCLE,
+    empty: EMPTY_CIRCLE,
+    handle: HANDLE_CIRCLE,
+};
+
+/// Horizontal slider style - squares
+pub const STYLE_HORIZONTAL_SQUARES: SymbolSet = SymbolSet {
+    filled: FILLED_SQUARE,
+    empty: EMPTY_SQUARE,
     handle: HANDLE_CIRCLE,
 };
