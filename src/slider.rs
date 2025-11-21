@@ -591,36 +591,79 @@ impl<'a> Slider<'a> {
 
         let percentage = self.percentage();
         let bar_height = area.height as usize;
-        let filled_height = (bar_height as f64 * percentage) as usize;
 
-        // Center the slider in the available width
-        let slider_x = area.x + (area.width / 2);
+        // Get display widths of symbols using unicode-width
+        let filled_width = self.filled_symbol.width().max(1);
+        let empty_width = self.empty_symbol.width().max(1);
 
-        // For vertical, render from bottom to top
-        for i in 0..bar_height {
-            let y = area.y + area.height - 1 - i as u16;
-            if y < area.y {
+        // Calculate how many rows should be filled based on percentage
+        let filled_rows = (bar_height as f64 * percentage) as usize;
+
+        // Center the slider horizontally in the available width
+        let center_x = area.x + (area.width / 2);
+
+        // Render bar from bottom to top, track row position
+        let mut current_y = area.y + area.height - 1;
+        let mut row = 0;
+
+        while row < bar_height {
+            if current_y < area.y {
                 break;
             }
 
-            let (symbol, color) = if i < filled_height {
-                (&self.filled_symbol, self.filled_color)
+            let remaining_rows = bar_height - row;
+
+            // Determine which symbol to use based on current position
+            let (symbol, color, symbol_height) = if row < filled_rows {
+                (&self.filled_symbol, self.filled_color, filled_width)
             } else {
-                (&self.empty_symbol, self.empty_color)
+                (&self.empty_symbol, self.empty_color, empty_width)
             };
 
-            buf.set_string(slider_x, y, symbol, Style::default().fg(color));
+            // If this symbol would exceed the bar height, fill remaining space
+            if symbol_height > remaining_rows {
+                for _ in 0..remaining_rows {
+                    if current_y >= area.y {
+                        buf.set_string(center_x, current_y, " ", Style::default());
+                        current_y = current_y.saturating_sub(1);
+                    }
+                }
+                break;
+            }
+
+            // Render the symbol
+            buf.set_string(center_x, current_y, symbol, Style::default().fg(color));
+            current_y = current_y.saturating_sub(symbol_height as u16);
+            row += symbol_height;
         }
 
         // Render handle if enabled
         if self.show_handle && bar_height > 0 {
-            let handle_y = area.y + area.height - 1 - (bar_height as f64 * percentage) as u16;
-            if handle_y >= area.y && handle_y < area.y + area.height {
-                // Center handle at same position as slider
-                let handle_x = slider_x;
+            // Calculate the y position where the handle should be placed
+            let mut handle_y = area.y + area.height - 1;
+            let mut accumulated_rows = 0;
 
+            // Walk through to find where filled_rows falls
+            while accumulated_rows < filled_rows && accumulated_rows < bar_height {
+                let symbol_height = if accumulated_rows < filled_rows {
+                    filled_width
+                } else {
+                    empty_width
+                };
+
+                // Stop if adding this symbol would overshoot the target
+                if accumulated_rows + symbol_height > filled_rows {
+                    break;
+                }
+
+                handle_y = handle_y.saturating_sub(symbol_height as u16);
+                accumulated_rows += symbol_height;
+            }
+
+            // Only render handle if it fits within the area
+            if handle_y >= area.y && handle_y < area.y + area.height {
                 buf.set_string(
-                    handle_x,
+                    center_x,
                     handle_y,
                     &self.handle_symbol,
                     Style::default().fg(self.handle_color),
@@ -639,77 +682,13 @@ impl<'a> Slider<'a> {
         self.render_value(buf, area, true, value_x, value_info);
     }
 
-    /// Renders vertical slider with labels and values, properly allocating space
-    ///
-    /// This method calculates the space needed for labels and values at the top/bottom,
-    /// then allocates a consistent slider area in the middle. This ensures all vertical
-    /// sliders have the same length regardless of label/value positioning.
-    ///
-    /// Layout:
-    /// ```text
-    /// ┌─────────────┐
-    /// │ Label/Value │ ← Top space (if needed)
-    /// ├─────────────┤
-    /// │   Slider    │ ← Consistent slider area
-    /// │    Bar      │
-    /// ├─────────────┤
-    /// │ Label/Value │ ← Bottom space (if needed)
-    /// └─────────────┘
-    /// ```
-    fn render_vertical_with_labels(&self, area: Rect, buf: &mut Buffer) {
-        // Calculate space needed for labels and values
-        let mut top_space = 0u16;
-        let mut bottom_space = 0u16;
-
-        // Check if label is at top or bottom
-        if self.label.is_some() {
-            match self.vertical_label_position {
-                VerticalLabelPosition::Top => top_space += 2, // 1 for label + 1 for spacing
-                VerticalLabelPosition::Bottom => bottom_space += 2,
-            }
-        }
-
-        // Check if value is at top, middle, or bottom (middle doesn't take extra space)
-        if self.show_value {
-            match self.vertical_value_position {
-                VerticalValuePosition::Top => {
-                    if !matches!(self.vertical_label_position, VerticalLabelPosition::Top)
-                        || self.label.is_none()
-                    {
-                        top_space += 2;
-                    }
-                }
-                VerticalValuePosition::Bottom => {
-                    if !matches!(self.vertical_label_position, VerticalLabelPosition::Bottom)
-                        || self.label.is_none()
-                    {
-                        bottom_space += 2;
-                    }
-                }
-                VerticalValuePosition::Middle => {
-                    // Middle position renders on top of the slider, no space needed
-                }
-            }
-        }
-
-        // Calculate slider area
-        let slider_y = area.y + top_space;
-        let slider_height = area.height.saturating_sub(top_space + bottom_space);
-        let slider_area = Rect {
-            x: area.x,
-            y: slider_y,
-            width: area.width,
-            height: slider_height,
-        };
-
-        // Render the slider bar
-        self.render_vertical(slider_area, buf);
-
+    /// Renders label and value for vertical sliders with positioning options
+    fn render_vertical_label_and_value(&self, area: Rect, buf: &mut Buffer) {
         // Render label if present
         if let Some(ref label) = self.label {
             let label_y = match self.vertical_label_position {
-                VerticalLabelPosition::Top => area.y,
-                VerticalLabelPosition::Bottom => area.y + area.height.saturating_sub(1),
+                VerticalLabelPosition::Top => area.y.saturating_sub(1),
+                VerticalLabelPosition::Bottom => area.y + area.height,
             };
 
             // Center the label horizontally
@@ -728,25 +707,9 @@ impl<'a> Slider<'a> {
 
             // Calculate Y position based on vertical position setting
             let value_y = match self.vertical_value_position {
-                VerticalValuePosition::Top => {
-                    if matches!(self.vertical_label_position, VerticalLabelPosition::Top)
-                        && self.label.is_some()
-                    {
-                        area.y + 1
-                    } else {
-                        area.y
-                    }
-                }
-                VerticalValuePosition::Middle => slider_area.y + slider_area.height / 2,
-                VerticalValuePosition::Bottom => {
-                    if matches!(self.vertical_label_position, VerticalLabelPosition::Bottom)
-                        && self.label.is_some()
-                    {
-                        area.y + area.height.saturating_sub(2)
-                    } else {
-                        area.y + area.height.saturating_sub(1)
-                    }
-                }
+                VerticalValuePosition::Top => area.y.saturating_sub(1),
+                VerticalValuePosition::Middle => area.y + area.height / 2,
+                VerticalValuePosition::Bottom => area.y + area.height,
             };
 
             // Calculate X position based on alignment setting
@@ -924,17 +887,20 @@ impl<'a> Widget for Slider<'a> {
             return;
         }
 
-        // Render based on orientation
+        // Render label and value if needed
         match self.orientation {
             SliderOrientation::Horizontal => {
-                // Horizontal: render label/value above, then slider
                 self.render_label_and_value(area, buf);
-                self.render_horizontal(area, buf);
             }
             SliderOrientation::Vertical => {
-                // Vertical: calculate areas and render with proper spacing
-                self.render_vertical_with_labels(area, buf);
+                self.render_vertical_label_and_value(area, buf);
             }
+        }
+
+        // Render the slider based on orientation
+        match self.orientation {
+            SliderOrientation::Horizontal => self.render_horizontal(area, buf),
+            SliderOrientation::Vertical => self.render_vertical(area, buf),
         }
     }
 }
@@ -1216,9 +1182,63 @@ mod tests {
     fn test_from_state_preserves_values() {
         let state = SliderState::new(42.0, 10.0, 90.0);
         let slider = Slider::from_state(&state);
-
         assert_eq!(slider.value, 42.0);
         assert_eq!(slider.min, 10.0);
         assert_eq!(slider.max, 90.0);
+    }
+
+    #[test]
+    fn test_vertical_rendering_consistency() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        // Create two sliders with different values but same configuration
+        let state1 = SliderState::new(25.0, 0.0, 100.0);
+        let state2 = SliderState::new(75.0, 0.0, 100.0);
+
+        let slider1 = Slider::from_state(&state1)
+            .orientation(SliderOrientation::Vertical)
+            .filled_symbol("│")
+            .empty_symbol("│")
+            .handle_symbol("━");
+
+        let slider2 = Slider::from_state(&state2)
+            .orientation(SliderOrientation::Vertical)
+            .filled_symbol("│")
+            .empty_symbol("│")
+            .handle_symbol("━");
+
+        // Render both sliders in same-sized areas
+        let area = Rect::new(0, 0, 5, 20);
+        let mut buf1 = Buffer::empty(area);
+        let mut buf2 = Buffer::empty(area);
+
+        slider1.render(area, &mut buf1);
+        slider2.render(area, &mut buf2);
+
+        // Both should render in the full area height
+        // Count non-empty cells to verify rendering happened
+        let count1 = (0..area.height)
+            .filter(|y| {
+                let cell = buf1.get(area.x + area.width / 2, area.y + y);
+                !cell.symbol().trim().is_empty()
+            })
+            .count();
+
+        let count2 = (0..area.height)
+            .filter(|y| {
+                let cell = buf2.get(area.x + area.width / 2, area.y + y);
+                !cell.symbol().trim().is_empty()
+            })
+            .count();
+
+        // Both should have similar number of rendered symbols (within reasonable range)
+        assert!(count1 > 0, "Slider 1 should render symbols");
+        assert!(count2 > 0, "Slider 2 should render symbols");
+        assert_eq!(
+            count1 + count2,
+            area.height as usize * 2,
+            "Both sliders should fill the same height"
+        );
     }
 }

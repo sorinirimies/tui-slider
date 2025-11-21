@@ -224,14 +224,17 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
         let inner_area = block.inner(slider_chunks[chunk_index]);
         f.render_widget(block, slider_chunks[chunk_index]);
 
-        // Reserve space for value at bottom
+        // Reserve 2 lines at bottom: 1 blank + 1 for value
+        let slider_height = inner_area.height.saturating_sub(2);
+
         let slider_area = ratatui::layout::Rect {
             x: inner_area.x,
             y: inner_area.y,
             width: inner_area.width,
-            height: inner_area.height.saturating_sub(2),
+            height: slider_height,
         };
 
+        // Render slider without built-in label/value
         let slider = Slider::from_state(state)
             .orientation(SliderOrientation::Vertical)
             .filled_symbol(style.filled_symbol)
@@ -248,10 +251,10 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
 
         f.render_widget(slider, slider_area);
 
-        // Render value below slider in separate area
+        // Render value at the bottom, centered
         let value_area = ratatui::layout::Rect {
             x: inner_area.x,
-            y: inner_area.y + slider_area.height,
+            y: inner_area.y + slider_height + 1,
             width: inner_area.width,
             height: 1,
         };

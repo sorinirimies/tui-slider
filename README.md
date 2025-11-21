@@ -284,7 +284,7 @@ let slider = Slider::from_state(&state)
 ```rust
 use tui_slider::symbols;
 
-// Clean vertical lines (default)
+// Clean vertical lines (default look)
 .filled_symbol(symbols::FILLED_VERTICAL_LINE)   // "│"
 .empty_symbol(symbols::EMPTY_VERTICAL_LINE)     // "│"
 .handle_symbol(symbols::HANDLE_HORIZONTAL_LINE) // "━"
@@ -293,6 +293,63 @@ use tui_slider::symbols;
 use tui_slider::style::SliderStyle;
 let style = SliderStyle::vertical();
 ```
+
+### Ensuring Consistent Vertical Slider Heights
+
+For vertical sliders displayed side-by-side (like audio mixers), ensure consistent heights by:
+
+1. **Reserve space for labels and values INSIDE the block**
+2. **Use the same slider area height for all sliders**
+
+```rust
+use ratatui::layout::Rect;
+
+// Inside your render function, after rendering the block:
+let inner_area = block.inner(area);
+f.render_widget(block, area);
+
+// Reserve 2 lines at bottom: 1 blank line + 1 for value
+let slider_height = inner_area.height.saturating_sub(2);
+
+let slider_area = Rect {
+    x: inner_area.x,
+    y: inner_area.y,
+    width: inner_area.width,
+    height: slider_height,  // Same for all sliders
+};
+
+// Render slider WITHOUT built-in label/value
+let slider = Slider::from_state(&state)
+    .orientation(SliderOrientation::Vertical)
+    .filled_symbol(style.filled_symbol)
+    .empty_symbol(style.empty_symbol)
+    .handle_symbol(style.handle_symbol)
+    .filled_color(style.filled_color)
+    .show_handle(true);  // Don't use .show_value(true) here
+
+f.render_widget(slider, slider_area);
+
+// Manually render value at the bottom, centered
+let value_area = Rect {
+    x: inner_area.x,
+    y: inner_area.y + slider_height + 1,
+    width: inner_area.width,
+    height: 1,
+};
+
+let value_para = Paragraph::new(format!("{:.0}", state.value()))
+    .style(Style::default().fg(Color::Cyan))
+    .alignment(Alignment::Center);
+
+f.render_widget(value_para, value_area);
+```
+
+**Why this approach?**
+- All sliders use `slider_height` = `inner_area.height - 2`
+- This ensures uniform slider bar lengths
+- Labels go in block titles
+- Values are manually positioned at the bottom
+- Consistent spacing and alignment across all sliders
 
 **Recommended Symbols for Horizontal Sliders:**
 ```rust

@@ -2,12 +2,18 @@
 
 This directory contains examples demonstrating various features of the `tui-slider` library.
 
+## 🎬 Demo Gallery
+
+All examples have animated GIF demos available in the `vhs/target/` directory. The demos are generated using [VHS](https://github.com/charmbracelet/vhs).
+
 ## Available Examples
 
 ### Interactive Examples with Thumb Indicators
 
 #### 1. Horizontal Sliders (`horizontal.rs`)
 Demonstrates various horizontal slider styles with different symbols and colors.
+
+![Horizontal Slider Demo](vhs/target/horizontal.gif)
 
 ```bash
 cargo run --example horizontal
@@ -24,10 +30,19 @@ cargo run --example horizontal
 - `←/→` or `h/l`: Adjust value
 - `q` or `ESC`: Quit
 
+**Additional Demos:**
+- [Horizontal Styles](vhs/target/horizontal_styles.gif) - Various horizontal slider styles
+- [Border Styles](vhs/target/border_styles.gif) - Different border styles
+- [Border Colors](vhs/target/border_colors.gif) - Colored borders
+- [Title Alignment](vhs/target/title_alignment.gif) - Title positioning options
+- [Value Alignment](vhs/target/value_alignment.gif) - Value positioning options
+
 ---
 
 #### 2. Vertical Sliders (`vertical.rs`)
 Shows vertical orientation with various styles.
+
+![Vertical Slider Demo](vhs/target/vertical.gif)
 
 ```bash
 cargo run --example vertical
@@ -43,10 +58,16 @@ cargo run --example vertical
 - `↑/↓` or `j/k`: Adjust value
 - `q` or `ESC`: Quit
 
+**Additional Demos:**
+- [Vertical Styles](vhs/target/vertical_styles.gif) - Various vertical slider styles
+- [Vertical Positioning](vhs/target/vertical_positioning.gif) - Label and value positioning
+
 ---
 
 #### 3. Custom Styles (`custom.rs`)
 Showcases custom slider styles with RGB colors and creative symbol combinations.
+
+![Custom Styles Demo](vhs/target/custom.gif)
 
 ```bash
 cargo run --example custom
@@ -68,6 +89,8 @@ cargo run --example custom
 #### 4. Handle Toggle (`handle_toggle.rs`)
 Interactive demonstration of toggling the handle/thumb visibility.
 
+![Handle Toggle Demo](vhs/target/handle_toggle.gif)
+
 ```bash
 cargo run --example handle_toggle
 ```
@@ -88,6 +111,8 @@ cargo run --example handle_toggle
 #### 5. Thumb Toggle (`thumb_toggle.rs`)
 Alternative demo for thumb/handle toggling functionality.
 
+![Thumb Toggle Demo](vhs/target/thumb_toggle.gif)
+
 ```bash
 cargo run --example thumb_toggle
 ```
@@ -96,6 +121,8 @@ cargo run --example thumb_toggle
 
 #### 6. Step Sizes (`step_sizes.rs`)
 Demonstrates configurable step intervals for increment/decrement operations.
+
+![Step Sizes Demo](vhs/target/step_sizes.gif)
 
 ```bash
 cargo run --example step_sizes
@@ -132,6 +159,8 @@ cargo run --example step_sizes
 #### 7. Progress Bars (`progress_bars.rs`)
 Various progress bar styles perfect for loading indicators and status displays.
 
+![Progress Bars Demo](vhs/target/progress_bars.gif)
+
 ```bash
 cargo run --example progress_bars
 ```
@@ -157,6 +186,8 @@ cargo run --example progress_bars
 
 #### 8. Status Bars (`status_bars.rs`)
 Game-style character stats and system monitoring without thumb indicators.
+
+![Status Bars Demo](vhs/target/status_bars.gif)
 
 ```bash
 cargo run --example status_bars
@@ -324,14 +355,46 @@ For more detailed information, see:
 - `../docs/STEP_SIZES.md` - Step size configuration guide
 - `../docs/UNICODE_WIDTH_FIX.md` - Technical details on width consistency
 
+## Generating Demo GIFs
+
+All demo GIFs can be regenerated using the justfile commands:
+
+```bash
+# Generate individual demos
+just vhs-horizontal
+just vhs-vertical
+just vhs-custom
+just vhs-thumb
+just vhs-handle-toggle
+just vhs-step-sizes
+just vhs-progress-bars
+just vhs-status-bars
+just vhs-border-colors
+just vhs-border-styles
+just vhs-horizontal-styles
+just vhs-vertical-styles
+just vhs-vertical-positioning
+just vhs-title-alignment
+just vhs-value-alignment
+
+# Generate all demos at once
+just vhs-all
+```
+
+**Requirements:**
+- [VHS](https://github.com/charmbracelet/vhs) - Install with `go install github.com/charmbracelet/vhs@latest`
+
 ## Contributing
 
 When adding new examples:
 1. Create the example file in `examples/`
 2. Add it to `Cargo.toml` under `[[example]]`
-3. Update this README with description and usage
-4. Test that it builds: `cargo build --example your_example`
-5. Test that it runs: `cargo run --example your_example`
+3. Create a VHS tape in `examples/vhs/your_example.tape`
+4. Add a justfile command in the root `justfile`
+5. Generate the GIF: `just vhs-your-example`
+6. Update this README with description, usage, and GIF reference
+7. Test that it builds: `cargo build --example your_example`
+8. Test that it runs: `cargo run --example your_example`
 
 ## License
 

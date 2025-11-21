@@ -245,14 +245,17 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
             let inner_area = block.inner(slider_chunks[chunk_index]);
             f.render_widget(block, slider_chunks[chunk_index]);
 
-            // Reserve space for value at bottom
+            // Reserve 2 lines at bottom: 1 blank + 1 for value
+            let slider_height = inner_area.height.saturating_sub(2);
+
             let slider_area = ratatui::layout::Rect {
                 x: inner_area.x,
                 y: inner_area.y,
                 width: inner_area.width,
-                height: inner_area.height.saturating_sub(2),
+                height: slider_height,
             };
 
+            // Render slider without built-in label/value
             let slider = Slider::from_state(state)
                 .orientation(SliderOrientation::Vertical)
                 .filled_symbol(style.filled_symbol)
@@ -269,10 +272,10 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
 
             f.render_widget(slider, slider_area);
 
-            // Render value below slider in separate area
+            // Render value at the bottom, centered
             let value_area = ratatui::layout::Rect {
                 x: inner_area.x,
-                y: inner_area.y + slider_area.height,
+                y: inner_area.y + slider_height + 1,
                 width: inner_area.width,
                 height: 1,
             };
@@ -308,11 +311,19 @@ fn render_segmented_slider(
         return;
     }
 
-    // Use full available height (minus space for value at bottom)
-    let total_height = inner.height.saturating_sub(2) as usize;
+    // Reserve 2 lines at bottom: 1 blank + 1 for value
+    let slider_height = inner.height.saturating_sub(2);
+    let total_height = slider_height as usize;
 
     if total_height < 10 {
         // Not enough height, render non-segmented
+        let slider_area = ratatui::layout::Rect {
+            x: inner.x,
+            y: inner.y,
+            width: inner.width,
+            height: slider_height,
+        };
+
         let slider = Slider::from_state(state)
             .orientation(SliderOrientation::Vertical)
             .filled_symbol(style.filled_symbol)
@@ -326,7 +337,28 @@ fn render_segmented_slider(
                 style.handle_color
             })
             .show_handle(true);
-        f.render_widget(slider, inner);
+
+        f.render_widget(slider, slider_area);
+
+        // Render value at bottom
+        let value_area = ratatui::layout::Rect {
+            x: inner.x,
+            y: inner.y + slider_height + 1,
+            width: inner.width,
+            height: 1,
+        };
+
+        let value_para = Paragraph::new(format!("{:.0}", state.value()))
+            .style(if is_selected {
+                Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD)
+            } else {
+                Style::default().fg(Color::Gray)
+            })
+            .alignment(Alignment::Center);
+
+        f.render_widget(value_para, value_area);
         return;
     }
 
@@ -372,7 +404,7 @@ fn render_segmented_slider(
         lines.push(Line::from(vec![Span::raw(" ")]));
     }
 
-    // Render the slider lines taking full height
+    // Render the slider lines in the slider area
     let slider_area = ratatui::layout::Rect {
         x: inner.x,
         y: inner.y,
@@ -383,10 +415,10 @@ fn render_segmented_slider(
     let para = Paragraph::new(lines).alignment(Alignment::Center);
     f.render_widget(para, slider_area);
 
-    // Add value at the bottom in a separate area
+    // Render value at bottom
     let value_area = ratatui::layout::Rect {
         x: inner.x,
-        y: inner.y + total_height as u16,
+        y: inner.y + total_height as u16 + 1,
         width: inner.width,
         height: 1,
     };

@@ -27,6 +27,27 @@ just vhs-horizontal
 
 # Vertical sliders demo
 just vhs-vertical
+
+# Horizontal styles demo
+vhs examples/vhs/horizontal_styles.tape
+
+# Vertical styles demo
+vhs examples/vhs/vertical_styles.tape
+
+# Vertical positioning demo
+vhs examples/vhs/vertical_positioning.tape
+
+# Border styles demo
+vhs examples/vhs/border_styles.tape
+
+# Title alignment demo
+vhs examples/vhs/title_alignment.tape
+
+# Value alignment demo
+vhs examples/vhs/value_alignment.tape
+
+# Progress bars demo
+vhs examples/vhs/progress_bars.tape
 ```
 
 ### Generate All Demos
@@ -48,13 +69,27 @@ You can also run VHS directly:
 ```bash
 vhs examples/vhs/horizontal.tape
 vhs examples/vhs/vertical.tape
+vhs examples/vhs/horizontal_styles.tape
+vhs examples/vhs/vertical_styles.tape
+vhs examples/vhs/vertical_positioning.tape
+vhs examples/vhs/border_styles.tape
+vhs examples/vhs/title_alignment.tape
+vhs examples/vhs/value_alignment.tape
+vhs examples/vhs/progress_bars.tape
 ```
 
 ## Output
 
 Generated GIFs will be saved in the `examples/vhs/target/` directory:
-- `horizontal.gif`
-- `vertical.gif`
+- `horizontal.gif` - Horizontal slider examples
+- `vertical.gif` - Vertical slider examples with different styles
+- `horizontal_styles.gif` - Horizontal slider style variations
+- `vertical_styles.gif` - Vertical slider style variations
+- `vertical_positioning.gif` - Vertical slider label/value positioning
+- `border_styles.gif` - Different border styles
+- `title_alignment.gif` - Title alignment options
+- `value_alignment.gif` - Value alignment options
+- `progress_bars.gif` - Progress bar examples
 
 ## Customization
 
