@@ -1,6 +1,6 @@
 # VHS tape for custom slider styles demo
 
-Output examples/vhs/target/custom.gif
+Output examples/vhs/output/custom.gif
 
 Set Shell "bash"
 Set FontSize 14

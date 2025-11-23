@@ -1,6 +1,6 @@
 # VHS tape for border styles demo
 
-Output examples/vhs/target/border_styles.gif
+Output examples/vhs/output/border_styles.gif
 
 Set Shell "bash"
 Set FontSize 14

@@ -1220,14 +1220,14 @@ mod tests {
         // Count non-empty cells to verify rendering happened
         let count1 = (0..area.height)
             .filter(|y| {
-                let cell = buf1.get(area.x + area.width / 2, area.y + y);
+                let cell = &buf1[(area.x + area.width / 2, area.y + y)];
                 !cell.symbol().trim().is_empty()
             })
             .count();
 
         let count2 = (0..area.height)
             .filter(|y| {
-                let cell = buf2.get(area.x + area.width / 2, area.y + y);
+                let cell = &buf2[(area.x + area.width / 2, area.y + y)];
                 !cell.symbol().trim().is_empty()
             })
             .count();

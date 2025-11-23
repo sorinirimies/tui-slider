@@ -24,7 +24,7 @@ All examples have animated GIF demos available in the `vhs/output/` directory, g
 | `title_alignment.rs` | Title positioning (left/center/right) | [GIF](vhs/output/title_alignment.gif) |
 | `value_alignment.rs` | Value display positioning | [GIF](vhs/output/value_alignment.gif) |
 | `progress_bars.rs` | Progress bar styles | [GIF](vhs/output/progress_bars.gif) |
-| `width_test.rs` | Width responsiveness testing | [GIF](vhs/output/width_test.gif) |
+| `width_test.rs` | Width responsiveness testing | - |
 
 ## Running Examples
 

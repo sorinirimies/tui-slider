@@ -143,9 +143,9 @@ Control value display positioning for optimal layout.
 ### Width Testing
 Responsive behavior testing at various width constraints.
 
-![Width Test Demo](vhs/output/width_test.gif)
-
 🚀 `cargo run --example width_test`
+
+_Note: This example is for testing purposes and does not have an animated demo._
 
 ---
 
@@ -177,7 +177,7 @@ Progress bar styles for loading indicators and completion displays.
 | `step_sizes.rs` | Interactive | Configurable step intervals |
 | `title_alignment.rs` | Layout | Title positioning options |
 | `value_alignment.rs` | Layout | Value display positioning |
-| `width_test.rs` | Layout | Width responsiveness testing |
+| `width_test.rs` | Layout | Width responsiveness testing (no demo) |
 | `progress_bars.rs` | Progress | Progress indicator styles |
 
 ---

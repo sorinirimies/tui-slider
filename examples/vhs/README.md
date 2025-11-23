@@ -80,7 +80,7 @@ vhs examples/vhs/progress_bars.tape
 
 ## Output
 
-Generated GIFs will be saved in the `examples/vhs/target/` directory:
+Generated GIFs will be saved in the `examples/vhs/output/` directory:
 - `horizontal.gif` - Horizontal slider examples
 - `vertical.gif` - Vertical slider examples with different styles
 - `horizontal_styles.gif` - Horizontal slider style variations
@@ -105,7 +105,7 @@ You can edit the `.tape` files to:
 Each tape file follows this structure:
 
 ```tape
-Output examples/vhs/target/output.gif
+Output examples/vhs/output/output.gif
 Set Shell "bash"
 Set FontSize 14
 Set Width 1400
