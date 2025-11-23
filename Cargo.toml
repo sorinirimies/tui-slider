@@ -1,6 +1,6 @@
 [package]
 name = "tui-slider"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 authors = ["Sorin Irimies <sorinirimies@gmail.com>"]
 license = "MIT"
@@ -49,8 +49,16 @@ name = "progress_bars"
 path = "examples/progress_bars.rs"
 
 [[example]]
-name = "status_bars"
-path = "examples/status_bars.rs"
+name = "horizontal_styles"
+path = "examples/horizontal_styles.rs"
+
+[[example]]
+name = "vertical_styles"
+path = "examples/vertical_styles.rs"
+
+[[example]]
+name = "vertical_positioning"
+path = "examples/vertical_positioning.rs"
 
 [[example]]
 name = "step_sizes"
