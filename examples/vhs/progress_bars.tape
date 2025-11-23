@@ -1,6 +1,6 @@
 # VHS tape for progress bars demo
 
-Output examples/vhs/target/progress_bars.gif
+Output examples/vhs/output/progress_bars.gif
 
 Set Shell "bash"
 Set FontSize 14

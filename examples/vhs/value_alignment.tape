@@ -1,6 +1,6 @@
 # VHS tape for value alignment demo
 
-Output examples/vhs/target/value_alignment.gif
+Output examples/vhs/output/value_alignment.gif
 
 Set Shell "bash"
 Set FontSize 14

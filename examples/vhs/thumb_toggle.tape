@@ -1,6 +1,6 @@
 # VHS tape for thumb toggle demo
 
-Output examples/vhs/target/thumb_toggle.gif
+Output examples/vhs/output/thumb_toggle.gif
 
 Set Shell "bash"
 Set FontSize 14

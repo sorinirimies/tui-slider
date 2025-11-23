@@ -1,6 +1,6 @@
 # VHS tape for step sizes demo
 
-Output examples/vhs/target/step_sizes.gif
+Output examples/vhs/output/step_sizes.gif
 
 Set Shell "bash"
 Set FontSize 14

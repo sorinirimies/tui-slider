@@ -1,6 +1,6 @@
 # VHS tape for handle toggle demo
 
-Output examples/vhs/target/handle_toggle.gif
+Output examples/vhs/output/handle_toggle.gif
 
 Set Shell "bash"
 Set FontSize 14

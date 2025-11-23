@@ -1,11 +1,11 @@
 # VHS tape for border colors demo
 
-Output examples/vhs/target/border_colors.gif
+Output examples/vhs/output/border_colors.gif
 
 Set Shell "bash"
 Set FontSize 14
 Set Width 1200
-Set Height 700
+Set Height 800
 Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 

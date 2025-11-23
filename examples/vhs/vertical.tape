@@ -1,6 +1,6 @@
 # VHS tape for vertical slider demo
 
-Output examples/vhs/target/vertical.gif
+Output examples/vhs/output/vertical.gif
 
 Set Shell "bash"
 Set FontSize 14

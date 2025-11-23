@@ -1,6 +1,6 @@
 # VHS tape for vertical slider positioning demo
 
-Output examples/vhs/target/vertical_positioning.gif
+Output examples/vhs/output/vertical_positioning.gif
 
 Set Shell "bash"
 Set FontSize 14

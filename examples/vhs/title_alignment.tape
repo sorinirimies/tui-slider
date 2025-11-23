@@ -1,6 +1,6 @@
 # VHS tape for title alignment demo
 
-Output examples/vhs/target/title_alignment.gif
+Output examples/vhs/output/title_alignment.gif
 
 Set Shell "bash"
 Set FontSize 14

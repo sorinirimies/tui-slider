@@ -59,356 +59,52 @@ fn main() {
 
 ## 📖 Examples
 
-### Horizontal Sliders
+> 🎨 **[Visual Gallery](examples/EXAMPLES_GALLERY.md)** | 📚 **[All Examples](examples/README.md)**
 
-![Horizontal Sliders](examples/vhs/target/horizontal.gif)
+![Examples Gallery](examples/vhs/output/horizontal.gif)
 
-Basic horizontal slider:
+### Horizontal Slider
 
 ```rust
-use ratatui::style::Color;
-use tui_slider::{Slider, SliderState, SliderOrientation, symbols};
+use tui_slider::{Slider, SliderState, SliderOrientation};
 
 let state = SliderState::new(75.0, 0.0, 100.0);
-
 let slider = Slider::from_state(&state)
     .orientation(SliderOrientation::Horizontal)
-    .label("Volume")
-    .show_value(true)
-    .filled_symbol(symbols::FILLED_THICK_LINE)
-    .empty_symbol(symbols::EMPTY_THIN_LINE)
-    .handle_symbol(symbols::HANDLE_CIRCLE)
-    .filled_color(Color::Cyan)
-    .empty_color(Color::DarkGray)
-    .handle_color(Color::White);
-```
-
-### Horizontal Slider Styles
-
-Using predefined horizontal slider styles:
-
-```rust
-use tui_slider::style::SliderStyle;
-
-// Clean horizontal lines
-let style = SliderStyle::horizontal();
-
-// Thick lines (default look)
-let style = SliderStyle::horizontal_thick();
-
-// Bold blocks
-let style = SliderStyle::horizontal_blocks();
-
-// Shaded gradient
-let style = SliderStyle::horizontal_gradient();
-
-// Dots/circles
-let style = SliderStyle::horizontal_dots();
-
-// Squares
-let style = SliderStyle::horizontal_squares();
-
-// Double lines
-let style = SliderStyle::horizontal_double();
-```
-
-### Vertical Sliders
-
-![Vertical Sliders](examples/vhs/target/vertical.gif)
-
-Basic vertical slider:
-
-```rust
-use ratatui::style::Color;
-use tui_slider::{Slider, SliderState, SliderOrientation, symbols};
-
-let state = SliderState::new(60.0, 0.0, 100.0);
-
-let slider = Slider::from_state(&state)
-    .orientation(SliderOrientation::Vertical)
-    .label("Bass")
-    .show_value(true)
-    .filled_symbol(symbols::FILLED_VERTICAL_LINE)
-    .empty_symbol(symbols::EMPTY_VERTICAL_LINE)
-    .handle_symbol(symbols::HANDLE_HORIZONTAL_LINE)
-    .filled_color(Color::Green)
-    .empty_color(Color::DarkGray)
-    .handle_color(Color::White);
-```
-
-### Vertical Slider Styles
-
-Using predefined vertical slider styles:
-
-```rust
-use tui_slider::style::SliderStyle;
-
-// Clean vertical lines
-let style = SliderStyle::vertical();
-
-// Bold blocks
-let style = SliderStyle::vertical_blocks();
-
-// Shaded gradient
-let style = SliderStyle::vertical_gradient();
-
-// Dots/circles
-let style = SliderStyle::vertical_dots();
-
-// Squares
-let style = SliderStyle::vertical_squares();
-
-// Equalizer bars
-let style = SliderStyle::vertical_equalizer();
-```
-
-### Border Styles
-
-![Border Styles](examples/vhs/target/border_styles.gif)
-
-Multiple border styles available (Plain, Rounded, Double, Thick, Segmented):
-
-```rust
-use tui_slider::border::BorderStyle;
-use ratatui::widgets::{Block, Borders};
-
-let block = Block::default()
-    .borders(Borders::ALL)
-    .border_set(BorderStyle::Rounded.border_set())
-    .title("Slider");
-
-let slider = Slider::from_state(&state).block(block);
-```
-
-### Title Alignment
-
-![Title Alignment](examples/vhs/target/title_alignment.gif)
-
-Control where titles appear on borders:
-
-```rust
-use tui_slider::border::{title_left, title_center, title_right, title_right_with_spacing};
-use ratatui::widgets::{Block, Borders};
-
-// Left-aligned title
-let title = title_left("Volume");
-let block = Block::default().borders(Borders::ALL).title(title);
-
-// Center-aligned title
-let title = title_center("Settings");
-let block = Block::default().borders(Borders::ALL).title(title);
-
-// Right-aligned title (use title_right_with_spacing if value is also right-aligned)
-let title = title_right_with_spacing("Status");
-let block = Block::default().borders(Borders::ALL).title(title);
-```
-
-### Value Alignment
-
-![Value Alignment](examples/vhs/target/value_alignment.gif)
-
-Control where values appear above/beside the slider (for horizontal sliders):
-
-```rust
-use ratatui::layout::Alignment;
-
-// Left-aligned value
-let slider = Slider::from_state(&state)
-    .show_value(true)
-    .value_alignment(Alignment::Left);
-
-// Center-aligned value
-let slider = Slider::from_state(&state)
-    .show_value(true)
-    .value_alignment(Alignment::Center);
-
-// Right-aligned value (default)
-let slider = Slider::from_state(&state)
-    .show_value(true)
-    .value_alignment(Alignment::Right);
-```
-
-### Vertical Slider Positioning
-
-Control the positioning of labels and values in vertical sliders:
-
-```rust
-use tui_slider::{
-    Slider, SliderOrientation, SliderState,
-    VerticalLabelPosition, VerticalValuePosition, VerticalValueAlignment
-};
-
-let state = SliderState::new(75.0, 0.0, 100.0);
-
-// Label at top, value at bottom center
-let slider = Slider::from_state(&state)
-    .orientation(SliderOrientation::Vertical)
-    .label("Volume")
-    .show_value(true)
-    .vertical_label_position(VerticalLabelPosition::Top)
-    .vertical_value_position(VerticalValuePosition::Bottom)
-    .vertical_value_alignment(VerticalValueAlignment::Center);
-
-// Label at bottom, value at top left
-let slider = Slider::from_state(&state)
-    .orientation(SliderOrientation::Vertical)
-    .label("Bass")
-    .show_value(true)
-    .vertical_label_position(VerticalLabelPosition::Bottom)
-    .vertical_value_position(VerticalValuePosition::Top)
-    .vertical_value_alignment(VerticalValueAlignment::Left);
-
-// Value at middle right
-let slider = Slider::from_state(&state)
-    .orientation(SliderOrientation::Vertical)
-    .show_value(true)
-    .vertical_value_position(VerticalValuePosition::Middle)
-    .vertical_value_alignment(VerticalValueAlignment::Right);
-```
-
-**Label Position Options:**
-- `VerticalLabelPosition::Top` - Label at the top (default)
-- `VerticalLabelPosition::Bottom` - Label at the bottom
-
-**Value Position Options:**
-- `VerticalValuePosition::Top` - Value at the top
-- `VerticalValuePosition::Middle` - Value at the middle
-- `VerticalValuePosition::Bottom` - Value at the bottom (default)
-
-**Value Alignment Options:**
-- `VerticalValueAlignment::Left` - Value aligned left
-- `VerticalValueAlignment::Center` - Value aligned center (default)
-- `VerticalValueAlignment::Right` - Value aligned right
-
-**Recommended Symbols for Vertical Sliders:**
-```rust
-use tui_slider::symbols;
-
-// Clean vertical lines (default look)
-.filled_symbol(symbols::FILLED_VERTICAL_LINE)   // "│"
-.empty_symbol(symbols::EMPTY_VERTICAL_LINE)     // "│"
-.handle_symbol(symbols::HANDLE_HORIZONTAL_LINE) // "━"
-
-// Or use predefined styles
-use tui_slider::style::SliderStyle;
-let style = SliderStyle::vertical();
-```
-
-### Ensuring Consistent Vertical Slider Heights
-
-For vertical sliders displayed side-by-side (like audio mixers), ensure consistent heights by:
-
-1. **Reserve space for labels and values INSIDE the block**
-2. **Use the same slider area height for all sliders**
-
-```rust
-use ratatui::layout::Rect;
-
-// Inside your render function, after rendering the block:
-let inner_area = block.inner(area);
-f.render_widget(block, area);
-
-// Reserve 2 lines at bottom: 1 blank line + 1 for value
-let slider_height = inner_area.height.saturating_sub(2);
-
-let slider_area = Rect {
-    x: inner_area.x,
-    y: inner_area.y,
-    width: inner_area.width,
-    height: slider_height,  // Same for all sliders
-};
-
-// Render slider WITHOUT built-in label/value
-let slider = Slider::from_state(&state)
-    .orientation(SliderOrientation::Vertical)
-    .filled_symbol(style.filled_symbol)
-    .empty_symbol(style.empty_symbol)
-    .handle_symbol(style.handle_symbol)
-    .filled_color(style.filled_color)
-    .show_handle(true);  // Don't use .show_value(true) here
-
-f.render_widget(slider, slider_area);
-
-// Manually render value at the bottom, centered
-let value_area = Rect {
-    x: inner_area.x,
-    y: inner_area.y + slider_height + 1,
-    width: inner_area.width,
-    height: 1,
-};
-
-let value_para = Paragraph::new(format!("{:.0}", state.value()))
-    .style(Style::default().fg(Color::Cyan))
-    .alignment(Alignment::Center);
-
-f.render_widget(value_para, value_area);
-```
-
-**Why this approach?**
-- All sliders use `slider_height` = `inner_area.height - 2`
-- This ensures uniform slider bar lengths
-- Labels go in block titles
-- Values are manually positioned at the bottom
-- Consistent spacing and alignment across all sliders
-
-**Recommended Symbols for Horizontal Sliders:**
-```rust
-use tui_slider::symbols;
-
-// Thick lines (default look)
-.filled_symbol(symbols::FILLED_THICK_LINE)      // "━"
-.empty_symbol(symbols::EMPTY_THIN_LINE)         // "─"
-.handle_symbol(symbols::HANDLE_CIRCLE)          // "●"
-
-// Clean horizontal lines
-.filled_symbol(symbols::FILLED_HORIZONTAL_LINE) // "─"
-.empty_symbol(symbols::EMPTY_HORIZONTAL_LINE)   // "─"
-.handle_symbol(symbols::HANDLE_VERTICAL_LINE)   // "│"
-
-// Or use predefined styles
-use tui_slider::style::SliderStyle;
-let style = SliderStyle::horizontal_thick();
-```
-
-### Progress Bars
-
-![Progress Bars](examples/vhs/target/progress_bars.gif)
-
-Use sliders as progress indicators by hiding the handle:
-
-```rust
-let slider = Slider::from_state(&state)
-    .filled_symbol("▓")
-    .empty_symbol("░")
-    .show_handle(false)  // Hide handle for progress bar style
+    .filled_symbol("━")
+    .empty_symbol("─")
+    .handle_symbol("●")
     .show_value(true);
 ```
 
-### Custom Symbols
+### Vertical Slider
 
 ```rust
 let slider = Slider::from_state(&state)
+    .orientation(SliderOrientation::Vertical)
     .filled_symbol("█")
     .empty_symbol("░")
-    .handle_symbol("▐")
-    .filled_color(Color::Yellow)
-    .show_handle(true);
+    .handle_symbol("▬");
 ```
 
-### Toggle Thumb/Handle Visibility
+### Using Predefined Styles
 
 ```rust
-// Show the thumb indicator (default)
-let slider = Slider::from_state(&state)
-    .show_thumb(true);
+use tui_slider::style::SliderStyle;
 
-// Hide the thumb for a progress bar style
+let style = SliderStyle::horizontal_thick();
 let slider = Slider::from_state(&state)
-    .show_thumb(false);
+    .filled_symbol(style.filled_symbol)
+    .filled_color(style.filled_color);
+```
 
-// show_handle() is an alias for show_thumb()
+### Progress Bar (No Handle)
+
+```rust
 let slider = Slider::from_state(&state)
-    .show_handle(false);
+    .show_handle(false)
+    .filled_symbol("█")
+    .empty_symbol("░");
 ```
 
 ## 🎮 Interactive Usage
@@ -469,42 +165,19 @@ let percentage = state.percentage();
 
 ## 🎨 Demos
 
-Run the examples to see the sliders in action:
+Run examples to see sliders in action:
 
 ```bash
-# Horizontal sliders with different styles
-cargo run --example horizontal
-
-# Horizontal slider styles
-cargo run --example horizontal_styles
-
-# Vertical sliders (equalizer style)
-cargo run --example vertical
-
-# Border styles demonstration
-cargo run --example border_styles
-
-# Title alignment examples
-cargo run --example title_alignment
-
-# Value alignment examples
-cargo run --example value_alignment
-
-# Vertical slider positioning examples
-cargo run --example vertical_positioning
-
-# Vertical slider styles
-cargo run --example vertical_styles
-
-# Progress bar styles
-cargo run --example progress_bars
-
-# Custom slider configurations
-cargo run --example custom
-
-# Toggle thumb/handle visibility
-cargo run --example thumb_toggle
+cargo run --example horizontal        # Horizontal styles
+cargo run --example vertical          # Vertical/mixer style
+cargo run --example custom            # RGB colors & symbols
+cargo run --example progress_bars     # Progress indicators
+cargo run --example step_sizes        # Configurable steps
+cargo run --example border_colors     # Themed borders
+cargo run --example title_alignment   # Layout options
 ```
+
+**Browse all:** [Visual Gallery](examples/EXAMPLES_GALLERY.md) | [Complete Guide](examples/README.md)
 
 ## 🏗️ Architecture
 
