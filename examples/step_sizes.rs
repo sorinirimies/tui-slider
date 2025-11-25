@@ -49,12 +49,6 @@ impl App {
                     filled_color: Color::Green,
                 },
                 SliderConfig {
-                    label: "Medium Steps".to_string(),
-                    state: SliderState::with_step(50.0, 0.0, 100.0, 2.5),
-                    description: "Step: 2.5 - Moderate jumps".to_string(),
-                    filled_color: Color::Yellow,
-                },
-                SliderConfig {
                     label: "Coarse".to_string(),
                     state: SliderState::with_step(50.0, 0.0, 100.0, 5.0),
                     description: "Step: 5.0 - Quick adjustments".to_string(),
@@ -67,28 +61,10 @@ impl App {
                     filled_color: Color::Red,
                 },
                 SliderConfig {
-                    label: "Quarter Steps".to_string(),
-                    state: SliderState::with_step(50.0, 0.0, 100.0, 25.0),
-                    description: "Step: 25.0 - Jump by quarters".to_string(),
-                    filled_color: Color::Blue,
-                },
-                SliderConfig {
                     label: "Percentage".to_string(),
                     state: SliderState::with_step(0.5, 0.0, 1.0, 0.01),
-                    description: "Step: 0.01 - Range 0-1 in 1% increments".to_string(),
-                    filled_color: Color::LightCyan,
-                },
-                SliderConfig {
-                    label: "Volume dB".to_string(),
-                    state: SliderState::with_step(0.0, -60.0, 0.0, 0.5),
-                    description: "Step: 0.5 - Range -60 to 0 dB".to_string(),
-                    filled_color: Color::LightGreen,
-                },
-                SliderConfig {
-                    label: "Temperature".to_string(),
-                    state: SliderState::with_step(20.0, -20.0, 50.0, 0.1),
-                    description: "Step: 0.1 - Range -20°C to 50°C".to_string(),
-                    filled_color: Color::LightRed,
+                    description: "Step: 0.01 - Range 0-1 (1% increments)".to_string(),
+                    filled_color: Color::Blue,
                 },
             ],
             selected: 0,

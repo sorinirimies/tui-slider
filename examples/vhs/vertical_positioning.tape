@@ -4,9 +4,9 @@ Output examples/vhs/output/vertical_positioning.gif
 
 Set Shell "bash"
 Set FontSize 14
-Set Width 1400
-Set Height 700
-Set PlaybackSpeed 1.0
+Set Width 1200
+Set Height 800
+Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
 Type "cargo run --example vertical_positioning"

@@ -290,44 +290,23 @@ vhs-vertical:
 # Run the VHS tape to generate demo GIF for custom slider
 vhs-custom:
     @echo "Running VHS tape to generate custom demo..."
-    vhs examples/vhs/custom.tape
+    vhs examples/vhs/custom_symbols.tape
     @echo "✅ Demo generated at examples/vhs/output/custom.gif"
 
-# Run the VHS tape to generate demo GIF for thumb toggle
-vhs-thumb:
-    @echo "Running VHS tape to generate thumb toggle demo..."
-    vhs examples/vhs/thumb_toggle.tape
-    @echo "✅ Demo generated at examples/vhs/output/thumb_toggle.gif"
+# Run the VHS tape to generate demo GIF for handles (with/without comparison)
+vhs-handles:
+    @echo "Running VHS tape to generate handles demo..."
+    vhs examples/vhs/handles.tape
+    @echo "✅ Demo generated at examples/vhs/output/handles.gif"
 
-# Run the VHS tape to generate demo GIF for border colors
-vhs-border-colors:
-    @echo "Running VHS tape to generate border colors demo..."
-    vhs examples/vhs/border_colors.tape
-    @echo "✅ Demo generated at examples/vhs/output/border_colors.gif"
+# Run the VHS tape to generate demo GIF for borders (styles and colors)
+vhs-borders:
+    @echo "Running VHS tape to generate borders demo..."
+    vhs examples/vhs/borders.tape
+    @echo "✅ Demo generated at examples/vhs/output/borders.gif"
 
-# Run the VHS tape to generate demo GIF for border styles
-vhs-border-styles:
-    @echo "Running VHS tape to generate border styles demo..."
-    vhs examples/vhs/border_styles.tape
-    @echo "✅ Demo generated at examples/vhs/output/border_styles.gif"
 
-# Run the VHS tape to generate demo GIF for handle toggle
-vhs-handle-toggle:
-    @echo "Running VHS tape to generate handle toggle demo..."
-    vhs examples/vhs/handle_toggle.tape
-    @echo "✅ Demo generated at examples/vhs/output/handle_toggle.gif"
 
-# Run the VHS tape to generate demo GIF for horizontal styles
-vhs-horizontal-styles:
-    @echo "Running VHS tape to generate horizontal styles demo..."
-    vhs examples/vhs/horizontal_styles.tape
-    @echo "✅ Demo generated at examples/vhs/output/horizontal_styles.gif"
-
-# Run the VHS tape to generate demo GIF for progress bars
-vhs-progress-bars:
-    @echo "Running VHS tape to generate progress bars demo..."
-    vhs examples/vhs/progress_bars.tape
-    @echo "✅ Demo generated at examples/vhs/output/progress_bars.gif"
 
 # Run the VHS tape to generate demo GIF for step sizes
 vhs-step-sizes:
@@ -360,5 +339,5 @@ vhs-vertical-styles:
     @echo "✅ Demo generated at examples/vhs/output/vertical_styles.gif"
 
 # Run all VHS tapes to generate all demo GIFs
-vhs-all: vhs-horizontal vhs-vertical vhs-custom vhs-thumb vhs-border-colors vhs-border-styles vhs-handle-toggle vhs-horizontal-styles vhs-progress-bars vhs-step-sizes vhs-title-alignment vhs-value-alignment vhs-vertical-positioning vhs-vertical-styles
+vhs-all: vhs-horizontal vhs-vertical vhs-custom vhs-handles vhs-borders vhs-step-sizes vhs-title-alignment vhs-value-alignment vhs-vertical-positioning vhs-vertical-styles
     @echo "✅ All demo GIFs generated!"

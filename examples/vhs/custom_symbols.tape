@@ -6,7 +6,7 @@ Set Shell "bash"
 Set FontSize 14
 Set Width 1200
 Set Height 800
-Set PlaybackSpeed 1.0
+Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
 Type "cargo run --example custom"

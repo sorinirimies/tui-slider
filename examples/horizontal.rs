@@ -1,6 +1,8 @@
-//! Horizontal slider example with different styles
+//! Horizontal slider styles example
 //!
-//! This example demonstrates horizontal sliders with various styling configurations.
+//! This example demonstrates various horizontal slider styles organized into two pages:
+//! - Page 1: Standard Styles (basic lines, blocks, gradients, progress bars)
+//! - Page 2: Specialty Styles (segmented, dots, squares, stars)
 
 use anyhow::Result;
 use crossterm::{
@@ -19,94 +21,202 @@ use std::io;
 use tui_slider::style::SliderStyle;
 use tui_slider::{Slider, SliderOrientation, SliderState};
 
+struct SliderExample {
+    label: String,
+    state: SliderState,
+    style: SliderStyle,
+    show_handle: bool,
+    description: String,
+}
+
 struct App {
-    sliders: Vec<(String, SliderState, SliderStyle, bool)>, // Added bool for show_handle
+    examples: Vec<SliderExample>,
     selected: usize,
+    current_page: usize,
+    items_per_page: usize,
 }
 
 impl App {
     fn new() -> Self {
         Self {
-            sliders: vec![
-                (
-                    "Volume".to_string(),
-                    SliderState::with_step(75.0, 0.0, 100.0, 1.0),
-                    SliderStyle::default_style(),
-                    true, // show_handle
-                ),
-                (
-                    "Bass".to_string(),
-                    SliderState::with_step(60.0, 0.0, 100.0, 1.0),
-                    SliderStyle::blocks(),
-                    true, // show_handle
-                ),
-                (
-                    "Chorus".to_string(),
-                    SliderState::with_step(65.0, 0.0, 100.0, 1.0),
-                    SliderStyle::progress(),
-                    true, // show_handle
-                ),
-                (
-                    "Compression".to_string(),
-                    SliderState::with_step(70.0, 0.0, 100.0, 1.0),
-                    SliderStyle::gradient(),
-                    true, // show_handle
-                ),
-                (
-                    "Mix".to_string(),
-                    SliderState::with_step(70.0, 0.0, 100.0, 1.0),
-                    SliderStyle::segmented(),
-                    true, // show_handle
-                ),
-                (
-                    "Attack".to_string(),
-                    SliderState::with_step(45.0, 0.0, 100.0, 1.0),
-                    SliderStyle::segmented_blocks(),
-                    true, // show_handle
-                ),
-                (
-                    "Release".to_string(),
-                    SliderState::with_step(60.0, 0.0, 100.0, 1.0),
-                    SliderStyle::segmented_dots(),
-                    false, // show_handle - hidden for dots style
-                ),
-                (
-                    "Decay".to_string(),
-                    SliderState::with_step(35.0, 0.0, 100.0, 1.0),
-                    SliderStyle::segmented_squares(),
-                    false, // show_handle - hidden for squares style
-                ),
-                (
-                    "Cutoff".to_string(),
-                    SliderState::with_step(75.0, 0.0, 100.0, 1.0),
-                    SliderStyle::segmented_stars(),
-                    true, // show_handle
-                ),
+            examples: vec![
+                // Page 1: Standard Styles
+                SliderExample {
+                    label: "Default".to_string(),
+                    state: SliderState::with_step(75.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::default_style(),
+                    show_handle: true,
+                    description: "Clean default style".to_string(),
+                },
+                SliderExample {
+                    label: "Horizontal".to_string(),
+                    state: SliderState::with_step(60.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::horizontal(),
+                    show_handle: true,
+                    description: "Standard horizontal".to_string(),
+                },
+                SliderExample {
+                    label: "Thick Line".to_string(),
+                    state: SliderState::with_step(65.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::horizontal_thick(),
+                    show_handle: true,
+                    description: "Bold thick line".to_string(),
+                },
+                SliderExample {
+                    label: "Blocks".to_string(),
+                    state: SliderState::with_step(70.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::blocks(),
+                    show_handle: true,
+                    description: "Solid block style".to_string(),
+                },
+                SliderExample {
+                    label: "Block Style".to_string(),
+                    state: SliderState::with_step(55.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::horizontal_blocks(),
+                    show_handle: true,
+                    description: "Block variation".to_string(),
+                },
+                SliderExample {
+                    label: "Gradient".to_string(),
+                    state: SliderState::with_step(80.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::gradient(),
+                    show_handle: true,
+                    description: "Shaded gradient".to_string(),
+                },
+                SliderExample {
+                    label: "Gradient Style".to_string(),
+                    state: SliderState::with_step(45.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::horizontal_gradient(),
+                    show_handle: true,
+                    description: "Gradient variation".to_string(),
+                },
+                SliderExample {
+                    label: "Progress".to_string(),
+                    state: SliderState::with_step(65.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::progress(),
+                    show_handle: true,
+                    description: "Progress bar style".to_string(),
+                },
+                SliderExample {
+                    label: "Double Line".to_string(),
+                    state: SliderState::with_step(50.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::horizontal_double(),
+                    show_handle: true,
+                    description: "Double line border".to_string(),
+                },
+                // Page 2: Specialty Styles
+                SliderExample {
+                    label: "Segmented".to_string(),
+                    state: SliderState::with_step(70.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::segmented(),
+                    show_handle: true,
+                    description: "Segmented sections".to_string(),
+                },
+                SliderExample {
+                    label: "Segmented Blocks".to_string(),
+                    state: SliderState::with_step(60.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::segmented_blocks(),
+                    show_handle: true,
+                    description: "Block segments".to_string(),
+                },
+                SliderExample {
+                    label: "Dots".to_string(),
+                    state: SliderState::with_step(55.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::horizontal_dots(),
+                    show_handle: false,
+                    description: "Dotted style".to_string(),
+                },
+                SliderExample {
+                    label: "Segmented Dots".to_string(),
+                    state: SliderState::with_step(75.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::segmented_dots(),
+                    show_handle: false,
+                    description: "Dotted segments".to_string(),
+                },
+                SliderExample {
+                    label: "Squares".to_string(),
+                    state: SliderState::with_step(45.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::horizontal_squares(),
+                    show_handle: false,
+                    description: "Square blocks".to_string(),
+                },
+                SliderExample {
+                    label: "Segmented Squares".to_string(),
+                    state: SliderState::with_step(80.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::segmented_squares(),
+                    show_handle: false,
+                    description: "Square segments".to_string(),
+                },
+                SliderExample {
+                    label: "Stars".to_string(),
+                    state: SliderState::with_step(65.0, 0.0, 100.0, 1.0),
+                    style: SliderStyle::segmented_stars(),
+                    show_handle: true,
+                    description: "Star segments".to_string(),
+                },
             ],
             selected: 0,
+            current_page: 0,
+            items_per_page: 9,
+        }
+    }
+
+    fn total_pages(&self) -> usize {
+        self.examples.len().div_ceil(self.items_per_page)
+    }
+
+    fn current_page_examples(&self) -> &[SliderExample] {
+        let start = self.current_page * self.items_per_page;
+        let end = (start + self.items_per_page).min(self.examples.len());
+        &self.examples[start..end]
+    }
+
+    fn page_title(&self) -> &str {
+        match self.current_page {
+            0 => "Standard Styles",
+            1 => "Specialty Styles",
+            _ => "Horizontal Sliders",
         }
     }
 
     fn next(&mut self) {
-        self.selected = (self.selected + 1) % self.sliders.len();
+        let page_examples = self.current_page_examples().len();
+        if self.selected < page_examples - 1 {
+            self.selected += 1;
+        }
     }
 
     fn previous(&mut self) {
         if self.selected > 0 {
             self.selected -= 1;
-        } else {
-            self.selected = self.sliders.len() - 1;
+        }
+    }
+
+    fn next_page(&mut self) {
+        if self.current_page < self.total_pages() - 1 {
+            self.current_page += 1;
+            self.selected = 0;
+        }
+    }
+
+    fn prev_page(&mut self) {
+        if self.current_page > 0 {
+            self.current_page -= 1;
+            self.selected = 0;
         }
     }
 
     fn increase(&mut self) {
-        if let Some((_, state, _, _)) = self.sliders.get_mut(self.selected) {
-            state.step_up();
+        let absolute_idx = self.current_page * self.items_per_page + self.selected;
+        if let Some(example) = self.examples.get_mut(absolute_idx) {
+            example.state.step_up();
         }
     }
+
     fn decrease(&mut self) {
-        if let Some((_, state, _, _)) = self.sliders.get_mut(self.selected) {
-            state.step_down();
+        let absolute_idx = self.current_page * self.items_per_page + self.selected;
+        if let Some(example) = self.examples.get_mut(absolute_idx) {
+            example.state.step_down();
         }
     }
 }
@@ -152,6 +262,8 @@ fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut A
                     KeyCode::Up | KeyCode::Char('k') => app.previous(),
                     KeyCode::Right | KeyCode::Char('l') => app.increase(),
                     KeyCode::Left | KeyCode::Char('h') => app.decrease(),
+                    KeyCode::PageDown | KeyCode::Char('n') => app.next_page(),
+                    KeyCode::PageUp | KeyCode::Char('p') => app.prev_page(),
                     _ => {}
                 }
             }
@@ -166,12 +278,12 @@ fn ui(f: &mut Frame, app: &App) {
         .constraints([
             Constraint::Length(3),
             Constraint::Min(10),
-            Constraint::Length(3),
+            Constraint::Length(5),
         ])
         .split(f.area());
 
     // Title
-    let title = Paragraph::new("Horizontal Slider Styles Demo")
+    let title = Paragraph::new(format!("Horizontal Slider Styles - {}", app.page_title()))
         .style(
             Style::default()
                 .fg(Color::Cyan)
@@ -181,9 +293,18 @@ fn ui(f: &mut Frame, app: &App) {
     f.render_widget(title, main_chunks[0]);
 
     // Help text
-    let help = Paragraph::new("↑/↓ or j/k: Select | ←/→ or h/l: Adjust | q/Esc: Quit")
-        .style(Style::default().fg(Color::Gray))
-        .alignment(Alignment::Center);
+    let help = Paragraph::new(vec![
+        ratatui::text::Line::from("↑/↓ or j/k: Select | ←/→ or h/l: Adjust value"),
+        ratatui::text::Line::from("n/PageDown: Next page | p/PageUp: Previous page | q/ESC: Quit"),
+        ratatui::text::Line::from(format!(
+            "Page {}/{} - {} styles on this page",
+            app.current_page + 1,
+            app.total_pages(),
+            app.current_page_examples().len()
+        )),
+    ])
+    .style(Style::default().fg(Color::Gray))
+    .alignment(Alignment::Center);
     f.render_widget(help, main_chunks[2]);
 
     // Render sliders
@@ -191,9 +312,11 @@ fn ui(f: &mut Frame, app: &App) {
 }
 
 fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
-    let num_sliders = app.sliders.len();
+    let examples = app.current_page_examples();
+    let num_examples = examples.len();
+
     let mut constraints = vec![Constraint::Length(1)];
-    for _ in 0..num_sliders {
+    for _ in 0..num_examples {
         constraints.push(Constraint::Length(5));
     }
     constraints.push(Constraint::Min(0));
@@ -203,7 +326,7 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
         .constraints(constraints)
         .split(area);
 
-    for (i, (label, state, style, show_handle)) in app.sliders.iter().enumerate() {
+    for (i, example) in examples.iter().enumerate() {
         if i + 1 >= chunks.len() {
             break;
         }
@@ -220,34 +343,37 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
             } else {
                 Style::default().fg(Color::DarkGray)
             })
-            .title(format!(" {} - {} Style ", label, style.name));
+            .title(format!(
+                " {} - {} - {} ",
+                example.label, example.style.name, example.description
+            ));
 
-        if style.segmented {
+        if example.style.segmented {
             // Render segmented slider with custom logic
             render_segmented_slider(
                 f,
-                state,
-                style,
+                &example.state,
+                &example.style,
                 is_selected,
-                *show_handle,
+                example.show_handle,
                 block,
                 chunks[i + 1],
             );
         } else {
-            let slider = Slider::from_state(state)
+            let slider = Slider::from_state(&example.state)
                 .orientation(SliderOrientation::Horizontal)
-                .filled_symbol(style.filled_symbol)
-                .empty_symbol(style.empty_symbol)
-                .handle_symbol(style.handle_symbol)
-                .filled_color(style.filled_color)
-                .empty_color(style.empty_color)
+                .filled_symbol(example.style.filled_symbol)
+                .empty_symbol(example.style.empty_symbol)
+                .handle_symbol(example.style.handle_symbol)
+                .filled_color(example.style.filled_color)
+                .empty_color(example.style.empty_color)
                 .handle_color(if is_selected {
                     Color::White
                 } else {
-                    style.handle_color
+                    example.style.handle_color
                 })
                 .show_value(true)
-                .show_handle(*show_handle)
+                .show_handle(example.show_handle)
                 .block(block);
 
             f.render_widget(slider, chunks[i + 1]);

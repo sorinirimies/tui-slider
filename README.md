@@ -59,11 +59,28 @@ fn main() {
 
 ## 📖 Examples
 
-> 🎨 **[Visual Gallery](examples/EXAMPLES_GALLERY.md)** | 📚 **[All Examples](examples/README.md)**
+> 📚 **[Examples Source Code →](examples/)** - View all example implementations
 
-![Examples Gallery](examples/vhs/output/horizontal.gif)
+### 🎯 Quick Navigation
 
-### Horizontal Slider
+- [Horizontal Sliders](#horizontal-sliders)
+- [Vertical Sliders](#vertical-sliders)
+- [Styling & Customization](#styling--customization)
+- [Interactive Features](#interactive-features)
+- [Layout & Positioning](#layout--positioning)
+
+- [Complete Example Index](#-complete-example-index)
+
+---
+
+## Horizontal Sliders
+
+### Horizontal Slider Styles
+Comprehensive horizontal slider styles organized into two pages:
+- **Page 1: Standard Styles** - Basic lines, blocks, gradients, progress bars (9 styles)
+- **Page 2: Specialty Styles** - Segmented, dots, squares, stars (7 styles)
+
+![Horizontal Demo](examples/vhs/output/horizontal.gif)
 
 ```rust
 use tui_slider::{Slider, SliderState, SliderOrientation};
@@ -77,7 +94,18 @@ let slider = Slider::from_state(&state)
     .show_value(true);
 ```
 
-### Vertical Slider
+🚀 `cargo run --example horizontal` | 📄 [View Source](examples/horizontal.rs)
+
+_Use `n`/`PageDown` and `p`/`PageUp` to navigate between style pages._
+
+---
+
+## Vertical Sliders
+
+### Basic Vertical Styles
+Vertical slider orientation with various visual styles, perfect for mixer interfaces.
+
+![Vertical Demo](examples/vhs/output/vertical.gif)
 
 ```rust
 let slider = Slider::from_state(&state)
@@ -87,7 +115,34 @@ let slider = Slider::from_state(&state)
     .handle_symbol("▬");
 ```
 
-### Using Predefined Styles
+🚀 `cargo run --example vertical` | 📄 [View Source](examples/vertical.rs)
+
+---
+
+### Vertical Style Variations
+Additional vertical slider styles optimized for different use cases.
+
+![Vertical Styles Demo](examples/vhs/output/vertical_styles.gif)
+
+🚀 `cargo run --example vertical_styles` | 📄 [View Source](examples/vertical_styles.rs)
+
+---
+
+### Vertical Positioning
+Layout strategies and positioning techniques for vertical sliders.
+
+![Vertical Positioning Demo](examples/vhs/output/vertical_positioning.gif)
+
+🚀 `cargo run --example vertical_positioning` | 📄 [View Source](examples/vertical_positioning.rs)
+
+---
+
+## Styling & Customization
+
+### Custom Styles
+Create your own slider styles with custom RGB colors and symbol combinations.
+
+![Custom Styles Demo](examples/vhs/output/custom.gif)
 
 ```rust
 use tui_slider::style::SliderStyle;
@@ -98,14 +153,90 @@ let slider = Slider::from_state(&state)
     .filled_color(style.filled_color);
 ```
 
-### Progress Bar (No Handle)
+🚀 `cargo run --example custom` | 📄 [View Source](examples/custom_symbols.rs)
 
-```rust
-let slider = Slider::from_state(&state)
-    .show_handle(false)
-    .filled_symbol("█")
-    .empty_symbol("░");
-```
+---
+
+### Borders
+Border types, styles, and color theming - including Plain, Rounded, Double, Thick borders with full, segmented, and sides-only variations.
+
+![Borders Demo](examples/vhs/output/borders.gif)
+
+🚀 `cargo run --example borders` | 📄 [View Source](examples/borders.rs)
+
+---
+
+## Interactive Features
+
+### Handle/Thumb Visibility
+Side-by-side comparison of sliders WITH handles (interactive controls) vs WITHOUT handles (progress bars).
+Shows the same sliders in both modes to clearly demonstrate the difference.
+
+![Handles Demo](examples/vhs/output/handles.gif)
+
+🚀 `cargo run --example handles` | 📄 [View Source](examples/handles.rs)
+
+_Use `Tab` to switch between left (with handles) and right (without handles) sections._
+
+---
+
+### Step Sizes
+Configurable step intervals for fine or coarse value adjustments.
+
+![Step Sizes Demo](examples/vhs/output/step_sizes.gif)
+
+🚀 `cargo run --example step_sizes` | 📄 [View Source](examples/step_sizes.rs)
+
+---
+
+## Layout & Positioning
+
+### Title Alignment
+Position slider titles left, center, or right.
+
+![Title Alignment Demo](examples/vhs/output/title_alignment.gif)
+
+🚀 `cargo run --example title_alignment` | 📄 [View Source](examples/title_alignment.rs)
+
+---
+
+### Value Alignment
+Control value display positioning for optimal layout.
+
+![Value Alignment Demo](examples/vhs/output/value_alignment.gif)
+
+🚀 `cargo run --example value_alignment` | 📄 [View Source](examples/value_alignment.rs)
+
+---
+
+
+## 📋 Complete Example Index
+
+| Example | Category | Description | Demo | Source |
+|---------|----------|-------------|------|--------|
+| `horizontal.rs` | Horizontal | Comprehensive horizontal styles (2 pages: Standard & Specialty) | [GIF](examples/vhs/output/horizontal.gif) | [Code](examples/horizontal.rs) |
+| `vertical.rs` | Vertical | Basic vertical slider styles | [GIF](examples/vhs/output/vertical.gif) | [Code](examples/vertical.rs) |
+| `vertical_styles.rs` | Vertical | Extended vertical variations | [GIF](examples/vhs/output/vertical_styles.gif) | [Code](examples/vertical_styles.rs) |
+| `vertical_positioning.rs` | Vertical | Vertical layout strategies | [GIF](examples/vhs/output/vertical_positioning.gif) | [Code](examples/vertical_positioning.rs) |
+| `custom_symbols.rs` | Styling | Custom RGB colors and symbols | [GIF](examples/vhs/output/custom.gif) | [Code](examples/custom_symbols.rs) |
+| `borders.rs` | Styling | Border types, styles, and colors | [GIF](examples/vhs/output/borders.gif) | [Code](examples/borders.rs) |
+| `handles.rs` | Interactive | Handle visibility comparison (with/without) | [GIF](examples/vhs/output/handles.gif) | [Code](examples/handles.rs) |
+| `step_sizes.rs` | Interactive | Configurable step intervals | [GIF](examples/vhs/output/step_sizes.gif) | [Code](examples/step_sizes.rs) |
+| `title_alignment.rs` | Layout | Title positioning options | [GIF](examples/vhs/output/title_alignment.gif) | [Code](examples/title_alignment.rs) |
+| `value_alignment.rs` | Layout | Value display positioning | [GIF](examples/vhs/output/value_alignment.gif) | [Code](examples/value_alignment.rs) |
+
+
+---
+
+## 🎮 Common Controls
+
+Most examples share similar keyboard controls:
+
+- **↑/↓** or **j/k** - Navigate between sliders
+- **←/→** or **h/l** - Adjust slider values
+- **q** or **ESC** - Quit the example
+
+Check each example's source code for specific controls and features.
 
 ## 🎮 Interactive Usage
 
@@ -163,21 +294,7 @@ let percentage = state.percentage();
 - `percentage()` - Get value as percentage (0.0-1.0)
 - `set_percentage(percentage)` - Set from percentage
 
-## 🎨 Demos
 
-Run examples to see sliders in action:
-
-```bash
-cargo run --example horizontal        # Horizontal styles
-cargo run --example vertical          # Vertical/mixer style
-cargo run --example custom            # RGB colors & symbols
-cargo run --example progress_bars     # Progress indicators
-cargo run --example step_sizes        # Configurable steps
-cargo run --example border_colors     # Themed borders
-cargo run --example title_alignment   # Layout options
-```
-
-**Browse all:** [Visual Gallery](examples/EXAMPLES_GALLERY.md) | [Complete Guide](examples/README.md)
 
 ## 🏗️ Architecture
 

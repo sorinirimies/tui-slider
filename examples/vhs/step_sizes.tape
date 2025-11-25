@@ -5,96 +5,97 @@ Output examples/vhs/output/step_sizes.gif
 Set Shell "bash"
 Set FontSize 14
 Set Width 1200
-Set Height 800
-Set PlaybackSpeed 1.0
+Set Height 700
+Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
 Type "cargo run --example step_sizes"
 Enter
 Sleep 2s
 
-# Show the interface with different step sizes
+# Show the interface with 5 different step sizes
 Sleep 1s
 
-# Navigate through sliders
-Type "j"
-Sleep 800ms
-Type "j"
-Sleep 800ms
-
-# Adjust slider with step size 1 (fine control)
+# Start with Fine Control (step 0.5)
+# Make small adjustments to show precision
 Type "l"
-Sleep 300ms
+Sleep 250ms
 Type "l"
-Sleep 300ms
+Sleep 250ms
 Type "l"
-Sleep 300ms
+Sleep 250ms
 Type "l"
-Sleep 300ms
-Type "l"
-Sleep 300ms
+Sleep 250ms
 
 Sleep 1s
 
-# Move to slider with step size 5
+# Move to Standard (step 1.0)
 Type "j"
-Sleep 800ms
+Sleep 600ms
 
-# Adjust with larger steps
+# Adjust with standard steps
 Type "h"
-Sleep 300ms
+Sleep 250ms
 Type "h"
-Sleep 300ms
+Sleep 250ms
 Type "h"
-Sleep 300ms
+Sleep 250ms
 
 Sleep 1s
 
-# Show step size 10
+# Move to Coarse (step 5.0)
 Type "j"
-Sleep 800ms
+Sleep 600ms
+
+# Show larger jumps
 Type "l"
-Sleep 300ms
+Sleep 250ms
 Type "l"
-Sleep 300ms
+Sleep 250ms
 Type "l"
-Sleep 300ms
+Sleep 250ms
 
 Sleep 1s
 
-# Navigate to step size 25
+# Move to Large Jumps (step 10.0)
 Type "j"
-Sleep 800ms
+Sleep 600ms
+
+# Demonstrate big increments
 Type "h"
-Sleep 300ms
+Sleep 250ms
 Type "h"
-Sleep 300ms
+Sleep 250ms
 
 Sleep 1s
 
-# Show step size 50 (large jumps)
+# Move to Percentage (step 0.01, range 0-1)
 Type "j"
-Sleep 800ms
+Sleep 600ms
+
+# Show percentage-based adjustments
 Type "l"
-Sleep 300ms
+Sleep 250ms
 Type "l"
-Sleep 300ms
+Sleep 250ms
+Type "l"
+Sleep 250ms
 
 Sleep 1s
 
-# Go back to show the differences
+# Go back to show contrast between step sizes
 Type "k"
-Sleep 800ms
+Sleep 600ms
 Type "k"
-Sleep 800ms
+Sleep 600ms
 Type "k"
-Sleep 800ms
+Sleep 600ms
+
+# Adjust Fine Control again to show difference
 Type "l"
-Sleep 300ms
+Sleep 250ms
 Type "l"
-Sleep 300ms
-Type "l"
-Sleep 300ms
+Sleep 250ms
 
 Sleep 2s
 

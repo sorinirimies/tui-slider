@@ -30,27 +30,11 @@ path = "examples/vertical.rs"
 
 [[example]]
 name = "custom"
-path = "examples/custom.rs"
+path = "examples/custom_symbols.rs"
 
 [[example]]
-name = "thumb_toggle"
-path = "examples/thumb_toggle.rs"
-
-[[example]]
-name = "width_test"
-path = "examples/width_test.rs"
-
-[[example]]
-name = "handle_toggle"
-path = "examples/handle_toggle.rs"
-
-[[example]]
-name = "progress_bars"
-path = "examples/progress_bars.rs"
-
-[[example]]
-name = "horizontal_styles"
-path = "examples/horizontal_styles.rs"
+name = "handles"
+path = "examples/handles.rs"
 
 [[example]]
 name = "vertical_styles"
@@ -65,12 +49,8 @@ name = "step_sizes"
 path = "examples/step_sizes.rs"
 
 [[example]]
-name = "border_styles"
-path = "examples/border_styles.rs"
-
-[[example]]
-name = "border_colors"
-path = "examples/border_colors.rs"
+name = "borders"
+path = "examples/borders.rs"
 
 [[example]]
 name = "title_alignment"

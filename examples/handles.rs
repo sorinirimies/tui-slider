@@ -1,7 +1,8 @@
-//! Thumb/Handle visibility example
+//! Handle/Thumb visibility example
 //!
-//! This example demonstrates sliders with and without thumb/handle indicators.
-//! The top sliders show thumbs, the bottom sliders hide them.
+//! This example demonstrates sliders with and without handles in a side-by-side comparison.
+//! The left section shows sliders WITH handles (interactive controls),
+//! the right section shows the same sliders WITHOUT handles (progress bar style).
 
 use anyhow::Result;
 use crossterm::{
@@ -13,60 +14,94 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, BorderType, Borders, Paragraph},
     Frame, Terminal,
 };
 use std::io;
 use tui_slider::{symbols, Slider, SliderOrientation, SliderState};
 
-struct SliderGroup {
+struct SliderPair {
     label: String,
     state: SliderState,
-    color: Color,
+    filled_symbol: &'static str,
+    empty_symbol: &'static str,
+    handle_symbol: &'static str,
+    filled_color: Color,
+    description: String,
 }
 
 struct App {
-    with_thumbs: Vec<SliderGroup>,
-    without_thumbs: Vec<SliderGroup>,
-    selected_section: usize, // 0 = with thumbs, 1 = without thumbs
+    pairs: Vec<SliderPair>,
+    selected_section: usize, // 0 = left (with handles), 1 = right (without handles)
     selected_index: usize,
 }
 
 impl App {
     fn new() -> Self {
         Self {
-            with_thumbs: vec![
-                SliderGroup {
+            pairs: vec![
+                SliderPair {
                     label: "Volume".to_string(),
                     state: SliderState::new(75.0, 0.0, 100.0),
-                    color: Color::Cyan,
+                    filled_symbol: symbols::FILLED_THICK_LINE,
+                    empty_symbol: symbols::EMPTY_THIN_LINE,
+                    handle_symbol: symbols::HANDLE_CIRCLE,
+                    filled_color: Color::Cyan,
+                    description: "Circle handle".to_string(),
                 },
-                SliderGroup {
+                SliderPair {
+                    label: "Balance".to_string(),
+                    state: SliderState::new(50.0, 0.0, 100.0),
+                    filled_symbol: symbols::FILLED_DOUBLE_LINE,
+                    empty_symbol: symbols::EMPTY_THIN_LINE,
+                    handle_symbol: symbols::HANDLE_DOUBLE_CIRCLE,
+                    filled_color: Color::Magenta,
+                    description: "Double circle handle".to_string(),
+                },
+                SliderPair {
                     label: "Bass".to_string(),
                     state: SliderState::new(60.0, 0.0, 100.0),
-                    color: Color::Green,
+                    filled_symbol: symbols::FILLED_BLOCK,
+                    empty_symbol: symbols::FILLED_LIGHT_SHADE,
+                    handle_symbol: symbols::HANDLE_SQUARE,
+                    filled_color: Color::Green,
+                    description: "Square handle".to_string(),
                 },
-                SliderGroup {
+                SliderPair {
                     label: "Treble".to_string(),
                     state: SliderState::new(55.0, 0.0, 100.0),
-                    color: Color::Blue,
+                    filled_symbol: symbols::FILLED_WAVE,
+                    empty_symbol: symbols::EMPTY_WAVE,
+                    handle_symbol: symbols::HANDLE_DIAMOND,
+                    filled_color: Color::Blue,
+                    description: "Diamond handle".to_string(),
                 },
-            ],
-            without_thumbs: vec![
-                SliderGroup {
+                SliderPair {
+                    label: "Mix".to_string(),
+                    state: SliderState::new(70.0, 0.0, 100.0),
+                    filled_symbol: symbols::FILLED_DARK_SHADE,
+                    empty_symbol: symbols::FILLED_LIGHT_SHADE,
+                    handle_symbol: symbols::HANDLE_HEXAGON,
+                    filled_color: Color::Yellow,
+                    description: "Hexagon handle".to_string(),
+                },
+                SliderPair {
                     label: "Progress".to_string(),
-                    state: SliderState::new(65.0, 0.0, 100.0),
-                    color: Color::Yellow,
+                    state: SliderState::new(45.0, 0.0, 100.0),
+                    filled_symbol: symbols::FILLED_PROGRESS,
+                    empty_symbol: symbols::EMPTY_PROGRESS,
+                    handle_symbol: symbols::HANDLE_TRIANGLE_RIGHT,
+                    filled_color: Color::LightYellow,
+                    description: "Triangle handle".to_string(),
                 },
-                SliderGroup {
-                    label: "Loading".to_string(),
-                    state: SliderState::new(40.0, 0.0, 100.0),
-                    color: Color::Magenta,
-                },
-                SliderGroup {
-                    label: "Status".to_string(),
-                    state: SliderState::new(80.0, 0.0, 100.0),
-                    color: Color::Red,
+                SliderPair {
+                    label: "Health".to_string(),
+                    state: SliderState::new(85.0, 0.0, 100.0),
+                    filled_symbol: symbols::FILLED_DARK_SHADE,
+                    empty_symbol: symbols::FILLED_LIGHT_SHADE,
+                    handle_symbol: symbols::HANDLE_BULLSEYE,
+                    filled_color: Color::Red,
+                    description: "Bullseye handle".to_string(),
                 },
             ],
             selected_section: 0,
@@ -75,56 +110,30 @@ impl App {
     }
 
     fn next(&mut self) {
-        let max_index = if self.selected_section == 0 {
-            self.with_thumbs.len()
-        } else {
-            self.without_thumbs.len()
-        };
-        self.selected_index = (self.selected_index + 1) % max_index;
+        self.selected_index = (self.selected_index + 1) % self.pairs.len();
     }
 
     fn previous(&mut self) {
-        let max_index = if self.selected_section == 0 {
-            self.with_thumbs.len()
-        } else {
-            self.without_thumbs.len()
-        };
         if self.selected_index > 0 {
             self.selected_index -= 1;
         } else {
-            self.selected_index = max_index - 1;
+            self.selected_index = self.pairs.len() - 1;
         }
     }
 
     fn switch_section(&mut self) {
         self.selected_section = if self.selected_section == 0 { 1 } else { 0 };
-        let max_index = if self.selected_section == 0 {
-            self.with_thumbs.len()
-        } else {
-            self.without_thumbs.len()
-        };
-        if self.selected_index >= max_index {
-            self.selected_index = max_index - 1;
-        }
     }
 
     fn increase(&mut self) {
-        if self.selected_section == 0 {
-            if let Some(group) = self.with_thumbs.get_mut(self.selected_index) {
-                group.state.increase(5.0);
-            }
-        } else if let Some(group) = self.without_thumbs.get_mut(self.selected_index) {
-            group.state.increase(5.0);
+        if let Some(pair) = self.pairs.get_mut(self.selected_index) {
+            pair.state.increase(5.0);
         }
     }
 
     fn decrease(&mut self) {
-        if self.selected_section == 0 {
-            if let Some(group) = self.with_thumbs.get_mut(self.selected_index) {
-                group.state.decrease(5.0);
-            }
-        } else if let Some(group) = self.without_thumbs.get_mut(self.selected_index) {
-            group.state.decrease(5.0);
+        if let Some(pair) = self.pairs.get_mut(self.selected_index) {
+            pair.state.decrease(5.0);
         }
     }
 }
@@ -185,12 +194,12 @@ fn ui(f: &mut Frame, app: &App) {
         .constraints([
             Constraint::Length(3),
             Constraint::Min(0),
-            Constraint::Length(3),
+            Constraint::Length(5),
         ])
         .split(f.area());
 
     // Title
-    let title = Paragraph::new("Thumb/Handle Visibility Demo")
+    let title = Paragraph::new("Handle/Thumb Visibility - Side-by-Side Comparison")
         .style(
             Style::default()
                 .fg(Color::Cyan)
@@ -200,35 +209,40 @@ fn ui(f: &mut Frame, app: &App) {
     f.render_widget(title, main_chunks[0]);
 
     // Help text
-    let help = Paragraph::new(
-        "Tab: Switch section | ↑/↓ or j/k: Select | ←/→ or h/l: Adjust | q/Esc: Quit",
-    )
+    let help = Paragraph::new(vec![
+        ratatui::text::Line::from(
+            "Tab: Switch section (Left: WITH handles | Right: WITHOUT handles)",
+        ),
+        ratatui::text::Line::from("↑/↓ or j/k: Select slider | ←/→ or h/l: Adjust value"),
+        ratatui::text::Line::from("Same sliders, different display - See the difference!"),
+        ratatui::text::Line::from("q/ESC: Quit"),
+    ])
     .style(Style::default().fg(Color::Gray))
     .alignment(Alignment::Center);
     f.render_widget(help, main_chunks[2]);
 
-    // Split content area into two sections
+    // Split content area into two columns
     let content_chunks = Layout::default()
-        .direction(Direction::Vertical)
+        .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(main_chunks[1]);
 
-    // Render with thumbs section
+    // Render left section (with handles)
     render_section(
         f,
-        "WITH THUMB INDICATORS",
-        &app.with_thumbs,
+        "WITH HANDLES (Interactive)",
+        &app.pairs,
         app.selected_section == 0,
         app.selected_index,
         true,
         content_chunks[0],
     );
 
-    // Render without thumbs section
+    // Render right section (without handles)
     render_section(
         f,
-        "WITHOUT THUMB INDICATORS (Progress Bar Style)",
-        &app.without_thumbs,
+        "WITHOUT HANDLES (Progress)",
+        &app.pairs,
         app.selected_section == 1,
         app.selected_index,
         false,
@@ -239,18 +253,19 @@ fn ui(f: &mut Frame, app: &App) {
 fn render_section(
     f: &mut Frame,
     title: &str,
-    sliders: &[SliderGroup],
+    pairs: &[SliderPair],
     is_active_section: bool,
     selected_index: usize,
-    show_thumbs: bool,
+    show_handles: bool,
     area: ratatui::layout::Rect,
 ) {
     // Section container
     let section_block = Block::default()
         .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
         .border_style(if is_active_section {
             Style::default()
-                .fg(Color::Cyan)
+                .fg(Color::Yellow)
                 .add_modifier(Modifier::BOLD)
         } else {
             Style::default().fg(Color::DarkGray)
@@ -261,7 +276,7 @@ fn render_section(
     f.render_widget(section_block, area);
 
     // Layout for sliders
-    let num_sliders = sliders.len();
+    let num_sliders = pairs.len();
     let mut constraints = vec![Constraint::Length(1)];
     for _ in 0..num_sliders {
         constraints.push(Constraint::Length(4));
@@ -273,7 +288,7 @@ fn render_section(
         .constraints(constraints)
         .split(inner_area);
 
-    for (i, group) in sliders.iter().enumerate() {
+    for (i, pair) in pairs.iter().enumerate() {
         if i + 1 >= chunks.len() {
             break;
         }
@@ -284,27 +299,27 @@ fn render_section(
             .borders(Borders::ALL)
             .border_style(if is_selected {
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(Color::White)
                     .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(Color::DarkGray)
             })
-            .title(format!(" {} ", group.label));
+            .title(format!(" {} - {} ", pair.label, pair.description));
 
-        let slider = Slider::from_state(&group.state)
+        let slider = Slider::from_state(&pair.state)
             .orientation(SliderOrientation::Horizontal)
-            .filled_symbol(symbols::FILLED_THICK_LINE)
-            .empty_symbol(symbols::EMPTY_THIN_LINE)
-            .handle_symbol(symbols::HANDLE_CIRCLE)
-            .filled_color(group.color)
+            .filled_symbol(pair.filled_symbol)
+            .empty_symbol(pair.empty_symbol)
+            .handle_symbol(pair.handle_symbol)
+            .filled_color(pair.filled_color)
             .empty_color(Color::DarkGray)
             .handle_color(if is_selected {
                 Color::White
             } else {
-                group.color
+                pair.filled_color
             })
             .show_value(true)
-            .show_handle(show_thumbs)
+            .show_handle(show_handles)
             .block(block);
 
         f.render_widget(slider, chunks[i + 1]);
