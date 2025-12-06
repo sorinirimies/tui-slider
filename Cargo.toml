@@ -1,0 +1,69 @@
+[package]
+name = "tui-slider"
+version = "0.2.5"
+edition = "2021"
+authors = ["Sorin Irimies <sorinirimies@gmail.com>"]
+license = "MIT"
+description = "A simple TUI slider component library for ratatui"
+repository = "https://github.com/sorinirimies/tui-slider"
+keywords = ["tui", "slider", "ratatui", "terminal", "widget"]
+categories = ["command-line-interface", "gui", "visualization", "rendering", "multimedia"]
+readme = "README.md"
+rust-version = "1.74.0"
+
+[dependencies]
+ratatui = "0.28"
+crossterm = "0.28"
+unicode-width = "0.1"
+
+[dev-dependencies]
+anyhow = "1.0"
+rand = "0.8"
+
+[[example]]
+name = "horizontal"
+path = "examples/horizontal.rs"
+
+[[example]]
+name = "vertical"
+path = "examples/vertical.rs"
+
+[[example]]
+name = "custom"
+path = "examples/custom_symbols.rs"
+
+[[example]]
+name = "handles"
+path = "examples/handles.rs"
+
+[[example]]
+name = "vertical_positioning"
+path = "examples/vertical_positioning.rs"
+
+[[example]]
+name = "step_sizes"
+path = "examples/step_sizes.rs"
+
+[[example]]
+name = "borders"
+path = "examples/borders.rs"
+
+[[example]]
+name = "horizontal_bar_alignment"
+path = "examples/horizontal_bar_alignment.rs"
+
+[[example]]
+name = "title_alignment"
+path = "examples/title_alignment.rs"
+
+[[example]]
+name = "value_alignment"
+path = "examples/value_alignment.rs"
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
