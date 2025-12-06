@@ -16,7 +16,7 @@ Sleep 2s
 # Show the side-by-side interface
 Sleep 1s
 
-# Left section is active (WITH handles)
+# Left section is active (with handles)
 # Navigate through sliders to show handles in action
 Type "j"
 Sleep 500ms
@@ -117,7 +117,7 @@ Sleep 200ms
 
 Sleep 1s
 
-# Switch back to LEFT section (WITH handles)
+# Switch back to LEFT section (with handles)
 Type "Tab"
 Sleep 1s
 

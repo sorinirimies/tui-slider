@@ -169,7 +169,7 @@ Border types, styles, and color theming - including Plain, Rounded, Double, Thic
 ## Interactive Features
 
 ### Handle/Thumb Visibility
-Side-by-side comparison of sliders WITH handles (interactive controls) vs WITHOUT handles (progress bars).
+Side-by-side comparison of sliders with handles (interactive controls) vs without handles (progress bars).
 Shows the same sliders in both modes to clearly demonstrate the difference.
 
 ![Handles Demo](examples/vhs/output/handles.gif)

@@ -1,7 +1,7 @@
 //! Handle/Thumb visibility example
 //!
 //! This example demonstrates sliders with and without handles in a side-by-side comparison.
-//! The left section shows sliders WITH handles (interactive controls),
+//! The left section shows sliders with handles (interactive controls),
 //! the right section shows the same sliders WITHOUT handles (progress bar style).
 
 use anyhow::Result;
@@ -211,7 +211,7 @@ fn ui(f: &mut Frame, app: &App) {
     // Help text
     let help = Paragraph::new(vec![
         ratatui::text::Line::from(
-            "Tab: Switch section (Left: WITH handles | Right: WITHOUT handles)",
+            "Tab: Switch section (Left: with handles | Right: WITHOUT handles)",
         ),
         ratatui::text::Line::from("↑/↓ or j/k: Select slider | ←/→ or h/l: Adjust value"),
         ratatui::text::Line::from("Same sliders, different display - See the difference!"),
