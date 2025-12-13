@@ -743,11 +743,38 @@ impl<'a> Slider<'a> {
 
     /// Renders label and value for vertical sliders with positioning options
     fn render_vertical_label_and_value(&self, area: Rect, buf: &mut Buffer) {
+        // Check if label and value will be on the same side
+        let label_at_top =
+            self.label.is_some() && self.vertical_label_position == VerticalLabelPosition::Top;
+        let label_at_bottom =
+            self.label.is_some() && self.vertical_label_position == VerticalLabelPosition::Bottom;
+        let value_at_top =
+            self.show_value && self.vertical_value_position == VerticalValuePosition::Top;
+        let value_at_bottom =
+            self.show_value && self.vertical_value_position == VerticalValuePosition::Bottom;
+
+        let both_at_top = label_at_top && value_at_top;
+        let both_at_bottom = label_at_bottom && value_at_bottom;
+
         // Render label if present
         if let Some(ref label) = self.label {
             let label_y = match self.vertical_label_position {
-                VerticalLabelPosition::Top => area.y.saturating_sub(1),
-                VerticalLabelPosition::Bottom => area.y + area.height,
+                VerticalLabelPosition::Top => {
+                    if both_at_top {
+                        // Stack label above value at top
+                        area.y.saturating_sub(2)
+                    } else {
+                        area.y.saturating_sub(1)
+                    }
+                }
+                VerticalLabelPosition::Bottom => {
+                    if both_at_bottom {
+                        // Stack label below value at bottom
+                        area.y + area.height + 1
+                    } else {
+                        area.y + area.height
+                    }
+                }
             };
 
             // Center the label horizontally
@@ -765,10 +792,25 @@ impl<'a> Slider<'a> {
             let value_width = value_str.len() as u16;
 
             // Calculate Y position based on vertical position setting
+            // When stacked with label, adjust position
             let value_y = match self.vertical_value_position {
-                VerticalValuePosition::Top => area.y.saturating_sub(1),
+                VerticalValuePosition::Top => {
+                    if both_at_top {
+                        // Value goes below label at top
+                        area.y.saturating_sub(1)
+                    } else {
+                        area.y.saturating_sub(1)
+                    }
+                }
                 VerticalValuePosition::Middle => area.y + area.height / 2,
-                VerticalValuePosition::Bottom => area.y + area.height,
+                VerticalValuePosition::Bottom => {
+                    if both_at_bottom {
+                        // Value goes above label at bottom
+                        area.y + area.height
+                    } else {
+                        area.y + area.height
+                    }
+                }
             };
 
             // Calculate X position based on alignment setting

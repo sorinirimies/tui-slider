@@ -305,6 +305,11 @@ vhs-borders:
     vhs examples/vhs/borders.tape
     @echo "✅ Demo generated at examples/vhs/output/borders.gif"
 
+# Run the VHS tape to generate demo GIF for comprehensive demo (horizontal and vertical sliders with various styles)
+vhs-comprehensive:
+    @echo "Running VHS tape to generate comprehensive demo..."
+    vhs examples/vhs/comprehensive_demo.tape
+    @echo "✅ Demo generated at examples/vhs/output/comprehensive_demo.gif"
 
 
 
@@ -346,5 +351,5 @@ vhs-all:
     @./scripts/generate_all_tapes.sh
 
 # Run all VHS tapes manually (legacy - explicitly lists each tape)
-vhs-all-manual: vhs-horizontal vhs-vertical vhs-custom vhs-handles vhs-borders vhs-step-sizes vhs-title-alignment vhs-value-alignment vhs-vertical-positioning vhs-horizontal-bar-alignment
+vhs-all-manual: vhs-horizontal vhs-vertical vhs-custom vhs-handles vhs-borders vhs-comprehensive vhs-step-sizes vhs-title-alignment vhs-value-alignment vhs-vertical-positioning vhs-horizontal-bar-alignment
     @echo "✅ All demo GIFs generated!"
