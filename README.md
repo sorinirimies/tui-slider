@@ -21,7 +21,6 @@ Whether you're building music players, audio mixers, settings panels, or progres
 - 🎨 **[Progress bars](#progress-bars)** - Use as progress indicators without handles
 - 🔧 **Easy to use** - Minimal configuration required
 - 📊 **State management** - Built-in state for value tracking
-- ⚡ **Lightweight** - No complex dependencies
 
 ## 📦 Installation
 
