@@ -262,10 +262,8 @@ impl App {
             if let Some(config) = self.horizontal_sliders.get_mut(self.selected_index) {
                 config.state.increase(5.0);
             }
-        } else {
-            if let Some(config) = self.vertical_sliders.get_mut(self.selected_index) {
-                config.state.increase(5.0);
-            }
+        } else if let Some(config) = self.vertical_sliders.get_mut(self.selected_index) {
+            config.state.increase(5.0);
         }
     }
 
@@ -274,10 +272,8 @@ impl App {
             if let Some(config) = self.horizontal_sliders.get_mut(self.selected_index) {
                 config.state.decrease(5.0);
             }
-        } else {
-            if let Some(config) = self.vertical_sliders.get_mut(self.selected_index) {
-                config.state.decrease(5.0);
-            }
+        } else if let Some(config) = self.vertical_sliders.get_mut(self.selected_index) {
+            config.state.decrease(5.0);
         }
     }
 }
