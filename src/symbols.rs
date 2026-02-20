@@ -516,3 +516,121 @@ pub const STYLE_HORIZONTAL_SQUARES: SymbolSet = SymbolSet {
     empty: EMPTY_SQUARE,
     handle: HANDLE_CIRCLE,
 };
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_symbol_set_new() {
+        let set = SymbolSet::new(FILLED_BLOCK, EMPTY_LIGHT_SHADE, HANDLE_CIRCLE);
+        assert_eq!(set.filled, FILLED_BLOCK);
+        assert_eq!(set.empty, EMPTY_LIGHT_SHADE);
+        assert_eq!(set.handle, HANDLE_CIRCLE);
+    }
+
+    #[test]
+    fn test_symbol_set_new_custom_strings() {
+        let set = SymbolSet::new("█", "░", "●");
+        assert_eq!(set.filled, "█");
+        assert_eq!(set.empty, "░");
+        assert_eq!(set.handle, "●");
+    }
+
+    #[test]
+    fn test_symbol_set_equality() {
+        let a = SymbolSet::new(FILLED_BLOCK, EMPTY_LIGHT_SHADE, HANDLE_CIRCLE);
+        let b = SymbolSet::new(FILLED_BLOCK, EMPTY_LIGHT_SHADE, HANDLE_CIRCLE);
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_symbol_set_inequality() {
+        let a = SymbolSet::new(FILLED_BLOCK, EMPTY_LIGHT_SHADE, HANDLE_CIRCLE);
+        let b = SymbolSet::new(FILLED_BRAILLE, EMPTY_BRAILLE, HANDLE_BLACK_CIRCLE);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn test_symbol_set_clone() {
+        let original = SymbolSet::new(FILLED_THICK_LINE, EMPTY_THIN_LINE, HANDLE_DIAMOND);
+        let cloned = original;
+        assert_eq!(cloned.filled, FILLED_THICK_LINE);
+        assert_eq!(cloned.empty, EMPTY_THIN_LINE);
+        assert_eq!(cloned.handle, HANDLE_DIAMOND);
+    }
+
+    #[test]
+    fn test_symbol_set_debug() {
+        let set = SymbolSet::new(FILLED_BLOCK, EMPTY_SPACE, HANDLE_SQUARE);
+        let dbg = format!("{:?}", set);
+        assert!(dbg.contains("SymbolSet"));
+    }
+
+    #[test]
+    fn test_predefined_style_default() {
+        assert_eq!(STYLE_DEFAULT.filled, FILLED_THICK_LINE);
+        assert_eq!(STYLE_DEFAULT.empty, EMPTY_THIN_LINE);
+        assert_eq!(STYLE_DEFAULT.handle, HANDLE_CIRCLE);
+    }
+
+    #[test]
+    fn test_predefined_style_block() {
+        assert_eq!(STYLE_BLOCK.filled, FILLED_BLOCK);
+        assert_eq!(STYLE_BLOCK.empty, FILLED_LIGHT_SHADE);
+        assert_eq!(STYLE_BLOCK.handle, FILLED_DARK_SHADE);
+    }
+
+    #[test]
+    fn test_predefined_style_dotted() {
+        assert_eq!(STYLE_DOTTED.filled, FILLED_BRAILLE);
+        assert_eq!(STYLE_DOTTED.empty, EMPTY_BRAILLE);
+        assert_eq!(STYLE_DOTTED.handle, HANDLE_BLACK_CIRCLE);
+    }
+
+    #[test]
+    fn test_predefined_style_minimal() {
+        assert_eq!(STYLE_MINIMAL.filled, FILLED_THIN_LINE);
+        assert_eq!(STYLE_MINIMAL.empty, EMPTY_SPACE);
+        assert_eq!(STYLE_MINIMAL.handle, HANDLE_VERTICAL_BAR);
+    }
+
+    #[test]
+    fn test_predefined_style_vertical() {
+        assert_eq!(STYLE_VERTICAL.filled, FILLED_VERTICAL_LINE);
+        assert_eq!(STYLE_VERTICAL.empty, EMPTY_VERTICAL_LINE);
+        assert_eq!(STYLE_VERTICAL.handle, HANDLE_HORIZONTAL_LINE);
+    }
+
+    #[test]
+    fn test_predefined_style_horizontal() {
+        assert_eq!(STYLE_HORIZONTAL.filled, FILLED_HORIZONTAL_LINE);
+        assert_eq!(STYLE_HORIZONTAL.empty, EMPTY_HORIZONTAL_LINE);
+        assert_eq!(STYLE_HORIZONTAL.handle, HANDLE_VERTICAL_LINE);
+    }
+
+    #[test]
+    fn test_predefined_style_segmented() {
+        assert_eq!(STYLE_SEGMENTED.filled, FILLED_SEGMENT);
+        assert_eq!(STYLE_SEGMENTED.empty, EMPTY_SPACE);
+        assert_eq!(STYLE_SEGMENTED.handle, HANDLE_CIRCLE);
+    }
+
+    #[test]
+    fn test_predefined_style_progress() {
+        assert_eq!(STYLE_PROGRESS.filled, FILLED_PROGRESS);
+        assert_eq!(STYLE_PROGRESS.empty, EMPTY_PROGRESS);
+        assert_eq!(STYLE_PROGRESS.handle, HANDLE_TRIANGLE_RIGHT);
+    }
+
+    #[test]
+    fn test_symbol_constants_are_nonempty() {
+        // Spot-check that symbol constants are non-empty strings
+        assert!(!FILLED_THICK_LINE.is_empty());
+        assert!(!EMPTY_THIN_LINE.is_empty());
+        assert!(!HANDLE_CIRCLE.is_empty());
+        assert!(!FILLED_BLOCK.is_empty());
+        assert!(!EMPTY_SPACE.is_empty());
+        assert!(!HANDLE_DIAMOND.is_empty());
+    }
+}

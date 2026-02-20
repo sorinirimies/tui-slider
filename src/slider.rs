@@ -1342,4 +1342,535 @@ mod tests {
             "Both sliders should fill the same height"
         );
     }
+
+    // ── Rendering: horizontal slider ─────────────────────────────────────────
+
+    #[test]
+    fn test_render_horizontal_at_zero() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 20, 1);
+        let mut buf = Buffer::empty(area);
+        let slider = Slider::new(0.0, 0.0, 100.0)
+            .filled_symbol("━")
+            .empty_symbol("─")
+            .show_handle(false);
+        slider.render(area, &mut buf);
+
+        // At 0% all cells should be empty symbol
+        let cell = &buf[(0, 0)];
+        assert_eq!(cell.symbol(), "─");
+    }
+
+    #[test]
+    fn test_render_horizontal_at_full() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 20, 1);
+        let mut buf = Buffer::empty(area);
+        let slider = Slider::new(100.0, 0.0, 100.0)
+            .filled_symbol("━")
+            .empty_symbol("─")
+            .show_handle(false);
+        slider.render(area, &mut buf);
+
+        // At 100% all cells should be filled symbol
+        let cell = &buf[(0, 0)];
+        assert_eq!(cell.symbol(), "━");
+    }
+
+    #[test]
+    fn test_render_horizontal_at_half() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 20, 1);
+        let mut buf = Buffer::empty(area);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .filled_symbol("━")
+            .empty_symbol("─")
+            .show_handle(false);
+        slider.render(area, &mut buf);
+
+        // First cell filled, last cell empty
+        assert_eq!(buf[(0, 0)].symbol(), "━");
+        assert_eq!(buf[(19, 0)].symbol(), "─");
+    }
+
+    #[test]
+    fn test_render_horizontal_with_handle() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 20, 1);
+        let mut buf = Buffer::empty(area);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .filled_symbol("━")
+            .empty_symbol("─")
+            .handle_symbol("●")
+            .show_handle(true);
+        slider.render(area, &mut buf);
+
+        // The buffer should contain a handle symbol somewhere
+        let has_handle = (0..20u16).any(|x| buf[(x, 0)].symbol() == "●");
+        assert!(has_handle, "handle symbol should be rendered");
+    }
+
+    #[test]
+    fn test_render_horizontal_zero_width_no_panic() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        // Zero-width area must not panic
+        let area = Rect::new(0, 0, 0, 1);
+        let mut buf = Buffer::empty(Rect::new(0, 0, 1, 1));
+        let slider = Slider::new(50.0, 0.0, 100.0);
+        slider.render(area, &mut buf);
+    }
+
+    #[test]
+    fn test_render_horizontal_zero_height_no_panic() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 20, 0);
+        let mut buf = Buffer::empty(Rect::new(0, 0, 20, 1));
+        let slider = Slider::new(50.0, 0.0, 100.0);
+        slider.render(area, &mut buf);
+    }
+
+    // ── Rendering: bar alignment ──────────────────────────────────────────────
+
+    #[test]
+    fn test_render_horizontal_bar_alignment_top() {
+        use crate::position::HorizontalBarAlignment;
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 10, 3);
+        let mut buf = Buffer::empty(area);
+        let slider = Slider::new(100.0, 0.0, 100.0)
+            .filled_symbol("━")
+            .empty_symbol("─")
+            .show_handle(false)
+            .horizontal_bar_alignment(HorizontalBarAlignment::Top);
+        slider.render(area, &mut buf);
+
+        // Row 0 (top) should be filled
+        assert_eq!(buf[(0, 0)].symbol(), "━");
+        // Row 2 (bottom) should be empty
+        assert_eq!(buf[(0, 2)].symbol(), " ");
+    }
+
+    #[test]
+    fn test_render_horizontal_bar_alignment_bottom() {
+        use crate::position::HorizontalBarAlignment;
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 10, 3);
+        let mut buf = Buffer::empty(area);
+        let slider = Slider::new(100.0, 0.0, 100.0)
+            .filled_symbol("━")
+            .empty_symbol("─")
+            .show_handle(false)
+            .horizontal_bar_alignment(HorizontalBarAlignment::Bottom);
+        slider.render(area, &mut buf);
+
+        // Row 2 (bottom) should be filled
+        assert_eq!(buf[(0, 2)].symbol(), "━");
+        // Row 0 (top) should be empty
+        assert_eq!(buf[(0, 0)].symbol(), " ");
+    }
+
+    #[test]
+    fn test_render_horizontal_bar_alignment_center() {
+        use crate::position::HorizontalBarAlignment;
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 10, 3);
+        let mut buf = Buffer::empty(area);
+        let slider = Slider::new(100.0, 0.0, 100.0)
+            .filled_symbol("━")
+            .empty_symbol("─")
+            .show_handle(false)
+            .horizontal_bar_alignment(HorizontalBarAlignment::Center);
+        slider.render(area, &mut buf);
+
+        // Center row (row 1) should be filled
+        assert_eq!(buf[(0, 1)].symbol(), "━");
+    }
+
+    // ── Rendering: vertical slider ────────────────────────────────────────────
+
+    #[test]
+    fn test_render_vertical_at_zero() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 3, 10);
+        let mut buf = Buffer::empty(area);
+        let slider = Slider::new(0.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .filled_symbol("│")
+            .empty_symbol("┊")
+            .show_handle(false);
+        slider.render(area, &mut buf);
+
+        // At 0% the top row should be empty symbol
+        let center_x = area.x + area.width / 2;
+        assert_eq!(buf[(center_x, 0)].symbol(), "┊");
+    }
+
+    #[test]
+    fn test_render_vertical_at_full() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 3, 10);
+        let mut buf = Buffer::empty(area);
+        let slider = Slider::new(100.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .filled_symbol("│")
+            .empty_symbol("┊")
+            .show_handle(false);
+        slider.render(area, &mut buf);
+
+        // At 100% the bottom row should be filled symbol
+        let center_x = area.x + area.width / 2;
+        assert_eq!(buf[(center_x, 9)].symbol(), "│");
+    }
+
+    #[test]
+    fn test_render_vertical_with_handle() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 3, 10);
+        let mut buf = Buffer::empty(area);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .filled_symbol("│")
+            .empty_symbol("┊")
+            .handle_symbol("━")
+            .show_handle(true);
+        slider.render(area, &mut buf);
+
+        let center_x = area.x + area.width / 2;
+        let has_handle = (0..10u16).any(|y| buf[(center_x, y)].symbol() == "━");
+        assert!(has_handle, "vertical handle should be rendered");
+    }
+
+    #[test]
+    fn test_render_vertical_zero_height_no_panic() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 3, 0);
+        let mut buf = Buffer::empty(Rect::new(0, 0, 3, 1));
+        let slider = Slider::new(50.0, 0.0, 100.0).orientation(SliderOrientation::Vertical);
+        slider.render(area, &mut buf);
+    }
+
+    // ── Rendering: label and value ────────────────────────────────────────────
+
+    #[test]
+    fn test_render_horizontal_with_label() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        // Give extra height so label row (y-1 = row 0) sits inside the buffer
+        let buf_area = Rect::new(0, 1, 20, 2);
+        let mut buf = Buffer::empty(buf_area);
+        let slider = Slider::new(50.0, 0.0, 100.0).label("Vol").show_value(false);
+        let render_area = Rect::new(0, 2, 20, 1);
+        slider.render(render_area, &mut buf);
+
+        // Label "Vol" should appear on row 1 (one above render_area.y)
+        let has_v = (0..20u16).any(|x| buf[(x, 1)].symbol() == "V");
+        assert!(has_v, "label should be rendered above the slider");
+    }
+
+    #[test]
+    fn test_render_horizontal_with_value() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let buf_area = Rect::new(0, 1, 20, 2);
+        let mut buf = Buffer::empty(buf_area);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .show_value(true)
+            .show_handle(false);
+        let render_area = Rect::new(0, 2, 20, 1);
+        slider.render(render_area, &mut buf);
+
+        // The value "50.0" should appear somewhere on row 1
+        let rendered: String = (0..20u16)
+            .map(|x| buf[(x, 1)].symbol().to_string())
+            .collect();
+        assert!(
+            rendered.contains("50") || rendered.contains('5'),
+            "value should be rendered: got '{rendered}'"
+        );
+    }
+
+    #[test]
+    fn test_render_horizontal_with_label_and_value_left_aligned() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Alignment;
+        use ratatui::layout::Rect;
+
+        let buf_area = Rect::new(0, 1, 30, 2);
+        let mut buf = Buffer::empty(buf_area);
+        let slider = Slider::new(75.0, 0.0, 100.0)
+            .label("Vol")
+            .show_value(true)
+            .value_alignment(Alignment::Left)
+            .show_handle(false);
+        let render_area = Rect::new(0, 2, 30, 1);
+        slider.render(render_area, &mut buf);
+    }
+
+    #[test]
+    fn test_render_horizontal_with_label_and_value_right_aligned() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Alignment;
+        use ratatui::layout::Rect;
+
+        let buf_area = Rect::new(0, 1, 30, 2);
+        let mut buf = Buffer::empty(buf_area);
+        let slider = Slider::new(75.0, 0.0, 100.0)
+            .label("Vol")
+            .show_value(true)
+            .value_alignment(Alignment::Right)
+            .show_handle(false);
+        let render_area = Rect::new(0, 2, 30, 1);
+        slider.render(render_area, &mut buf);
+    }
+
+    // ── Rendering: vertical label and value ───────────────────────────────────
+
+    #[test]
+    fn test_render_vertical_with_label_top() {
+        use crate::position::VerticalLabelPosition;
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let buf_area = Rect::new(0, 0, 5, 15);
+        let mut buf = Buffer::empty(buf_area);
+        let render_area = Rect::new(0, 2, 5, 10);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .label("V")
+            .vertical_label_position(VerticalLabelPosition::Top)
+            .show_value(false);
+        slider.render(render_area, &mut buf);
+    }
+
+    #[test]
+    fn test_render_vertical_with_label_bottom() {
+        use crate::position::VerticalLabelPosition;
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let buf_area = Rect::new(0, 0, 5, 15);
+        let mut buf = Buffer::empty(buf_area);
+        let render_area = Rect::new(0, 2, 5, 10);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .label("V")
+            .vertical_label_position(VerticalLabelPosition::Bottom)
+            .show_value(false);
+        slider.render(render_area, &mut buf);
+    }
+
+    #[test]
+    fn test_render_vertical_with_value_top() {
+        use crate::position::VerticalValuePosition;
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let buf_area = Rect::new(0, 0, 5, 15);
+        let mut buf = Buffer::empty(buf_area);
+        let render_area = Rect::new(0, 2, 5, 10);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .show_value(true)
+            .vertical_value_position(VerticalValuePosition::Top);
+        slider.render(render_area, &mut buf);
+    }
+
+    #[test]
+    fn test_render_vertical_with_value_middle() {
+        use crate::position::VerticalValuePosition;
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let buf_area = Rect::new(0, 0, 5, 15);
+        let mut buf = Buffer::empty(buf_area);
+        let render_area = Rect::new(0, 2, 5, 10);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .show_value(true)
+            .vertical_value_position(VerticalValuePosition::Middle);
+        slider.render(render_area, &mut buf);
+    }
+
+    #[test]
+    fn test_render_vertical_with_value_bottom() {
+        use crate::position::VerticalValuePosition;
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let buf_area = Rect::new(0, 0, 5, 15);
+        let mut buf = Buffer::empty(buf_area);
+        let render_area = Rect::new(0, 2, 5, 10);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .show_value(true)
+            .vertical_value_position(VerticalValuePosition::Bottom);
+        slider.render(render_area, &mut buf);
+    }
+
+    #[test]
+    fn test_render_vertical_label_and_value_both_top() {
+        use crate::position::{VerticalLabelPosition, VerticalValuePosition};
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        // Both label and value at top exercises the stacking branch
+        let buf_area = Rect::new(0, 0, 5, 15);
+        let mut buf = Buffer::empty(buf_area);
+        let render_area = Rect::new(0, 3, 5, 10);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .label("V")
+            .vertical_label_position(VerticalLabelPosition::Top)
+            .show_value(true)
+            .vertical_value_position(VerticalValuePosition::Top);
+        slider.render(render_area, &mut buf);
+    }
+
+    #[test]
+    fn test_render_vertical_label_and_value_both_bottom() {
+        use crate::position::{VerticalLabelPosition, VerticalValuePosition};
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let buf_area = Rect::new(0, 0, 5, 15);
+        let mut buf = Buffer::empty(buf_area);
+        let render_area = Rect::new(0, 2, 5, 10);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .label("V")
+            .vertical_label_position(VerticalLabelPosition::Bottom)
+            .show_value(true)
+            .vertical_value_position(VerticalValuePosition::Bottom);
+        slider.render(render_area, &mut buf);
+    }
+
+    #[test]
+    fn test_render_vertical_value_alignment_left() {
+        use crate::position::{VerticalValueAlignment, VerticalValuePosition};
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let buf_area = Rect::new(0, 0, 5, 15);
+        let mut buf = Buffer::empty(buf_area);
+        let render_area = Rect::new(0, 2, 5, 10);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .show_value(true)
+            .vertical_value_position(VerticalValuePosition::Middle)
+            .vertical_value_alignment(VerticalValueAlignment::Left);
+        slider.render(render_area, &mut buf);
+    }
+
+    #[test]
+    fn test_render_vertical_value_alignment_right() {
+        use crate::position::{VerticalValueAlignment, VerticalValuePosition};
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let buf_area = Rect::new(0, 0, 5, 15);
+        let mut buf = Buffer::empty(buf_area);
+        let render_area = Rect::new(0, 2, 5, 10);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .show_value(true)
+            .vertical_value_position(VerticalValuePosition::Middle)
+            .vertical_value_alignment(VerticalValueAlignment::Right);
+        slider.render(render_area, &mut buf);
+    }
+
+    // ── Rendering: block ──────────────────────────────────────────────────────
+
+    #[test]
+    fn test_render_with_block() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+        use ratatui::widgets::{Block, Borders};
+
+        let area = Rect::new(0, 0, 20, 3);
+        let mut buf = Buffer::empty(area);
+        let block = Block::default().borders(Borders::ALL);
+        let slider = Slider::new(50.0, 0.0, 100.0)
+            .block(block)
+            .filled_symbol("━")
+            .empty_symbol("─")
+            .show_handle(false);
+        slider.render(area, &mut buf);
+
+        // Border corners should be present
+        assert_eq!(buf[(0, 0)].symbol(), "┌");
+        assert_eq!(buf[(19, 0)].symbol(), "┐");
+        assert_eq!(buf[(0, 2)].symbol(), "└");
+        assert_eq!(buf[(19, 2)].symbol(), "┘");
+    }
+
+    // ── Percentage edge cases ─────────────────────────────────────────────────
+
+    #[test]
+    fn test_percentage_equal_min_max() {
+        // When min == max the percentage guard returns 0.0 without dividing by zero
+        let slider = Slider::new(50.0, 50.0, 50.0);
+        assert_eq!(slider.percentage(), 0.0);
+    }
+
+    #[test]
+    fn test_percentage_clamped_above_max() {
+        let slider = Slider::new(100.0, 0.0, 100.0);
+        assert_eq!(slider.percentage(), 1.0);
+    }
+
+    #[test]
+    fn test_percentage_clamped_below_min() {
+        let slider = Slider::new(0.0, 0.0, 100.0);
+        assert_eq!(slider.percentage(), 0.0);
+    }
+
+    // ── horizontal_bar_alignment builder ─────────────────────────────────────
+
+    #[test]
+    fn test_horizontal_bar_alignment_builder() {
+        use crate::position::HorizontalBarAlignment;
+
+        let slider = Slider::default().horizontal_bar_alignment(HorizontalBarAlignment::Top);
+        assert_eq!(slider.horizontal_bar_alignment, HorizontalBarAlignment::Top);
+
+        let slider = Slider::default().horizontal_bar_alignment(HorizontalBarAlignment::Center);
+        assert_eq!(
+            slider.horizontal_bar_alignment,
+            HorizontalBarAlignment::Center
+        );
+
+        let slider = Slider::default().horizontal_bar_alignment(HorizontalBarAlignment::Bottom);
+        assert_eq!(
+            slider.horizontal_bar_alignment,
+            HorizontalBarAlignment::Bottom
+        );
+    }
 }

@@ -740,3 +740,493 @@ impl Default for SliderStyle {
         Self::default_style()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::symbols;
+    use ratatui::style::Color;
+
+    // ── Predefined styles ────────────────────────────────────────────────────
+
+    #[test]
+    fn test_default_style() {
+        let s = SliderStyle::default_style();
+        assert_eq!(s.name, "Default");
+        assert_eq!(s.filled_symbol, symbols::FILLED_THICK_LINE);
+        assert_eq!(s.empty_symbol, symbols::EMPTY_THIN_LINE);
+        assert_eq!(s.handle_symbol, symbols::HANDLE_CIRCLE);
+        assert_eq!(s.filled_color, Color::Cyan);
+        assert_eq!(s.empty_color, Color::DarkGray);
+        assert_eq!(s.handle_color, Color::White);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_default_trait() {
+        let s = SliderStyle::default();
+        assert_eq!(s.name, "Default");
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_blocks_style() {
+        let s = SliderStyle::blocks();
+        assert_eq!(s.name, "Blocks");
+        assert_eq!(s.filled_symbol, symbols::FILLED_BLOCK);
+        assert_eq!(s.filled_color, Color::Green);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_dots_style() {
+        let s = SliderStyle::dots();
+        assert_eq!(s.name, "Dots");
+        assert_eq!(s.filled_symbol, symbols::FILLED_BRAILLE);
+        assert_eq!(s.filled_color, Color::Yellow);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_arrows_style() {
+        let s = SliderStyle::arrows();
+        assert_eq!(s.name, "Arrows");
+        assert_eq!(s.handle_symbol, symbols::HANDLE_DIAMOND);
+        assert_eq!(s.filled_color, Color::Magenta);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_minimal_style() {
+        let s = SliderStyle::minimal();
+        assert_eq!(s.name, "Minimal");
+        assert_eq!(s.empty_symbol, symbols::EMPTY_SPACE);
+        assert_eq!(s.filled_color, Color::Blue);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_double_line_style() {
+        let s = SliderStyle::double_line();
+        assert_eq!(s.name, "Double Line");
+        assert_eq!(s.filled_symbol, symbols::FILLED_DOUBLE_LINE);
+        assert_eq!(s.filled_color, Color::Red);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_wave_style() {
+        let s = SliderStyle::wave();
+        assert_eq!(s.name, "Wave");
+        assert_eq!(s.filled_symbol, symbols::FILLED_WAVE);
+        assert_eq!(s.filled_color, Color::Cyan);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_progress_style() {
+        let s = SliderStyle::progress();
+        assert_eq!(s.name, "Progress");
+        assert_eq!(s.filled_symbol, symbols::FILLED_PROGRESS);
+        assert_eq!(s.handle_color, Color::Yellow);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_thick_style() {
+        let s = SliderStyle::thick();
+        assert_eq!(s.name, "Thick");
+        assert_eq!(s.handle_symbol, symbols::HANDLE_SQUARE);
+        assert_eq!(s.filled_color, Color::Magenta);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_gradient_style() {
+        let s = SliderStyle::gradient();
+        assert_eq!(s.name, "Gradient");
+        assert_eq!(s.filled_symbol, symbols::FILLED_DARK_SHADE);
+        assert_eq!(s.filled_color, Color::Blue);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_rounded_style() {
+        let s = SliderStyle::rounded();
+        assert_eq!(s.name, "Rounded");
+        assert_eq!(s.handle_symbol, symbols::HANDLE_LARGE_CIRCLE);
+        assert_eq!(s.filled_color, Color::Yellow);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_retro_style() {
+        let s = SliderStyle::retro();
+        assert_eq!(s.name, "Retro");
+        assert_eq!(s.filled_symbol, symbols::FILLED_HASH);
+        assert_eq!(s.handle_symbol, symbols::HANDLE_AT);
+        assert!(!s.segmented);
+    }
+
+    // ── Segmented styles ─────────────────────────────────────────────────────
+
+    #[test]
+    fn test_segmented_style() {
+        let s = SliderStyle::segmented();
+        assert_eq!(s.name, "Segmented");
+        assert!(s.segmented);
+        assert_eq!(s.filled_color, Color::Red);
+    }
+
+    #[test]
+    fn test_segmented_blocks_style() {
+        let s = SliderStyle::segmented_blocks();
+        assert_eq!(s.name, "Segmented Blocks");
+        assert!(s.segmented);
+        assert_eq!(s.filled_color, Color::Green);
+    }
+
+    #[test]
+    fn test_segmented_dots_style() {
+        let s = SliderStyle::segmented_dots();
+        assert_eq!(s.name, "Segmented Dots");
+        assert!(s.segmented);
+        assert_eq!(s.handle_color, Color::Yellow);
+    }
+
+    #[test]
+    fn test_segmented_bars_style() {
+        let s = SliderStyle::segmented_bars();
+        assert_eq!(s.name, "Segmented Bars");
+        assert!(s.segmented);
+        assert_eq!(s.filled_color, Color::Magenta);
+    }
+
+    #[test]
+    fn test_segmented_squares_style() {
+        let s = SliderStyle::segmented_squares();
+        assert_eq!(s.name, "Segmented Squares");
+        assert!(s.segmented);
+        assert_eq!(s.filled_color, Color::Blue);
+    }
+
+    #[test]
+    fn test_segmented_diamonds_style() {
+        let s = SliderStyle::segmented_diamonds();
+        assert_eq!(s.name, "Segmented Diamonds");
+        assert!(s.segmented);
+        assert_eq!(s.filled_color, Color::Yellow);
+    }
+
+    #[test]
+    fn test_segmented_stars_style() {
+        let s = SliderStyle::segmented_stars();
+        assert_eq!(s.name, "Segmented Stars");
+        assert!(s.segmented);
+        assert_eq!(s.handle_color, Color::Cyan);
+    }
+
+    #[test]
+    fn test_segmented_arrows_style() {
+        let s = SliderStyle::segmented_arrows();
+        assert_eq!(s.name, "Segmented Arrows");
+        assert!(s.segmented);
+        assert_eq!(s.filled_color, Color::Red);
+    }
+
+    #[test]
+    fn test_segmented_thick_style() {
+        let s = SliderStyle::segmented_thick();
+        assert_eq!(s.name, "Segmented Thick");
+        assert!(s.segmented);
+        assert_eq!(s.filled_color, Color::Cyan);
+    }
+
+    // ── Custom builder ───────────────────────────────────────────────────────
+
+    #[test]
+    fn test_custom_name() {
+        let s = SliderStyle::custom("My Style");
+        assert_eq!(s.name, "My Style");
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_custom_filled_symbol() {
+        let s = SliderStyle::custom("Test").filled_symbol(symbols::FILLED_BLOCK);
+        assert_eq!(s.filled_symbol, symbols::FILLED_BLOCK);
+    }
+
+    #[test]
+    fn test_custom_empty_symbol() {
+        let s = SliderStyle::custom("Test").empty_symbol(symbols::EMPTY_DOTTED);
+        assert_eq!(s.empty_symbol, symbols::EMPTY_DOTTED);
+    }
+
+    #[test]
+    fn test_custom_handle_symbol() {
+        let s = SliderStyle::custom("Test").handle_symbol(symbols::HANDLE_DIAMOND);
+        assert_eq!(s.handle_symbol, symbols::HANDLE_DIAMOND);
+    }
+
+    #[test]
+    fn test_custom_filled_color() {
+        let s = SliderStyle::custom("Test").filled_color(Color::Red);
+        assert_eq!(s.filled_color, Color::Red);
+    }
+
+    #[test]
+    fn test_custom_empty_color() {
+        let s = SliderStyle::custom("Test").empty_color(Color::Blue);
+        assert_eq!(s.empty_color, Color::Blue);
+    }
+
+    #[test]
+    fn test_custom_handle_color() {
+        let s = SliderStyle::custom("Test").handle_color(Color::Green);
+        assert_eq!(s.handle_color, Color::Green);
+    }
+
+    #[test]
+    fn test_custom_with_segments_enabled() {
+        let s = SliderStyle::custom("Test").with_segments(true);
+        assert!(s.segmented);
+    }
+
+    #[test]
+    fn test_custom_with_segments_disabled() {
+        let s = SliderStyle::custom("Test").with_segments(false);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_custom_full_builder_chain() {
+        let s = SliderStyle::custom("Rainbow")
+            .filled_symbol(symbols::FILLED_BLOCK)
+            .empty_symbol(symbols::EMPTY_LIGHT_SHADE)
+            .handle_symbol(symbols::HANDLE_CIRCLE)
+            .filled_color(Color::Rgb(255, 100, 200))
+            .empty_color(Color::Rgb(50, 50, 50))
+            .handle_color(Color::White)
+            .with_segments(true);
+
+        assert_eq!(s.name, "Rainbow");
+        assert_eq!(s.filled_symbol, symbols::FILLED_BLOCK);
+        assert_eq!(s.empty_symbol, symbols::EMPTY_LIGHT_SHADE);
+        assert_eq!(s.handle_symbol, symbols::HANDLE_CIRCLE);
+        assert_eq!(s.filled_color, Color::Rgb(255, 100, 200));
+        assert_eq!(s.empty_color, Color::Rgb(50, 50, 50));
+        assert_eq!(s.handle_color, Color::White);
+        assert!(s.segmented);
+    }
+
+    // ── Progress presets ─────────────────────────────────────────────────────
+
+    #[test]
+    fn test_progress_download() {
+        let s = SliderStyle::progress_download();
+        assert_eq!(s.name, "Download");
+        assert_eq!(s.filled_color, Color::Green);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_progress_upload() {
+        let s = SliderStyle::progress_upload();
+        assert_eq!(s.name, "Upload");
+        assert_eq!(s.filled_color, Color::Blue);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_progress_health() {
+        let s = SliderStyle::progress_health();
+        assert_eq!(s.name, "Health");
+        assert_eq!(s.filled_color, Color::Red);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_progress_mana() {
+        let s = SliderStyle::progress_mana();
+        assert_eq!(s.name, "Mana");
+        assert_eq!(s.filled_color, Color::Cyan);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_progress_experience() {
+        let s = SliderStyle::progress_experience();
+        assert_eq!(s.name, "Experience");
+        assert_eq!(s.filled_color, Color::Yellow);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_progress_loading() {
+        let s = SliderStyle::progress_loading();
+        assert_eq!(s.name, "Loading");
+        assert_eq!(s.filled_color, Color::Magenta);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_progress_installation() {
+        let s = SliderStyle::progress_installation();
+        assert_eq!(s.name, "Installation");
+        assert_eq!(s.filled_color, Color::LightGreen);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_progress_battery() {
+        let s = SliderStyle::progress_battery();
+        assert_eq!(s.name, "Battery");
+        assert_eq!(s.filled_color, Color::LightYellow);
+        assert!(!s.segmented);
+    }
+
+    // ── Vertical presets ─────────────────────────────────────────────────────
+
+    #[test]
+    fn test_vertical_style() {
+        let s = SliderStyle::vertical();
+        assert_eq!(s.name, "Vertical");
+        assert_eq!(s.filled_symbol, symbols::FILLED_VERTICAL_LINE);
+        assert_eq!(s.handle_symbol, symbols::HANDLE_HORIZONTAL_LINE);
+        assert_eq!(s.filled_color, Color::Cyan);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_vertical_blocks_style() {
+        let s = SliderStyle::vertical_blocks();
+        assert_eq!(s.name, "Vertical Blocks");
+        assert_eq!(s.filled_symbol, symbols::FILLED_BLOCK);
+        assert_eq!(s.filled_color, Color::Green);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_vertical_gradient_style() {
+        let s = SliderStyle::vertical_gradient();
+        assert_eq!(s.name, "Vertical Gradient");
+        assert_eq!(s.filled_symbol, symbols::FILLED_DARK_SHADE);
+        assert_eq!(s.filled_color, Color::Magenta);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_vertical_dots_style() {
+        let s = SliderStyle::vertical_dots();
+        assert_eq!(s.name, "Vertical Dots");
+        assert_eq!(s.filled_symbol, symbols::FILLED_CIRCLE);
+        assert_eq!(s.filled_color, Color::Yellow);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_vertical_squares_style() {
+        let s = SliderStyle::vertical_squares();
+        assert_eq!(s.name, "Vertical Squares");
+        assert_eq!(s.filled_symbol, symbols::FILLED_SQUARE);
+        assert_eq!(s.filled_color, Color::Blue);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_vertical_equalizer_style() {
+        let s = SliderStyle::vertical_equalizer();
+        assert_eq!(s.name, "Equalizer");
+        assert_eq!(s.filled_symbol, symbols::FILLED_VERTICAL_BAR);
+        assert_eq!(s.filled_color, Color::LightGreen);
+        assert!(!s.segmented);
+    }
+
+    // ── Horizontal presets ───────────────────────────────────────────────────
+
+    #[test]
+    fn test_horizontal_style() {
+        let s = SliderStyle::horizontal();
+        assert_eq!(s.name, "Horizontal");
+        assert_eq!(s.filled_symbol, symbols::FILLED_HORIZONTAL_LINE);
+        assert_eq!(s.handle_symbol, symbols::HANDLE_VERTICAL_LINE);
+        assert_eq!(s.filled_color, Color::Cyan);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_horizontal_thick_style() {
+        let s = SliderStyle::horizontal_thick();
+        assert_eq!(s.name, "Horizontal Thick");
+        assert_eq!(s.filled_symbol, symbols::FILLED_THICK_LINE);
+        assert_eq!(s.filled_color, Color::Cyan);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_horizontal_blocks_style() {
+        let s = SliderStyle::horizontal_blocks();
+        assert_eq!(s.name, "Horizontal Blocks");
+        assert_eq!(s.filled_symbol, symbols::FILLED_BLOCK);
+        assert_eq!(s.filled_color, Color::Green);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_horizontal_gradient_style() {
+        let s = SliderStyle::horizontal_gradient();
+        assert_eq!(s.name, "Horizontal Gradient");
+        assert_eq!(s.filled_symbol, symbols::FILLED_DARK_SHADE);
+        assert_eq!(s.filled_color, Color::Magenta);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_horizontal_dots_style() {
+        let s = SliderStyle::horizontal_dots();
+        assert_eq!(s.name, "Horizontal Dots");
+        assert_eq!(s.filled_symbol, symbols::FILLED_CIRCLE);
+        assert_eq!(s.filled_color, Color::Yellow);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_horizontal_squares_style() {
+        let s = SliderStyle::horizontal_squares();
+        assert_eq!(s.name, "Horizontal Squares");
+        assert_eq!(s.filled_symbol, symbols::FILLED_SQUARE);
+        assert_eq!(s.filled_color, Color::Blue);
+        assert!(!s.segmented);
+    }
+
+    #[test]
+    fn test_horizontal_double_style() {
+        let s = SliderStyle::horizontal_double();
+        assert_eq!(s.name, "Horizontal Double");
+        assert_eq!(s.filled_symbol, symbols::FILLED_DOUBLE_LINE);
+        assert_eq!(s.filled_color, Color::LightCyan);
+        assert!(!s.segmented);
+    }
+
+    // ── Clone + Debug ────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_clone() {
+        let original = SliderStyle::custom("Clone Test")
+            .filled_color(Color::Red)
+            .with_segments(true);
+        let cloned = original.clone();
+        assert_eq!(cloned.name, "Clone Test");
+        assert_eq!(cloned.filled_color, Color::Red);
+        assert!(cloned.segmented);
+    }
+
+    #[test]
+    fn test_debug() {
+        let s = SliderStyle::default_style();
+        let dbg = format!("{:?}", s);
+        assert!(dbg.contains("SliderStyle"));
+        assert!(dbg.contains("Default"));
+    }
+}

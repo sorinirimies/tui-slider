@@ -501,8 +501,54 @@ mod tests {
     #[test]
     fn test_names_and_descriptions() {
         assert_eq!(BorderStyle::Plain.name(), "Plain");
+        assert_eq!(BorderStyle::Rounded.name(), "Rounded");
+        assert_eq!(BorderStyle::Double.name(), "Double");
+        assert_eq!(BorderStyle::Thick.name(), "Thick");
         assert_eq!(BorderStyle::PlainSegmented.name(), "Plain (Segmented)");
+        assert_eq!(BorderStyle::RoundedSegmented.name(), "Rounded (Segmented)");
+        assert_eq!(BorderStyle::DoubleSegmented.name(), "Double (Segmented)");
+        assert_eq!(BorderStyle::ThickSegmented.name(), "Thick (Segmented)");
+        assert_eq!(BorderStyle::PlainSidesOnly.name(), "Plain (Sides Only)");
+        assert_eq!(BorderStyle::RoundedSidesOnly.name(), "Rounded (Sides Only)");
+        assert_eq!(BorderStyle::DoubleSidesOnly.name(), "Double (Sides Only)");
+        assert_eq!(BorderStyle::ThickSidesOnly.name(), "Thick (Sides Only)");
+    }
+
+    #[test]
+    fn test_all_descriptions() {
         assert_eq!(BorderStyle::Plain.description(), "Basic straight lines");
+        assert_eq!(BorderStyle::Rounded.description(), "Smooth rounded corners");
+        assert_eq!(BorderStyle::Double.description(), "Elegant double lines");
+        assert_eq!(BorderStyle::Thick.description(), "Bold thick borders");
+        assert_eq!(
+            BorderStyle::PlainSegmented.description(),
+            "Dashed lines with gaps"
+        );
+        assert_eq!(
+            BorderStyle::RoundedSegmented.description(),
+            "Rounded with gaps"
+        );
+        assert_eq!(
+            BorderStyle::DoubleSegmented.description(),
+            "Double lines with gaps"
+        );
+        assert_eq!(BorderStyle::ThickSegmented.description(), "Thick with gaps");
+        assert_eq!(
+            BorderStyle::PlainSidesOnly.description(),
+            "Left and right borders only"
+        );
+        assert_eq!(
+            BorderStyle::RoundedSidesOnly.description(),
+            "Rounded sides only"
+        );
+        assert_eq!(
+            BorderStyle::DoubleSidesOnly.description(),
+            "Double sides only"
+        );
+        assert_eq!(
+            BorderStyle::ThickSidesOnly.description(),
+            "Thick sides only"
+        );
     }
 
     #[test]
@@ -544,5 +590,123 @@ mod tests {
         let title_with_space = title_right_with_spacing("Test");
         let content_with_space = format!("{:?}", title_with_space);
         assert!(content_with_space.contains("Test     ")); // Has 5 trailing spaces
+    }
+
+    #[test]
+    fn test_create_title_with_alignment() {
+        use ratatui::layout::Alignment;
+
+        let left = create_title("Left", Some(TitleAlignment::Left), None);
+        assert_eq!(left.alignment, Some(Alignment::Left));
+
+        let center = create_title("Center", Some(TitleAlignment::Center), None);
+        assert_eq!(center.alignment, Some(Alignment::Center));
+
+        let right = create_title("Right", Some(TitleAlignment::Right), None);
+        assert_eq!(right.alignment, Some(Alignment::Right));
+    }
+
+    #[test]
+    fn test_create_title_default_alignment() {
+        use ratatui::layout::Alignment;
+
+        // None alignment should default to Center (TitleAlignment::default())
+        let title = create_title("Default", None, None);
+        assert_eq!(title.alignment, Some(Alignment::Center));
+    }
+
+    #[test]
+    fn test_create_title_position_bottom_ignored() {
+        // TitlePosition::Bottom is accepted without panic;
+        // the returned Line carries the text and alignment regardless
+        let title = create_title("Bottom", None, Some(TitlePosition::Bottom));
+        let dbg = format!("{:?}", title);
+        assert!(dbg.contains("Bottom"));
+    }
+
+    #[test]
+    fn test_create_title_position_top() {
+        let title = create_title("Top", None, Some(TitlePosition::Top));
+        let dbg = format!("{:?}", title);
+        assert!(dbg.contains("Top"));
+    }
+
+    #[test]
+    fn test_border_set_segmented_plain() {
+        let set = BorderStyle::PlainSegmented.border_set();
+        assert!(set.segmented);
+        assert_eq!(set.top_left, '┌');
+    }
+
+    #[test]
+    fn test_border_set_segmented_rounded() {
+        let set = BorderStyle::RoundedSegmented.border_set();
+        assert!(set.segmented);
+        assert_eq!(set.top_left, '╭');
+    }
+
+    #[test]
+    fn test_border_set_segmented_double() {
+        let set = BorderStyle::DoubleSegmented.border_set();
+        assert!(set.segmented);
+        assert_eq!(set.top_left, '╔');
+    }
+
+    #[test]
+    fn test_border_set_segmented_thick() {
+        let set = BorderStyle::ThickSegmented.border_set();
+        assert!(set.segmented);
+        assert_eq!(set.top_left, '┏');
+    }
+
+    #[test]
+    fn test_border_set_sides_only_plain() {
+        let set = BorderStyle::PlainSidesOnly.border_set();
+        assert!(set.sides_only);
+        assert!(!set.segmented);
+    }
+
+    #[test]
+    fn test_border_set_sides_only_rounded() {
+        let set = BorderStyle::RoundedSidesOnly.border_set();
+        assert!(set.sides_only);
+    }
+
+    #[test]
+    fn test_border_set_sides_only_double() {
+        let set = BorderStyle::DoubleSidesOnly.border_set();
+        assert!(set.sides_only);
+    }
+
+    #[test]
+    fn test_border_set_sides_only_thick() {
+        let set = BorderStyle::ThickSidesOnly.border_set();
+        assert!(set.sides_only);
+    }
+
+    #[test]
+    fn test_title_position_variants() {
+        // Both variants exist and are distinct
+        assert_ne!(
+            std::mem::discriminant(&TitlePosition::Top),
+            std::mem::discriminant(&TitlePosition::Bottom),
+        );
+    }
+
+    #[test]
+    fn test_title_alignment_default_is_center() {
+        assert_eq!(TitleAlignment::default(), TitleAlignment::Center);
+    }
+
+    #[test]
+    fn test_create_segmented_line_zero_length() {
+        let line = create_segmented_line(0, '-');
+        assert_eq!(line, "");
+    }
+
+    #[test]
+    fn test_create_segmented_line_one_char() {
+        let line = create_segmented_line(1, '─');
+        assert_eq!(line, "─");
     }
 }

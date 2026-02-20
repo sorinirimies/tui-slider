@@ -864,4 +864,239 @@ mod tests {
         state.step_up();
         assert_eq!(state.value(), 75.0);
     }
+
+    #[test]
+    fn test_set_min() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_min(-10.0);
+        assert_eq!(state.min(), -10.0);
+        assert_eq!(state.value(), 50.0); // value unchanged, still in range
+    }
+
+    #[test]
+    fn test_set_min_clamps_value() {
+        let mut state = SliderState::new(5.0, 0.0, 100.0);
+        state.set_min(20.0); // new min is above current value
+        assert_eq!(state.min(), 20.0);
+        assert_eq!(state.value(), 20.0); // value clamped to new min
+    }
+
+    #[test]
+    #[should_panic(expected = "min must be less than max")]
+    fn test_set_min_panics_when_ge_max() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_min(100.0);
+    }
+
+    #[test]
+    fn test_set_max() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_max(200.0);
+        assert_eq!(state.max(), 200.0);
+        assert_eq!(state.value(), 50.0); // value unchanged, still in range
+    }
+
+    #[test]
+    fn test_set_max_clamps_value() {
+        let mut state = SliderState::new(80.0, 0.0, 100.0);
+        state.set_max(50.0); // new max is below current value
+        assert_eq!(state.max(), 50.0);
+        assert_eq!(state.value(), 50.0); // value clamped to new max
+    }
+
+    #[test]
+    #[should_panic(expected = "max must be greater than min")]
+    fn test_set_max_panics_when_le_min() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_max(0.0);
+    }
+
+    #[test]
+    fn test_range() {
+        let state = SliderState::new(50.0, 0.0, 100.0);
+        assert_eq!(state.range(), 100.0);
+
+        let state = SliderState::new(50.0, 25.0, 75.0);
+        assert_eq!(state.range(), 50.0);
+
+        let state = SliderState::new(0.0, -50.0, 50.0);
+        assert_eq!(state.range(), 100.0);
+    }
+
+    #[test]
+    fn test_is_at_min() {
+        let state = SliderState::new(0.0, 0.0, 100.0);
+        assert!(state.is_at_min());
+
+        let state = SliderState::new(50.0, 0.0, 100.0);
+        assert!(!state.is_at_min());
+
+        let state = SliderState::new(100.0, 0.0, 100.0);
+        assert!(!state.is_at_min());
+    }
+
+    #[test]
+    fn test_is_at_max() {
+        let state = SliderState::new(100.0, 0.0, 100.0);
+        assert!(state.is_at_max());
+
+        let state = SliderState::new(50.0, 0.0, 100.0);
+        assert!(!state.is_at_max());
+
+        let state = SliderState::new(0.0, 0.0, 100.0);
+        assert!(!state.is_at_max());
+    }
+
+    #[test]
+    fn test_is_at_middle() {
+        let state = SliderState::new(50.0, 0.0, 100.0);
+        assert!(state.is_at_middle());
+
+        let state = SliderState::new(45.0, 0.0, 100.0); // within 10% of middle
+        assert!(state.is_at_middle());
+
+        let state = SliderState::new(0.0, 0.0, 100.0);
+        assert!(!state.is_at_middle());
+
+        let state = SliderState::new(100.0, 0.0, 100.0);
+        assert!(!state.is_at_middle());
+    }
+
+    #[test]
+    fn test_is_low() {
+        let state = SliderState::new(20.0, 0.0, 100.0);
+        assert!(state.is_low());
+
+        let state = SliderState::new(0.0, 0.0, 100.0);
+        assert!(state.is_low());
+
+        let state = SliderState::new(50.0, 0.0, 100.0);
+        assert!(!state.is_low());
+
+        let state = SliderState::new(80.0, 0.0, 100.0);
+        assert!(!state.is_low());
+    }
+
+    #[test]
+    fn test_is_medium() {
+        let state = SliderState::new(50.0, 0.0, 100.0);
+        assert!(state.is_medium());
+
+        let state = SliderState::new(40.0, 0.0, 100.0);
+        assert!(state.is_medium());
+
+        let state = SliderState::new(10.0, 0.0, 100.0);
+        assert!(!state.is_medium());
+
+        let state = SliderState::new(80.0, 0.0, 100.0);
+        assert!(!state.is_medium());
+    }
+
+    #[test]
+    fn test_is_high() {
+        let state = SliderState::new(80.0, 0.0, 100.0);
+        assert!(state.is_high());
+
+        let state = SliderState::new(100.0, 0.0, 100.0);
+        assert!(state.is_high());
+
+        let state = SliderState::new(20.0, 0.0, 100.0);
+        assert!(!state.is_high());
+
+        let state = SliderState::new(50.0, 0.0, 100.0);
+        assert!(!state.is_high());
+    }
+
+    #[test]
+    fn test_distance_from_min() {
+        let state = SliderState::new(75.0, 0.0, 100.0);
+        assert_eq!(state.distance_from_min(), 75.0);
+
+        let state = SliderState::new(75.0, 25.0, 100.0);
+        assert_eq!(state.distance_from_min(), 50.0);
+
+        let state = SliderState::new(0.0, 0.0, 100.0);
+        assert_eq!(state.distance_from_min(), 0.0);
+    }
+
+    #[test]
+    fn test_distance_from_max() {
+        let state = SliderState::new(75.0, 0.0, 100.0);
+        assert_eq!(state.distance_from_max(), 25.0);
+
+        let state = SliderState::new(75.0, 25.0, 100.0);
+        assert_eq!(state.distance_from_max(), 25.0);
+
+        let state = SliderState::new(100.0, 0.0, 100.0);
+        assert_eq!(state.distance_from_max(), 0.0);
+    }
+
+    #[test]
+    fn test_value_string() {
+        let state = SliderState::new(75.5, 0.0, 100.0);
+        assert_eq!(state.value_string(1), "75.5");
+        assert_eq!(state.value_string(0), "76");
+        assert_eq!(state.value_string(2), "75.50");
+    }
+
+    #[test]
+    fn test_value_string_integer_value() {
+        let state = SliderState::new(50.0, 0.0, 100.0);
+        assert_eq!(state.value_string(0), "50");
+        assert_eq!(state.value_string(1), "50.0");
+    }
+
+    #[test]
+    fn test_percentage_string() {
+        let state = SliderState::new(75.0, 0.0, 100.0);
+        assert_eq!(state.percentage_string(), "75%");
+
+        let state = SliderState::new(50.0, 0.0, 100.0);
+        assert_eq!(state.percentage_string(), "50%");
+
+        let state = SliderState::new(0.0, 0.0, 100.0);
+        assert_eq!(state.percentage_string(), "0%");
+
+        let state = SliderState::new(100.0, 0.0, 100.0);
+        assert_eq!(state.percentage_string(), "100%");
+    }
+
+    #[test]
+    fn test_percentage_zero_range() {
+        // When min == max, percentage should return 0.0 without dividing by zero.
+        // Construct the state manually to bypass the new() assertion.
+        let state = SliderState {
+            value: 50.0,
+            min: 50.0,
+            max: 50.0,
+            step: 1.0,
+        };
+        assert_eq!(state.percentage(), 0.0);
+    }
+
+    #[test]
+    fn test_set_from_position_zero_length() {
+        // set_from_position with length=0 should be a no-op
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_from_position(99, 0);
+        assert_eq!(state.value(), 50.0); // unchanged
+    }
+
+    #[test]
+    fn test_set_from_position_full_range() {
+        let mut state = SliderState::new(0.0, 0.0, 100.0);
+        state.set_from_position(100, 100);
+        assert_eq!(state.value(), 100.0);
+
+        state.set_from_position(0, 100);
+        assert_eq!(state.value(), 0.0);
+    }
+
+    #[test]
+    fn test_default_state() {
+        let state = SliderState::default();
+        assert_eq!(state.value(), 0.0);
+        assert_eq!(state.min(), 0.0);
+        assert_eq!(state.max(), 100.0);
+    }
 }
