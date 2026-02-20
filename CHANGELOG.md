@@ -5,4 +5,5 @@ All notable changes to this project will be documented in this file.
 
 ### Miscellaneous
 - Bump version to 0.2.6
+- Bump version to 0.2.7
 
