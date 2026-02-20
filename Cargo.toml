@@ -12,13 +12,13 @@ readme = "README.md"
 rust-version = "1.74.0"
 
 [dependencies]
-ratatui = "0.28"
-crossterm = "0.28"
-unicode-width = "0.1"
+ratatui = "0.30"
+crossterm = "0.29"
+unicode-width = "0.2"
 
 [dev-dependencies]
 anyhow = "1.0"
-rand = "0.8"
+rand = "0.10"
 
 [[example]]
 name = "horizontal"

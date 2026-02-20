@@ -143,7 +143,10 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> {
+fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()>
+where
+    B::Error: Send + Sync + 'static,
+{
     loop {
         terminal.draw(|f| ui(f, app))?;
 

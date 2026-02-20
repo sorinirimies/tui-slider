@@ -333,7 +333,11 @@ pub fn create_segmented_line(length: usize, char: char) -> String {
     result
 }
 
-/// Helper function to create a centered title for ratatui Block
+/// Helper function to create a title `Line` for ratatui Block
+///
+/// Returns a [`ratatui::text::Line`] with the requested alignment applied.
+/// To place the title at the bottom of a block, use [`Block::title_bottom`] instead
+/// of [`Block::title`] / [`Block::title_top`] when adding the returned line.
 ///
 /// # Examples
 ///
@@ -342,26 +346,19 @@ pub fn create_segmented_line(length: usize, char: char) -> String {
 /// use ratatui::widgets::Block;
 ///
 /// let title = create_title("My Slider", None, None);
-/// let block = Block::default().title(title);
+/// let block = Block::default().title_top(title);
 /// ```
 pub fn create_title(
     text: impl Into<String>,
     alignment: Option<TitleAlignment>,
-    position: Option<TitlePosition>,
-) -> ratatui::widgets::block::Title<'static> {
-    use ratatui::widgets::block::{Position, Title};
+    _position: Option<TitlePosition>,
+) -> ratatui::text::Line<'static> {
+    use ratatui::text::Line;
 
     let alignment = alignment.unwrap_or_default();
-    let position = position.unwrap_or_default();
-
     let title_text = text.into();
-    let mut title = Title::from(title_text).alignment(alignment.to_ratatui_alignment());
 
-    if matches!(position, TitlePosition::Bottom) {
-        title = title.position(Position::Bottom);
-    }
-
-    title
+    Line::from(title_text).alignment(alignment.to_ratatui_alignment())
 }
 
 /// Helper function to create a left-aligned title
@@ -373,9 +370,9 @@ pub fn create_title(
 /// use ratatui::widgets::Block;
 ///
 /// let title = title_left("Volume");
-/// let block = Block::default().title(title);
+/// let block = Block::default().title_top(title);
 /// ```
-pub fn title_left(text: impl Into<String>) -> ratatui::widgets::block::Title<'static> {
+pub fn title_left(text: impl Into<String>) -> ratatui::text::Line<'static> {
     create_title(text, Some(TitleAlignment::Left), None)
 }
 
@@ -388,9 +385,9 @@ pub fn title_left(text: impl Into<String>) -> ratatui::widgets::block::Title<'st
 /// use ratatui::widgets::Block;
 ///
 /// let title = title_center("Volume");
-/// let block = Block::default().title(title);
+/// let block = Block::default().title_top(title);
 /// ```
-pub fn title_center(text: impl Into<String>) -> ratatui::widgets::block::Title<'static> {
+pub fn title_center(text: impl Into<String>) -> ratatui::text::Line<'static> {
     create_title(text, Some(TitleAlignment::Center), None)
 }
 
@@ -403,9 +400,9 @@ pub fn title_center(text: impl Into<String>) -> ratatui::widgets::block::Title<'
 /// use ratatui::widgets::Block;
 ///
 /// let title = title_right("100%");
-/// let block = Block::default().title(title);
+/// let block = Block::default().title_top(title);
 /// ```
-pub fn title_right(text: impl Into<String>) -> ratatui::widgets::block::Title<'static> {
+pub fn title_right(text: impl Into<String>) -> ratatui::text::Line<'static> {
     create_title(text, Some(TitleAlignment::Right), None)
 }
 
@@ -421,11 +418,9 @@ pub fn title_right(text: impl Into<String>) -> ratatui::widgets::block::Title<'s
 /// use ratatui::widgets::Block;
 ///
 /// let title = title_right_with_spacing("Status");
-/// let block = Block::default().title(title);
+/// let block = Block::default().title_top(title);
 /// ```
-pub fn title_right_with_spacing(
-    text: impl Into<String>,
-) -> ratatui::widgets::block::Title<'static> {
+pub fn title_right_with_spacing(text: impl Into<String>) -> ratatui::text::Line<'static> {
     let text_with_spacing = format!("{}     ", text.into());
     create_title(text_with_spacing, Some(TitleAlignment::Right), None)
 }
