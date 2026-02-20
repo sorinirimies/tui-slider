@@ -5,6 +5,17 @@
 
 set -e
 
+# Cross-platform in-place sed helper
+# macOS (BSD sed) requires an explicit empty extension: sed -i ''
+# Linux (GNU sed) uses bare: sed -i
+sed_inplace() {
+    if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -50,13 +61,13 @@ fi
 
 echo ""
 echo -e "${CYAN}Step 1/8: Updating Cargo.toml...${NC}"
-sed -i "s/^version = \".*\"/version = \"${NEW_VERSION}\"/" Cargo.toml
+sed_inplace "s/^version = \".*\"/version = \"${NEW_VERSION}\"/" Cargo.toml
 echo -e "${GREEN}✓ Cargo.toml updated${NC}"
 
 echo ""
 echo -e "${CYAN}Step 2/8: Updating README.md badges...${NC}"
 if grep -q "version-[0-9]*\.[0-9]*\.[0-9]*-blue" README.md 2>/dev/null; then
-    sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*\(-[a-zA-Z0-9]*\)\?-blue/version-${NEW_VERSION}-blue/" README.md
+    sed_inplace -E "s/version-[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?-blue/version-${NEW_VERSION}-blue/" README.md
     echo -e "${GREEN}✓ README.md updated${NC}"
 else
     echo -e "${YELLOW}⚠ No version badge found in README.md${NC}"
