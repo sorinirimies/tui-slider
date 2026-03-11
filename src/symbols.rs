@@ -626,11 +626,11 @@ mod tests {
     #[test]
     fn test_symbol_constants_are_nonempty() {
         // Spot-check that symbol constants are non-empty strings
-        assert!(!FILLED_THICK_LINE.is_empty());
-        assert!(!EMPTY_THIN_LINE.is_empty());
-        assert!(!HANDLE_CIRCLE.is_empty());
-        assert!(!FILLED_BLOCK.is_empty());
-        assert!(!EMPTY_SPACE.is_empty());
-        assert!(!HANDLE_DIAMOND.is_empty());
+        const _: () = assert!(!FILLED_THICK_LINE.is_empty());
+        const _: () = assert!(!EMPTY_THIN_LINE.is_empty());
+        const _: () = assert!(!HANDLE_CIRCLE.is_empty());
+        const _: () = assert!(!FILLED_BLOCK.is_empty());
+        const _: () = assert!(!EMPTY_SPACE.is_empty());
+        const _: () = assert!(!HANDLE_DIAMOND.is_empty());
     }
 }
