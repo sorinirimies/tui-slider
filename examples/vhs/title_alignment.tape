@@ -9,9 +9,11 @@ Set Height 600
 Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
+Hide
 Type "cargo run --example title_alignment"
 Enter
 Sleep 2s
+Show
 
 # Show the interface with different title alignments
 Sleep 1s

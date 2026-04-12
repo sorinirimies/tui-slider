@@ -1,17 +1,12 @@
 # tui-slider - A simple TUI slider component library for ratatui
 #
-# Setup: Run './scripts/setup-just.sh' for interactive installation
-# Or install manually: cargo install just
+# Prerequisites: cargo install just && cargo install nu
 # Usage: just <task> or just --list
 # Patterns: See docs/JUSTFILE_PATTERNS.md for best practices
 
 # Default task - show available commands
 default:
     @just --list
-
-# Setup just command runner with interactive installer
-setup-just:
-    @./scripts/setup-just.sh
 
 # Install required tools (just, git-cliff)
 install-tools:
@@ -129,7 +124,7 @@ changelog-update: check-git-cliff
 # Note: Runs check-all first to ensure code quality before version bump (fail early)
 bump version: check-all check-git-cliff
     @echo "Bumping version to {{version}}..."
-    @./scripts/bump_version.sh {{version}}
+    nu scripts/bump_version.nu {{version}}
 
 # Quick release: format, check, test, and build
 release-check: fmt clippy test build-release
@@ -142,6 +137,14 @@ publish-dry:
 # Publish to crates.io
 publish:
     cargo publish
+
+# Run pre-publish readiness checks
+check-publish:
+    nu scripts/check_publish.nu
+
+# Upgrade dependencies (nightly-style: upgrade pins, sync lock, quality gate)
+upgrade-deps:
+    nu scripts/upgrade_deps.nu --dry-run
 
 # Update dependencies
 update:
@@ -255,7 +258,7 @@ setup-gitea url:
 
 # Show current version
 version:
-    @grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/'
+    @nu scripts/version.nu
 
 # Show git-cliff info
 cliff-info:
@@ -305,13 +308,11 @@ vhs-borders:
     vhs examples/vhs/borders.tape
     @echo "✅ Demo generated at examples/vhs/output/borders.gif"
 
-# Run the VHS tape to generate demo GIF for comprehensive demo (horizontal and vertical sliders with various styles)
-vhs-comprehensive:
-    @echo "Running VHS tape to generate comprehensive demo..."
-    vhs examples/vhs/comprehensive_demo.tape
-    @echo "✅ Demo generated at examples/vhs/output/comprehensive_demo.gif"
-
-
+# Run the VHS tape to generate the main tui-slider demo GIF (horizontal and vertical sliders showcase)
+vhs-tui-slider:
+    @echo "Running VHS tape to generate tui-slider demo..."
+    vhs examples/vhs/tui_slider.tape
+    @echo "✅ Demo generated at examples/vhs/output/tui-slider.gif"
 
 # Run the VHS tape to generate demo GIF for step sizes
 vhs-step-sizes:
@@ -348,8 +349,8 @@ vhs-vertical-positioning:
 # Run all VHS tapes to generate all demo GIFs (automatically discovers all .tape files)
 vhs-all:
     @echo "🎬 Running automated VHS tape generation..."
-    @./scripts/generate_all_tapes.sh
+    nu scripts/generate_all_tapes.nu
 
 # Run all VHS tapes manually (legacy - explicitly lists each tape)
-vhs-all-manual: vhs-horizontal vhs-vertical vhs-custom vhs-handles vhs-borders vhs-comprehensive vhs-step-sizes vhs-title-alignment vhs-value-alignment vhs-vertical-positioning vhs-horizontal-bar-alignment
+vhs-all-manual: vhs-tui-slider vhs-horizontal vhs-vertical vhs-custom vhs-handles vhs-borders vhs-step-sizes vhs-title-alignment vhs-value-alignment vhs-vertical-positioning vhs-horizontal-bar-alignment
     @echo "✅ All demo GIFs generated!"

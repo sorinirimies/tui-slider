@@ -54,80 +54,13 @@ jobs:
       - name: Install cliff
         run: cargo install git-cliff
 
-      - name: Update version and generate changelog
-        run: |
-          # Extract version from tag (remove 'v' prefix)
-          VERSION=${GITHUB_REF_NAME#v}
-          echo "Updating version to: $VERSION"
+      - name: Install Nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: "*"
 
-          # Update Cargo.toml version
-          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
-
-          # Update full changelog with git-cliff
-          git-cliff --config cliff.toml --latest --output CHANGELOG.md
-
-          # Generate release notes with git-cliff
-          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-
-          # Generate release changelog using git-cliff
-          if [ -n "$LAST_TAG" ]; then
-            # Generate changelog between tags
-            git-cliff --config cliff.toml ${LAST_TAG}..${{ github.ref_name }} --strip header > CLIFF_CHANGES.md
-          else
-            # Generate changelog for first release
-            git-cliff --config cliff.toml --tag ${{ github.ref_name }} --strip header > CLIFF_CHANGES.md
-          fi
-
-          # Create the release note template
-          echo "# tui-slider ${VERSION}" > RELEASE_CHANGELOG.md
-          echo "" >> RELEASE_CHANGELOG.md
-          echo "## 🚀 What's New" >> RELEASE_CHANGELOG.md
-          echo "" >> RELEASE_CHANGELOG.md
-
-          if [ -n "$LAST_TAG" ]; then
-            echo "### 📝 Changes since ${LAST_TAG}:" >> RELEASE_CHANGELOG.md
-            echo "" >> RELEASE_CHANGELOG.md
-          else
-            echo "### 🎉 Initial Release" >> RELEASE_CHANGELOG.md
-            echo "" >> RELEASE_CHANGELOG.md
-          fi
-
-          # Add the git-cliff generated changes to the release notes
-          cat CLIFF_CHANGES.md >> RELEASE_CHANGELOG.md
-
-          # Add installation and quick start info
-          echo "" >> RELEASE_CHANGELOG.md
-          echo "## 📦 Installation" >> RELEASE_CHANGELOG.md
-          echo "" >> RELEASE_CHANGELOG.md
-          echo "Add this to your \`Cargo.toml\`:" >> RELEASE_CHANGELOG.md
-          echo "" >> RELEASE_CHANGELOG.md
-          echo "\`\`\`toml" >> RELEASE_CHANGELOG.md
-          echo "[dependencies]" >> RELEASE_CHANGELOG.md
-          echo "tui-slider = \"${VERSION}\"" >> RELEASE_CHANGELOG.md
-          echo "\`\`\`" >> RELEASE_CHANGELOG.md
-          echo "" >> RELEASE_CHANGELOG.md
-          echo "Or install with cargo:" >> RELEASE_CHANGELOG.md
-          echo "" >> RELEASE_CHANGELOG.md
-          echo "\`\`\`bash" >> RELEASE_CHANGELOG.md
-          echo "cargo add tui-slider" >> RELEASE_CHANGELOG.md
-          echo "\`\`\`" >> RELEASE_CHANGELOG.md
-          echo "" >> RELEASE_CHANGELOG.md
-          echo "## 🚀 Quick Start" >> RELEASE_CHANGELOG.md
-          echo "" >> RELEASE_CHANGELOG.md
-          echo "\`\`\`rust" >> RELEASE_CHANGELOG.md
-          echo "use ratatui::prelude::*;" >> RELEASE_CHANGELOG.md
-          echo "use tui_slider::{Slider, SliderState, SliderOrientation};" >> RELEASE_CHANGELOG.md
-          echo "" >> RELEASE_CHANGELOG.md
-          echo "let mut state = SliderState::new(50.0, 0.0, 100.0);" >> RELEASE_CHANGELOG.md
-          echo "let slider = Slider::from_state(&state)" >> RELEASE_CHANGELOG.md
-          echo "    .orientation(SliderOrientation::Horizontal)" >> RELEASE_CHANGELOG.md
-          echo "    .label(\"Volume\")" >> RELEASE_CHANGELOG.md
-          echo "    .show_value(true);" >> RELEASE_CHANGELOG.md
-          echo "\`\`\`" >> RELEASE_CHANGELOG.md
-
-          # Show the generated release notes
-          echo "Generated release notes:"
-          cat RELEASE_CHANGELOG.md
+      - name: Prepare release artifacts
+        run: nu scripts/release_prepare.nu ${{ github.ref_name }}
 
       - name: Build release
         run: cargo build --release --all-features
@@ -135,7 +68,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          body_path: RELEASE_CHANGELOG.md
+          body_path: RELEASE_NOTES.md
           files: |
             LICENSE
             README.md

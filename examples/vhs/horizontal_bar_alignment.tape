@@ -9,9 +9,11 @@ Set Height 900
 Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
+Hide
 Type "cargo run --example horizontal_bar_alignment"
 Enter
 Sleep 2s
+Show
 
 # Show the interface with all alignment options
 Sleep 1s

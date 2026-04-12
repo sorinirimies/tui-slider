@@ -9,9 +9,11 @@ Set Height 800
 Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
+Hide
 Type "cargo run --example vertical_positioning"
 Enter
 Sleep 2s
+Show
 
 # Show the interface with all positioning combinations
 Sleep 1s

@@ -9,9 +9,11 @@ Set Height 700
 Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
+Hide
 Type "cargo run --example value_alignment"
 Enter
 Sleep 2s
+Show
 
 # Show the interface with different value alignments
 Sleep 1s

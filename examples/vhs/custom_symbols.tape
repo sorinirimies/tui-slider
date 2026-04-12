@@ -9,9 +9,11 @@ Set Height 800
 Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
+Hide
 Type "cargo run --example custom"
 Enter
 Sleep 2s
+Show
 
 # Show the interface with all custom styles
 Sleep 1s

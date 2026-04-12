@@ -9,9 +9,11 @@ Set Height 1000
 Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
+Hide
 Type "cargo run --example horizontal"
 Enter
 Sleep 2s
+Show
 
 # Page 1: Standard Styles
 Sleep 1s

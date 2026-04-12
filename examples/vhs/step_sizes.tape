@@ -9,9 +9,11 @@ Set Height 700
 Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
+Hide
 Type "cargo run --example step_sizes"
 Enter
 Sleep 2s
+Show
 
 # Show the interface with 5 different step sizes
 Sleep 1s

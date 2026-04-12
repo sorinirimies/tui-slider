@@ -9,9 +9,11 @@ Set Height 900
 Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
+Hide
 Type "cargo run --example handles"
 Enter
 Sleep 2s
+Show
 
 # Show the side-by-side interface
 Sleep 1s

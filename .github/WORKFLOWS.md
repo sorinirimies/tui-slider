@@ -8,11 +8,13 @@ The project uses two main workflows:
 1. **CI** - Continuous Integration for pull requests and pushes
 2. **Release** - Automated releases when version tags are pushed
 
-Both workflows are simplified and match the structure from tui-checkbox for consistency.
+Both workflows are available for GitHub Actions (`.github/workflows/`) and Gitea Actions (`.gitea/workflows/`).
+
+Release logic is extracted into reusable Nushell scripts under `scripts/`, keeping the workflow YAML thin and the logic testable locally.
 
 ## CI Workflow
 
-**File:** `.github/workflows/ci.yml`
+**File:** `.github/workflows/ci.yml` / `.gitea/workflows/ci.yml`
 
 **Triggers:**
 - Pull requests to any branch
@@ -21,8 +23,8 @@ Both workflows are simplified and match the structure from tui-checkbox for cons
 **Features:**
 - ✅ Concurrency control (cancels outdated PR runs)
 - ✅ Smart caching with `Swatinem/rust-cache`
-- ✅ Tests on Ubuntu and Windows
 - ✅ Clippy feedback directly on PRs
+- ✅ Nightly docs build with `#[doc(cfg)]` support
 
 ### Jobs
 
@@ -45,8 +47,7 @@ Both workflows are simplified and match the structure from tui-checkbox for cons
 - Environment: `RUSTDOCFLAGS: --cfg docsrs`
 
 #### 4. `test` - Tests
-- Runs on: Ubuntu Latest + Windows Latest
-- Matrix strategy with fail-fast disabled
+- Runs on: Ubuntu Latest
 - Commands:
   - `cargo generate-lockfile` (if Cargo.lock missing)
   - `cargo test --locked --all-features --all-targets`
@@ -54,7 +55,6 @@ Both workflows are simplified and match the structure from tui-checkbox for cons
 
 ### Why These Choices?
 
-- **Ubuntu + Windows only**: Most users are on these platforms
 - **Nightly for docs only**: Enables `#[doc(cfg)]` features
 - **Clippy check action**: Better PR experience with inline comments
 - **Swatinem/rust-cache**: Faster builds (saves ~2-3 minutes)
@@ -62,21 +62,22 @@ Both workflows are simplified and match the structure from tui-checkbox for cons
 
 ## Release Workflow
 
-**File:** `.github/workflows/release.yml`
+**File:** `.github/workflows/release.yml` / `.gitea/workflows/release.yml`
 
 **Triggers:**
-- Push of tags matching `v*` (e.g., `v0.1.0`, `v0.2.0`)
+- Push of tags matching `v*` (e.g., `v0.3.0`, `v0.4.0`)
 
 **Features:**
+- ✅ Nushell-based release preparation (`scripts/release_prepare.nu`)
 - ✅ Automatic changelog generation with git-cliff
-- ✅ Rich release notes with installation guide
+- ✅ Rich release notes with installation guide and quick-start example
 - ✅ Auto-publish to crates.io (when token is set)
-- ✅ GitHub Release with files attached
+- ✅ GitHub/Gitea Release with files attached
 
 ### Jobs
 
 #### 1. `test` - Pre-Release Testing
-- Runs on: Ubuntu Latest + Windows Latest
+- Runs on: Ubuntu Latest
 - Runs all quality checks:
   - Code formatting (`cargo fmt --check`)
   - Clippy linting (`cargo clippy`)
@@ -87,106 +88,74 @@ Both workflows are simplified and match the structure from tui-checkbox for cons
 - Runs on: Ubuntu Latest
 - Depends on: `test` job passing
 - Steps:
-  1. **Update Version**: Extracts version from tag and updates `Cargo.toml`
-  2. **Generate Changelog**: Uses git-cliff to create `CHANGELOG.md`
-  3. **Create Release Notes**: Generates rich markdown with:
-     - What's new section
-     - Changes since last version
-     - Installation instructions
-     - Quick start example
-  4. **Build Release**: `cargo build --release --all-features`
-  5. **Create GitHub Release**: Uses `softprops/action-gh-release`
+  1. **Install git-cliff**: `cargo install git-cliff`
+  2. **Install Nushell**: Uses `hustcer/setup-nu@v3`
+  3. **Prepare release**: `nu scripts/release_prepare.nu <tag>` — updates `Cargo.toml`, generates `CHANGELOG.md` and `RELEASE_NOTES.md`
+  4. **Build release**: `cargo build --release --all-features`
+  5. **Create Release**: Uses `softprops/action-gh-release` with `RELEASE_NOTES.md` as the body
   6. **Publish to crates.io**: Auto-publishes if `CRATES_IO_TOKEN` is set
+
+### What `release_prepare.nu` Does
+
+All release-note logic lives in `scripts/release_prepare.nu` rather than inline shell in the workflow YAML. This means you can run it locally to preview release artifacts:
+
+```bash
+nu scripts/release_prepare.nu v0.4.0
+```
+
+| Step | Action |
+|------|--------|
+| 1/5 | Updates `version = "..."` in `Cargo.toml` |
+| 2/5 | Regenerates `CHANGELOG.md` with git-cliff |
+| 3/5 | Generates per-release diff (`CLIFF_CHANGES.md`) |
+| 4/5 | Builds `RELEASE_NOTES.md` with changelog, installation guide, and quick-start |
+| 5/5 | Cleans up temporary files |
 
 ### Release Notes Format
 
-Each release includes:
+Each release's `RELEASE_NOTES.md` includes:
 
-```markdown
-# tui-slider X.Y.Z
-
-## 🚀 What's New
-
-### 📝 Changes since vX.Y.Z:
-- [Generated changelog from git-cliff]
-
-## 📦 Installation
-
-Add this to your `Cargo.toml`:
-
-```toml
-[dependencies]
-tui-slider = "X.Y.Z"
-```
-
-Or install with cargo:
-
-```bash
-cargo add tui-slider
-```
-
-## 🚀 Quick Start
-
-```rust
-use ratatui::prelude::*;
-use tui_slider::{Slider, SliderState, SliderOrientation};
-
-let mut state = SliderState::new(50.0, 0.0, 100.0);
-let slider = Slider::from_state(&state)
-    .orientation(SliderOrientation::Horizontal)
-    .label("Volume")
-    .show_value(true);
-```
-```
+- **What's New** — git-cliff generated changelog
+- **Installation** — `Cargo.toml` dependency snippet and `cargo add tui-slider`
+- **Quick Start** — Rust code example with `Slider`, `SliderState`, and `SliderOrientation`
 
 ## How to Release
 
 ### Automated (Recommended)
 
-Use the justfile commands:
-
 ```bash
-# Full release (bump version, generate changelog, push)
-just release 0.2.0
+# 1. Run all checks and bump version
+just bump 0.4.0
 
-# Then publish to crates.io
-just publish
+# 2. Review the changes
+git show
+
+# 3. Push to both remotes (triggers release workflows)
+just push-release-all
+
+# 4. The release workflow handles the rest:
+#    - Runs tests
+#    - Generates release notes
+#    - Creates GitHub/Gitea release
+#    - Publishes to crates.io (if CRATES_IO_TOKEN is set)
 ```
 
-The `just release` command:
-1. Runs all CI checks locally
-2. Updates `Cargo.toml` and `Cargo.lock`
-3. Generates `CHANGELOG.md` with git-cliff
-4. Creates commit: `chore(release): bump version to X.Y.Z`
-5. Creates tag: `vX.Y.Z`
-6. Pushes everything to GitHub
+The `just bump` command runs `nu scripts/bump_version.nu` which:
+1. Validates the semver format
+2. Updates `Cargo.toml`, `README.md` badges, and `Cargo.lock`
+3. Runs fmt, clippy, and tests
+4. Generates `CHANGELOG.md` with git-cliff
+5. Creates a commit and annotated tag
 
-This triggers the Release workflow which:
-1. Runs tests on Ubuntu and Windows
-2. Builds the release
-3. Creates GitHub Release with rich notes
-4. Publishes to crates.io (if `CRATES_IO_TOKEN` is set)
+### Pre-flight Check
 
-### Manual
+Before releasing, you can run a full publish-readiness check:
 
 ```bash
-# 1. Update version in Cargo.toml
-sed -i 's/version = "0.1.0"/version = "0.2.0"/' Cargo.toml
-
-# 2. Generate changelog
-git-cliff --tag v0.2.0 -o CHANGELOG.md
-
-# 3. Commit and tag
-git add Cargo.toml Cargo.lock CHANGELOG.md
-git commit -m "chore(release): bump version to 0.2.0"
-git tag -a v0.2.0 -m "Release v0.2.0"
-
-# 4. Push
-git push origin main
-git push origin v0.2.0
+just check-publish
 ```
 
-The Release workflow will handle the rest.
+This runs `nu scripts/check_publish.nu` which validates formatting, linting, tests, docs, examples, required files, and a `cargo publish --dry-run`.
 
 ## Required Secrets
 
@@ -202,7 +171,7 @@ To enable automatic publishing to crates.io:
    - Name: `CRATES_IO_TOKEN`
    - Value: Your token
 
-**Note:** If this secret is not set, the workflow will skip crates.io publishing and just create the GitHub Release.
+**Note:** If this secret is not set, the workflow will skip crates.io publishing and just create the GitHub/Gitea Release.
 
 ## Workflow Files
 
@@ -210,6 +179,21 @@ To enable automatic publishing to crates.io:
 .github/workflows/
 ├── ci.yml        # Continuous Integration
 └── release.yml   # Release Automation
+
+.gitea/workflows/
+├── ci.yml        # Continuous Integration (mirrors GitHub)
+└── release.yml   # Release Automation (mirrors GitHub)
+
+scripts/
+├── bump_version.nu       # Version bump (called by `just bump`)
+├── check_publish.nu      # Publish readiness check
+├── release_prepare.nu    # Release artifact preparation (called by CI)
+├── generate_all_tapes.nu # VHS demo GIF generation
+├── upgrade_deps.nu       # Nightly dependency upgrade
+├── version.nu            # Print current version
+├── setup_gitea.nu        # Set up Gitea remote
+├── migrate_to_gitea.nu   # Full Gitea migration
+└── README.md             # Script documentation
 ```
 
 ## Caching Strategy
@@ -240,7 +224,6 @@ This means:
 
 ### CI Failing on Formatting
 
-Run locally:
 ```bash
 just fmt
 git add -A
@@ -249,10 +232,9 @@ git commit -m "style: format code"
 
 ### CI Failing on Clippy
 
-Run locally:
 ```bash
 just clippy
-# Fix issues manually
+# Fix issues, then commit
 ```
 
 ### Release Not Publishing to crates.io
@@ -266,8 +248,18 @@ Check:
 
 The release workflow uses git-cliff which requires:
 1. Conventional commit messages
-2. Proper git history
+2. Proper git history (checkout with `fetch-depth: 0`)
 3. At least one commit since the last tag
+
+### Testing Release Locally
+
+```bash
+# Preview what the release script will produce
+nu scripts/release_prepare.nu v0.4.0
+
+# Dry-run publish
+just publish-dry
+```
 
 ## Best Practices
 
@@ -278,30 +270,20 @@ The release workflow uses git-cliff which requires:
    docs: update documentation
    ```
 
-2. **Run CI checks locally** before pushing:
+2. **Run checks locally** before pushing:
    ```bash
-   just check-all  # or just ci
+   just check-all
    ```
 
-3. **Review release notes** on GitHub after releasing
+3. **Review release notes** on GitHub/Gitea after releasing
 
 4. **Test releases** with `just publish-dry` first
-
-## Comparison with tui-checkbox
-
-These workflows are based on tui-checkbox's proven approach:
-
-- ✅ Same job structure
-- ✅ Same caching strategy
-- ✅ Same release note format
-- ✅ Same clippy-check integration
-- ✅ Same concurrency control
-
-This ensures consistency across projects and makes maintenance easier.
 
 ## References
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [rust-cache Action](https://github.com/Swatinem/rust-cache)
+- [Nushell](https://www.nushell.sh/)
+- [hustcer/setup-nu](https://github.com/hustcer/setup-nu)
+- [Swatinem/rust-cache](https://github.com/Swatinem/rust-cache)
 - [git-cliff](https://github.com/orhun/git-cliff)
 - [softprops/action-gh-release](https://github.com/softprops/action-gh-release)

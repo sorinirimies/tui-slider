@@ -9,9 +9,11 @@ Set Height 600
 Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
+Hide
 Type "cargo run --example vertical_styles"
 Enter
 Sleep 2s
+Show
 
 # Show the interface with all vertical styles
 Sleep 1s
