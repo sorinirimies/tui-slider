@@ -58,3 +58,6 @@ Desktop.ini
 
 # CodeGraph local index
 .codegraph/
+
+# Generated release notes (created fresh by release_prepare.nu / bump script)
+RELEASE_NOTES.md

@@ -80,7 +80,7 @@ def main [
     print $"($cyan)Step 1/8: Updating Cargo.toml...($reset)"
     let updated_cargo = (
         $cargo_content
-        | str replace --regex '^version\s*=\s*"[^"]+"' $'version = "($new_version)"'
+        | str replace --regex '(?m)^version\s*=\s*"[^"]+"' $'version = "($new_version)"'
     )
     $updated_cargo | save --force Cargo.toml
     print $"($green)  ✓ Cargo.toml updated($reset)"

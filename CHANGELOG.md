@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 ### Miscellaneous
 - Update Cargo.lock and add nightly dependency update workflow
+- Bump version to 0.3.3
 
 ## [0.3.2] - 2026-03-11
 

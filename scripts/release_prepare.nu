@@ -13,7 +13,7 @@ def build_release_notes [
     version: string,
     last_tag: string,
     cliff_changes: string,
-] -> string {
+]: nothing -> string {
     mut lines = []
 
     # ── Title ───────────────────────────────────────────────────
