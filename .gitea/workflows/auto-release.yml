@@ -1,0 +1,77 @@
+name: Auto Release on Dependency Update
+
+# Fires when a dependency-update PR (e.g. the nightly workflow's PR) merges
+# into main/master, changing Cargo.lock. Bumps the patch version, updates the
+# changelog, tags the commit, and pushes — which triggers release.yml.
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "Cargo.lock"
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
+jobs:
+  auto-release:
+    name: Bump version and tag
+    runs-on: ubuntu-latest
+    # Skip commits made by this workflow itself (avoid infinite loop) and
+    # skip anything that isn't a merge/push we actually want to react to.
+    if: "!contains(github.event.head_commit.message, 'chore: bump version')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cliff
+        run: cargo install git-cliff
+
+      - name: Install Nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: "*"
+
+      - name: Configure git identity
+        run: |
+          git config user.name "gitea-actions[bot]"
+          git config user.email "gitea-actions[bot]@users.noreply.gitea.io"
+
+      - name: Compute next patch version
+        id: version
+        run: |
+          current=$(grep -m1 '^version' Cargo.toml | sed -E 's/version = "(.*)"/\1/')
+          IFS='.' read -r major minor patch <<< "$current"
+          next="$major.$minor.$((patch + 1))"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version, changelog, commit and tag
+        run: nu scripts/bump_version.nu --yes ${{ steps.version.outputs.next }}
+
+      - name: Push release commit and tag to Gitea
+        run: |
+          git push origin HEAD:${{ github.ref_name }}
+          git push origin "v${{ steps.version.outputs.next }}"
+
+      - name: Push release commit and tag to GitHub mirror
+        if: ${{ secrets.GITHUB_REMOTE_URL != '' }}
+        run: |
+          git remote add github-ci "${{ secrets.GITHUB_REMOTE_URL }}"
+          git push github-ci HEAD:${{ github.ref_name }}
+          git push github-ci "v${{ steps.version.outputs.next }}"
