@@ -70,8 +70,10 @@ jobs:
           git push origin "v${{ steps.version.outputs.next }}"
 
       - name: Push release commit and tag to Gitea mirror
-        if: ${{ secrets.GITEA_REMOTE_URL != '' }}
+        if: ${{ env.GITEA_REMOTE_URL != '' }}
+        env:
+          GITEA_REMOTE_URL: ${{ secrets.GITEA_REMOTE_URL }}
         run: |
-          git remote add gitea-ci "${{ secrets.GITEA_REMOTE_URL }}"
+          git remote add gitea-ci "$GITEA_REMOTE_URL"
           git push gitea-ci HEAD:${{ github.ref_name }}
           git push gitea-ci "v${{ steps.version.outputs.next }}"

@@ -70,8 +70,10 @@ jobs:
           git push origin "v${{ steps.version.outputs.next }}"
 
       - name: Push release commit and tag to GitHub mirror
-        if: ${{ secrets.GITHUB_REMOTE_URL != '' }}
+        if: ${{ env.GITHUB_REMOTE_URL != '' }}
+        env:
+          GITHUB_REMOTE_URL: ${{ secrets.GITHUB_REMOTE_URL }}
         run: |
-          git remote add github-ci "${{ secrets.GITHUB_REMOTE_URL }}"
+          git remote add github-ci "$GITHUB_REMOTE_URL"
           git push github-ci HEAD:${{ github.ref_name }}
           git push github-ci "v${{ steps.version.outputs.next }}"
