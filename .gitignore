@@ -55,3 +55,6 @@ Desktop.ini
 # Linux
 *~
 .directory
+
+# CodeGraph local index
+.codegraph/
