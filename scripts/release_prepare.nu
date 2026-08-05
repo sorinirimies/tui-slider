@@ -102,6 +102,17 @@ def main [
     print $"  ($green)✓($reset) Cargo.toml version set to ($green)($version)($reset)"
     print ""
 
+    # Keep Cargo.lock's own package entry in sync so a later
+    # `cargo test/build --locked` doesn't fail on a stale lockfile.
+    let lock_sync = (do { cargo update -p tui-slider } | complete)
+    if $lock_sync.exit_code != 0 {
+        print $"  ($red)✗ Failed to sync Cargo.lock($reset)"
+        print $"  ($red)($lock_sync.stderr)($reset)"
+        exit 1
+    }
+    print $"  ($green)✓($reset) Cargo.lock synced"
+    print ""
+
     # ── Step 2: Regenerate full CHANGELOG.md ────────────────────
     print $"($cyan)Step 2/5:($reset) Regenerating CHANGELOG.md with git-cliff..."
 

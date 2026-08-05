@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 ## [0.3.3] - 2026-08-05
 
+### Bug Fixes
+- Sync Cargo.lock tui-slider entry to 0.3.3
+
+## [0.3.3] - 2026-08-05
+
+### Bug Fixes
+- Correct nu regex bugs breaking version bump and release prep
+
 ### Features
 - Auto-release when dependency-update PR merges
 
