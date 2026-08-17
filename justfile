@@ -175,11 +175,16 @@ pull:
 pull-gitea:
     git pull gitea main
 
-# Git: pull from both (Gitea first, then GitHub)
+# Git: pull from Gitea (nexus-lab instance)
+pull-gitea-nexus-lab:
+    git pull gitea-nexus-lab main
+
+# Git: pull from all remotes (Gitea first, then GitHub)
 pull-all:
     git pull gitea main
+    git pull gitea-nexus-lab main
     git pull origin main
-    @echo "✅ Pulled from both Gitea and GitHub!"
+    @echo "✅ Pulled from Gitea, Gitea (nexus-lab), and GitHub!"
 
 # Git: push to GitHub (origin)
 push:
@@ -189,21 +194,27 @@ push:
 push-gitea:
     git push gitea main
 
-# Git: push to both GitHub and Gitea
+# Git: push to Gitea (nexus-lab instance)
+push-gitea-nexus-lab:
+    git push gitea-nexus-lab main
+
+# Git: push to GitHub, Gitea, and Gitea (nexus-lab)
 push-all:
     git push origin main
     git push gitea main
-    @echo "✅ Pushed to both GitHub and Gitea!"
+    git push gitea-nexus-lab main
+    @echo "✅ Pushed to GitHub, Gitea, and Gitea (nexus-lab)!"
 
 # Git: push tags to GitHub
 push-tags:
     git push origin --tags
 
-# Git: push tags to both remotes
+# Git: push tags to all remotes
 push-tags-all:
     git push origin --tags
     git push gitea --tags
-    @echo "✅ Tags pushed to both GitHub and Gitea!"
+    git push gitea-nexus-lab --tags
+    @echo "✅ Tags pushed to GitHub, Gitea, and Gitea (nexus-lab)!"
 
 # Full release workflow: bump version and push to GitHub
 release version: (bump version)
@@ -219,23 +230,34 @@ release-gitea version: (bump version)
     git push gitea v{{version}}
     @echo "✅ Release v{{version}} complete on Gitea!"
 
-# Full release workflow: bump version and push to both GitHub and Gitea
+# Full release workflow: bump version and push to Gitea (nexus-lab instance)
+release-gitea-nexus-lab version: (bump version)
+    @echo "Pushing to Gitea (nexus-lab)..."
+    git push gitea-nexus-lab main
+    git push gitea-nexus-lab v{{version}}
+    @echo "✅ Release v{{version}} complete on Gitea (nexus-lab)!"
+
+# Full release workflow: bump version and push to GitHub, Gitea, and Gitea (nexus-lab)
 release-all version: (bump version)
-    @echo "Pushing to both GitHub and Gitea..."
+    @echo "Pushing to all remotes..."
     git push origin main
     git push gitea main
+    git push gitea-nexus-lab main
     git push origin v{{version}}
     git push gitea v{{version}}
-    @echo "✅ Release v{{version}} complete on both remotes!"
+    git push gitea-nexus-lab v{{version}}
+    @echo "✅ Release v{{version}} complete on all remotes!"
 
-# Push release to both GitHub and Gitea (without bumping)
+# Push release to all remotes (without bumping)
 push-release-all:
-    @echo "Pushing release to both GitHub and Gitea..."
+    @echo "Pushing release to all remotes..."
     git push origin main
     git push gitea main
+    git push gitea-nexus-lab main
     git push origin --tags
     git push gitea --tags
-    @echo "✅ Release pushed to both remotes!"
+    git push gitea-nexus-lab --tags
+    @echo "✅ Release pushed to all remotes!"
 
 # Sync Gitea with GitHub (force)
 sync-gitea:
@@ -243,6 +265,13 @@ sync-gitea:
     git push gitea main --force
     git push gitea --tags --force
     @echo "✅ Gitea synced!"
+
+# Sync Gitea (nexus-lab instance) with GitHub (force)
+sync-gitea-nexus-lab:
+    @echo "Syncing Gitea (nexus-lab) with GitHub..."
+    git push gitea-nexus-lab main --force
+    git push gitea-nexus-lab --tags --force
+    @echo "✅ Gitea (nexus-lab) synced!"
 
 # Show configured remotes
 remotes:
