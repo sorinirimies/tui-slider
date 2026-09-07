@@ -53,7 +53,7 @@ All GIF demos are generated using [VHS](https://github.com/charmbracelet/vhs):
 just vhs-all
 
 # Or run the script directly
-./scripts/generate_all_tapes.sh
+nu scripts/generate_all_tapes.nu
 
 # Or generate specific demos manually
 just vhs-horizontal
@@ -64,7 +64,7 @@ just vhs-borders
 
 The `vhs-all` command automatically discovers all `.tape` files in `examples/vhs/` and generates their GIFs, so you don't need to manually list each tape when adding new examples.
 
-See the [VHS README](vhs/README.md) for more details.
+See [`scripts/README.md`](../scripts/README.md#generate_all_tapesnu) for more details.
 
 ## License
 

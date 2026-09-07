@@ -8,17 +8,26 @@ description = "A simple TUI slider component library for ratatui"
 repository = "https://github.com/sorinirimies/tui-slider"
 keywords = ["tui", "slider", "ratatui", "terminal", "widget"]
 categories = ["command-line-interface", "gui", "visualization", "rendering", "multimedia"]
-readme = "README.md"
-rust-version = "1.74.0"
+rust-version = "1.88.0"
+exclude = [
+    ".gitea/**",
+    ".github/**",
+    ".zed/**",
+    "docs/**",
+    "examples/vhs/**",
+    "scripts/**",
+    "cliff.toml",
+    "justfile",
+]
 
 [dependencies]
-ratatui = "0.30"
-crossterm = "0.29"
+ratatui = { version = "0.30", default-features = false }
 unicode-width = "0.2"
 
 [dev-dependencies]
 anyhow = "1.0"
-rand = "0.10"
+crossterm = "0.29"
+ratatui = { version = "0.30", features = ["crossterm"] }
 
 [[example]]
 name = "horizontal"

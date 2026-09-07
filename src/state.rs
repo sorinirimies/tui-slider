@@ -84,6 +84,25 @@ pub struct SliderState {
 }
 
 impl SliderState {
+    fn assert_valid_bounds(min: f64, max: f64) {
+        assert!(
+            min.is_finite() && max.is_finite(),
+            "min and max must be finite"
+        );
+        assert!(min < max, "min must be less than max");
+    }
+
+    fn assert_valid_value(value: f64) {
+        assert!(!value.is_nan(), "value must not be NaN");
+    }
+
+    fn assert_valid_step(step: f64) {
+        assert!(
+            step.is_finite() && step > 0.0,
+            "step must be finite and positive"
+        );
+    }
+
     /// Creates a new slider state with the given value and bounds
     ///
     /// # Arguments
@@ -94,7 +113,7 @@ impl SliderState {
     ///
     /// # Panics
     ///
-    /// Panics if min >= max
+    /// Panics if `value` is NaN, if either bound is non-finite, or if `min >= max`.
     ///
     /// # Examples
     ///
@@ -114,7 +133,8 @@ impl SliderState {
     /// let state = SliderState::new(50.0, 100.0, 0.0);
     /// ```
     pub fn new(value: f64, min: f64, max: f64) -> Self {
-        assert!(min < max, "min must be less than max");
+        Self::assert_valid_bounds(min, max);
+        Self::assert_valid_value(value);
         let clamped_value = value.clamp(min, max);
         Self {
             value: clamped_value,
@@ -140,6 +160,10 @@ impl SliderState {
 
     /// Sets the value (automatically clamped to min..max range)
     ///
+    /// # Panics
+    ///
+    /// Panics if `value` is NaN.
+    ///
     /// # Examples
     ///
     /// ```
@@ -154,6 +178,7 @@ impl SliderState {
     /// assert_eq!(state.value(), 100.0);
     /// ```
     pub fn set_value(&mut self, value: f64) {
+        Self::assert_valid_value(value);
         self.value = value.clamp(self.min, self.max);
     }
 
@@ -189,7 +214,7 @@ impl SliderState {
     ///
     /// # Panics
     ///
-    /// Panics if the new min is >= max
+    /// Panics if the new minimum is non-finite or is greater than or equal to `max`.
     ///
     /// # Examples
     ///
@@ -201,7 +226,7 @@ impl SliderState {
     /// assert_eq!(state.min(), -10.0);
     /// ```
     pub fn set_min(&mut self, min: f64) {
-        assert!(min < self.max, "min must be less than max");
+        Self::assert_valid_bounds(min, self.max);
         self.min = min;
         self.value = self.value.clamp(self.min, self.max);
     }
@@ -210,7 +235,7 @@ impl SliderState {
     ///
     /// # Panics
     ///
-    /// Panics if the new max is <= min
+    /// Panics if the new maximum is non-finite or is less than or equal to `min`.
     ///
     /// # Examples
     ///
@@ -222,7 +247,7 @@ impl SliderState {
     /// assert_eq!(state.max(), 200.0);
     /// ```
     pub fn set_max(&mut self, max: f64) {
-        assert!(max > self.min, "max must be greater than min");
+        Self::assert_valid_bounds(self.min, max);
         self.max = max;
         self.value = self.value.clamp(self.min, self.max);
     }
@@ -250,6 +275,7 @@ impl SliderState {
     /// Sets the value from a percentage (0.0 to 1.0)
     ///
     /// The percentage is automatically clamped to the 0.0-1.0 range.
+    /// Panics if `percentage` is NaN.
     ///
     /// # Examples
     ///
@@ -264,6 +290,7 @@ impl SliderState {
     /// assert_eq!(state.value(), 50.0);
     /// ```
     pub fn set_percentage(&mut self, percentage: f64) {
+        assert!(!percentage.is_nan(), "percentage must not be NaN");
         let clamped_percentage = percentage.clamp(0.0, 1.0);
         self.set_value(self.min + (self.max - self.min) * clamped_percentage);
     }
@@ -271,6 +298,7 @@ impl SliderState {
     /// Increases the value by a step
     ///
     /// The result is automatically clamped to the maximum value.
+    /// Panics if `step` is negative or non-finite.
     ///
     /// # Examples
     ///
@@ -286,6 +314,10 @@ impl SliderState {
     /// assert_eq!(state.value(), 100.0);
     /// ```
     pub fn increase(&mut self, step: f64) {
+        assert!(
+            step.is_finite() && step >= 0.0,
+            "step must be finite and non-negative"
+        );
         self.set_value(self.value + step);
     }
 
@@ -310,6 +342,7 @@ impl SliderState {
     /// Decreases the value by a step
     ///
     /// The result is automatically clamped to the minimum value.
+    /// Panics if `step` is negative or non-finite.
     ///
     /// # Examples
     ///
@@ -325,6 +358,10 @@ impl SliderState {
     /// assert_eq!(state.value(), 0.0);
     /// ```
     pub fn decrease(&mut self, step: f64) {
+        assert!(
+            step.is_finite() && step >= 0.0,
+            "step must be finite and non-negative"
+        );
         self.set_value(self.value - step);
     }
 
@@ -367,11 +404,11 @@ impl SliderState {
     ///
     /// # Arguments
     ///
-    /// * `step` - The step size (must be positive)
+    /// * `step` - The step size (must be finite and positive)
     ///
     /// # Panics
     ///
-    /// Panics if step is not positive (step <= 0.0)
+    /// Panics if `step` is non-finite or not positive.
     ///
     /// # Examples
     ///
@@ -395,7 +432,7 @@ impl SliderState {
     /// state.set_step(-1.0); // Panics!
     /// ```
     pub fn set_step(&mut self, step: f64) {
-        assert!(step > 0.0, "step must be positive");
+        Self::assert_valid_step(step);
         self.step = step;
     }
 
@@ -410,7 +447,8 @@ impl SliderState {
     ///
     /// # Panics
     ///
-    /// Panics if min >= max or if step <= 0.0
+    /// Panics if bounds are non-finite, `min >= max`, `value` is NaN,
+    /// or `step` is non-finite or not positive.
     ///
     /// # Examples
     ///
@@ -423,8 +461,9 @@ impl SliderState {
     /// assert_eq!(state.value(), 55.0);
     /// ```
     pub fn with_step(value: f64, min: f64, max: f64, step: f64) -> Self {
-        assert!(min < max, "min must be less than max");
-        assert!(step > 0.0, "step must be positive");
+        Self::assert_valid_bounds(min, max);
+        Self::assert_valid_value(value);
+        Self::assert_valid_step(step);
         let clamped_value = value.clamp(min, max);
         Self {
             value: clamped_value,
@@ -768,14 +807,14 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "step must be positive")]
+    #[should_panic(expected = "step must be finite and positive")]
     fn test_invalid_step_negative() {
         let mut state = SliderState::new(50.0, 0.0, 100.0);
         state.set_step(-1.0);
     }
 
     #[test]
-    #[should_panic(expected = "step must be positive")]
+    #[should_panic(expected = "step must be finite and positive")]
     fn test_invalid_step_zero() {
         let mut state = SliderState::new(50.0, 0.0, 100.0);
         state.set_step(0.0);
@@ -844,7 +883,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "step must be positive")]
+    #[should_panic(expected = "step must be finite and positive")]
     fn test_with_step_invalid() {
         SliderState::with_step(50.0, 0.0, 100.0, -1.0);
     }
@@ -905,7 +944,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "max must be greater than min")]
+    #[should_panic(expected = "min must be less than max")]
     fn test_set_max_panics_when_le_min() {
         let mut state = SliderState::new(50.0, 0.0, 100.0);
         state.set_max(0.0);
@@ -1090,6 +1129,62 @@ mod tests {
 
         state.set_from_position(0, 100);
         assert_eq!(state.value(), 0.0);
+    }
+
+    #[test]
+    #[should_panic(expected = "value must not be NaN")]
+    fn test_new_rejects_nan_value() {
+        SliderState::new(f64::NAN, 0.0, 100.0);
+    }
+
+    #[test]
+    #[should_panic(expected = "value must not be NaN")]
+    fn test_set_value_rejects_nan() {
+        let mut state = SliderState::default();
+        state.set_value(f64::NAN);
+    }
+
+    #[test]
+    #[should_panic(expected = "percentage must not be NaN")]
+    fn test_set_percentage_rejects_nan() {
+        let mut state = SliderState::default();
+        state.set_percentage(f64::NAN);
+    }
+
+    #[test]
+    #[should_panic(expected = "min and max must be finite")]
+    fn test_new_rejects_infinite_bounds() {
+        SliderState::new(0.0, f64::NEG_INFINITY, 100.0);
+    }
+
+    #[test]
+    #[should_panic(expected = "step must be finite and positive")]
+    fn test_set_step_rejects_infinity() {
+        let mut state = SliderState::default();
+        state.set_step(f64::INFINITY);
+    }
+
+    #[test]
+    #[should_panic(expected = "step must be finite and non-negative")]
+    fn test_increase_rejects_negative_step() {
+        let mut state = SliderState::default();
+        state.increase(-1.0);
+    }
+
+    #[test]
+    fn test_state_invariants_across_percentages_and_lengths() {
+        let mut state = SliderState::new(0.0, -25.0, 75.0);
+
+        for percentage in [-1.0, 0.0, 0.1, 0.5, 0.9, 1.0, 2.0] {
+            state.set_percentage(percentage);
+            assert!(state.value().is_finite());
+            assert!((-25.0..=75.0).contains(&state.value()));
+            assert!((0.0..=1.0).contains(&state.percentage()));
+
+            for length in [1, 2, 7, 100, u16::MAX] {
+                assert!(state.position(length) <= length);
+            }
+        }
     }
 
     #[test]

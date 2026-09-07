@@ -274,11 +274,7 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
             let show_handle = i < 7;
             let slider = Slider::from_state(state)
                 .orientation(SliderOrientation::Vertical)
-                .filled_symbol(style.filled_symbol)
-                .empty_symbol(style.empty_symbol)
-                .handle_symbol(style.handle_symbol)
-                .filled_color(style.filled_color)
-                .empty_color(style.empty_color)
+                .style(style)
                 .handle_color(if is_selected {
                     Color::White
                 } else {
@@ -345,11 +341,7 @@ fn render_segmented_slider(
         let show_handle = i < 9;
         let slider = Slider::from_state(state)
             .orientation(SliderOrientation::Vertical)
-            .filled_symbol(style.filled_symbol)
-            .empty_symbol(style.empty_symbol)
-            .handle_symbol(style.handle_symbol)
-            .filled_color(style.filled_color)
-            .empty_color(style.empty_color)
+            .style(style)
             .handle_color(if is_selected {
                 Color::White
             } else {

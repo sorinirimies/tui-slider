@@ -26,7 +26,8 @@ Release logic is extracted into reusable Nushell scripts under `scripts/`, keepi
 - ✅ Concurrency control (cancels outdated PR runs)
 - ✅ Smart caching with `Swatinem/rust-cache`
 - ✅ Clippy feedback directly on PRs
-- ✅ Nightly docs build with `#[doc(cfg)]` support
+- ✅ Rust 1.88 MSRV verification
+- ✅ Nightly docs build with strict warning checks and `#[doc(cfg)]` support
 
 ### Jobs
 
@@ -41,14 +42,20 @@ Release logic is extracted into reusable Nushell scripts under `scripts/`, keepi
 - Purpose: Provides inline PR comments for clippy warnings
 - Permissions: Requires `contents: read` and `checks: write`
 
-#### 3. `doc` - Documentation
+#### 3. `msrv` - Minimum Supported Rust Version
+- Runs on: Ubuntu Latest
+- Uses: Rust 1.88.0
+- Checks: `cargo check --locked --lib`
+- Purpose: Keeps `package.rust-version` truthful
+
+#### 4. `doc` - Documentation
 - Runs on: Ubuntu Latest
 - Uses: Rust nightly toolchain
 - Checks: `cargo doc --no-deps --all-features`
-- Purpose: Ensures documentation builds without errors
-- Environment: `RUSTDOCFLAGS: --cfg docsrs`
+- Purpose: Ensures documentation builds without warnings or broken links
+- Environment: `RUSTDOCFLAGS: --cfg docsrs -D warnings`
 
-#### 4. `test` - Tests
+#### 5. `test` - Tests
 - Runs on: Ubuntu Latest
 - Commands:
   - `cargo generate-lockfile` (if Cargo.lock missing)

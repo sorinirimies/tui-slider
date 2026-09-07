@@ -56,6 +56,15 @@ pub enum TitlePosition {
     Bottom,
 }
 
+impl From<TitlePosition> for ratatui::widgets::TitlePosition {
+    fn from(position: TitlePosition) -> Self {
+        match position {
+            TitlePosition::Top => Self::Top,
+            TitlePosition::Bottom => Self::Bottom,
+        }
+    }
+}
+
 /// Border style variants
 ///
 /// This enum defines the available border styles, including both solid
@@ -336,8 +345,13 @@ pub fn create_segmented_line(length: usize, char: char) -> String {
 /// Helper function to create a title `Line` for ratatui Block
 ///
 /// Returns a [`ratatui::text::Line`] with the requested alignment applied.
-/// To place the title at the bottom of a block, use [`Block::title_bottom`] instead
-/// of [`Block::title`] / [`Block::title_top`] when adding the returned line.
+/// A `Line` cannot store block-title position, so the optional `position`
+/// argument is retained for API compatibility but does not alter the line.
+/// Apply it to the block with `Block::title_position(position.into())`.
+/// To place the title at the bottom of a block, use
+/// [`Block::title_bottom`](ratatui::widgets::Block::title_bottom) instead of
+/// [`Block::title`](ratatui::widgets::Block::title) or
+/// [`Block::title_top`](ratatui::widgets::Block::title_top) when adding the returned line.
 ///
 /// # Examples
 ///
@@ -569,14 +583,11 @@ mod tests {
 
     #[test]
     fn test_title_helpers() {
-        let title = title_center("Test");
-        // Just verify it compiles and creates a title
-        let _title_text = format!("{:?}", title);
+        use ratatui::layout::Alignment;
 
-        let left = title_left("Left");
-        let right = title_right("Right");
-        // Verify they compile
-        let _ = format!("{:?}{:?}", left, right);
+        assert_eq!(title_center("Test").alignment, Some(Alignment::Center));
+        assert_eq!(title_left("Left").alignment, Some(Alignment::Left));
+        assert_eq!(title_right("Right").alignment, Some(Alignment::Right));
     }
 
     #[test]
@@ -686,10 +697,15 @@ mod tests {
 
     #[test]
     fn test_title_position_variants() {
-        // Both variants exist and are distinct
-        assert_ne!(
-            std::mem::discriminant(&TitlePosition::Top),
-            std::mem::discriminant(&TitlePosition::Bottom),
+        use ratatui::widgets::TitlePosition as RatatuiTitlePosition;
+
+        assert_eq!(
+            RatatuiTitlePosition::from(TitlePosition::Top),
+            RatatuiTitlePosition::Top
+        );
+        assert_eq!(
+            RatatuiTitlePosition::from(TitlePosition::Bottom),
+            RatatuiTitlePosition::Bottom
         );
     }
 

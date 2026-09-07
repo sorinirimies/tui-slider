@@ -365,11 +365,7 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
         } else {
             let slider = Slider::from_state(&example.state)
                 .orientation(SliderOrientation::Horizontal)
-                .filled_symbol(example.style.filled_symbol)
-                .empty_symbol(example.style.empty_symbol)
-                .handle_symbol(example.style.handle_symbol)
-                .filled_color(example.style.filled_color)
-                .empty_color(example.style.empty_color)
+                .style(&example.style)
                 .handle_color(if is_selected {
                     Color::White
                 } else {

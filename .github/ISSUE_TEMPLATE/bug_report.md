@@ -40,7 +40,7 @@ If applicable, add screenshots or terminal output to help explain your problem.
 
 - OS: [e.g. Ubuntu 22.04, macOS 14, Windows 11]
 - Terminal: [e.g. Alacritty, iTerm2, Windows Terminal]
-- Rust version: [e.g. 1.74.0]
+- Rust version: [e.g. 1.88.0]
 - tui-slider version: [e.g. 0.1.0]
 - ratatui version: [e.g. 0.28.0]
 

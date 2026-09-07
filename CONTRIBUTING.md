@@ -88,7 +88,7 @@ All contributions must be submitted through GitHub using the forking workflow:
 
 ### Prerequisites
 
-- Rust 1.74.0 or later
+- Rust 1.88.0 or later
 - A terminal that supports Unicode (for full visual testing)
 
 ### Building

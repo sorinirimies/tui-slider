@@ -78,17 +78,19 @@ pub use position::{
 };
 pub use slider::Slider;
 pub use state::SliderState;
+pub use style::SliderStyle;
 
 /// Prelude module for convenient imports
 pub mod prelude {
     pub use crate::border;
     pub use crate::orientation::SliderOrientation;
     pub use crate::position::{
-        VerticalLabelPosition, VerticalValueAlignment, VerticalValuePosition,
+        HorizontalBarAlignment, VerticalLabelPosition, VerticalValueAlignment,
+        VerticalValuePosition,
     };
     pub use crate::slider::Slider;
     pub use crate::state::SliderState;
-    pub use crate::style;
+    pub use crate::style::{self, SliderStyle};
     pub use crate::symbols;
 }
 

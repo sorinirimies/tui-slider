@@ -24,6 +24,7 @@ use crate::{
         VerticalValuePosition,
     },
     state::SliderState,
+    style::SliderStyle,
 };
 use ratatui::{
     buffer::Buffer,
@@ -120,6 +121,8 @@ pub struct Slider<'a> {
     handle_color: Color,
     /// Whether to show handle
     show_handle: bool,
+    /// Whether to leave a one-cell gap between bar symbols
+    segmented: bool,
     /// Label position for vertical sliders
     vertical_label_position: VerticalLabelPosition,
     /// Value position for vertical sliders
@@ -131,6 +134,18 @@ pub struct Slider<'a> {
 }
 
 impl<'a> Slider<'a> {
+    fn assert_valid_bounds(min: f64, max: f64) {
+        assert!(
+            min.is_finite() && max.is_finite(),
+            "min and max must be finite"
+        );
+        assert!(min <= max, "min must not exceed max");
+    }
+
+    fn assert_valid_value(value: f64) {
+        assert!(!value.is_nan(), "value must not be NaN");
+    }
+
     /// Creates a new slider with default settings
     ///
     /// **Note:** It's recommended to use [`Slider::from_state`] instead for better state management.
@@ -140,6 +155,10 @@ impl<'a> Slider<'a> {
     /// * `value` - Initial value (will be clamped to min..max)
     /// * `min` - Minimum value
     /// * `max` - Maximum value
+    ///
+    /// # Panics
+    ///
+    /// Panics if `value` is NaN, either bound is non-finite, or `min > max`.
     ///
     /// # Examples
     ///
@@ -154,6 +173,8 @@ impl<'a> Slider<'a> {
     /// let slider = Slider::new(50.0, 0.0, 100.0);
     /// ```
     pub fn new(value: f64, min: f64, max: f64) -> Self {
+        Self::assert_valid_bounds(min, max);
+        Self::assert_valid_value(value);
         Self {
             block: None,
             orientation: SliderOrientation::Horizontal,
@@ -170,6 +191,7 @@ impl<'a> Slider<'a> {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             show_handle: true,
+            segmented: false,
             vertical_label_position: VerticalLabelPosition::default(),
             vertical_value_position: VerticalValuePosition::default(),
             vertical_value_alignment: VerticalValueAlignment::default(),
@@ -233,6 +255,10 @@ impl<'a> Slider<'a> {
 
     /// Sets the value (will be clamped to min..max range)
     ///
+    /// # Panics
+    ///
+    /// Panics if `value` is NaN.
+    ///
     /// # Examples
     ///
     /// ```
@@ -241,11 +267,16 @@ impl<'a> Slider<'a> {
     /// let slider = Slider::default().value(75.0);
     /// ```
     pub fn value(mut self, value: f64) -> Self {
+        Self::assert_valid_value(value);
         self.value = value.clamp(self.min, self.max);
         self
     }
 
     /// Sets the minimum value
+    ///
+    /// # Panics
+    ///
+    /// Panics if `min` is non-finite or exceeds the current maximum.
     ///
     /// # Examples
     ///
@@ -255,12 +286,17 @@ impl<'a> Slider<'a> {
     /// let slider = Slider::default().min(0.0).max(100.0);
     /// ```
     pub fn min(mut self, min: f64) -> Self {
+        Self::assert_valid_bounds(min, self.max);
         self.min = min;
         self.value = self.value.clamp(self.min, self.max);
         self
     }
 
     /// Sets the maximum value
+    ///
+    /// # Panics
+    ///
+    /// Panics if `max` is non-finite or is below the current minimum.
     ///
     /// # Examples
     ///
@@ -270,12 +306,16 @@ impl<'a> Slider<'a> {
     /// let slider = Slider::default().min(0.0).max(100.0);
     /// ```
     pub fn max(mut self, max: f64) -> Self {
+        Self::assert_valid_bounds(self.min, max);
         self.max = max;
         self.value = self.value.clamp(self.min, self.max);
         self
     }
 
     /// Sets the label text displayed above the slider
+    ///
+    /// The render area describes the bar itself. Reserve one buffer row above
+    /// horizontal sliders when displaying a label or value.
     ///
     /// # Examples
     ///
@@ -404,6 +444,24 @@ impl<'a> Slider<'a> {
     /// ```
     pub fn handle_color(mut self, color: Color) -> Self {
         self.handle_color = color;
+        self
+    }
+
+    /// Applies a reusable [`SliderStyle`].
+    pub fn style(mut self, style: &SliderStyle) -> Self {
+        self.filled_symbol = style.filled_symbol.to_string();
+        self.empty_symbol = style.empty_symbol.to_string();
+        self.handle_symbol = style.handle_symbol.to_string();
+        self.filled_color = style.filled_color;
+        self.empty_color = style.empty_color;
+        self.handle_color = style.handle_color;
+        self.segmented = style.segmented;
+        self
+    }
+
+    /// Enables or disables one-cell gaps between rendered bar symbols.
+    pub fn segmented(mut self, segmented: bool) -> Self {
+        self.segmented = segmented;
         self
     }
 
@@ -568,18 +626,24 @@ impl<'a> Slider<'a> {
         // Render bar - track column position to ensure we fill exactly bar_width columns
         let mut current_x = area.x;
         let mut col = 0;
+        let mut render_gap = false;
 
         while col < bar_width {
-            let remaining_cols = bar_width - col;
+            if self.segmented && render_gap {
+                buf.set_string(current_x, bar_y, " ", Style::default());
+                current_x += 1;
+                col += 1;
+                render_gap = false;
+                continue;
+            }
 
-            // Determine which symbol to use based on current position
+            let remaining_cols = bar_width - col;
             let (symbol, color, symbol_width) = if col < filled_columns {
                 (&self.filled_symbol, self.filled_color, filled_width)
             } else {
                 (&self.empty_symbol, self.empty_color, empty_width)
             };
 
-            // If this symbol would exceed the bar width, fill remaining space
             if symbol_width > remaining_cols {
                 for _ in 0..remaining_cols {
                     buf.set_string(current_x, bar_y, " ", Style::default());
@@ -588,146 +652,94 @@ impl<'a> Slider<'a> {
                 break;
             }
 
-            // Render the symbol at the calculated Y position
             buf.set_string(current_x, bar_y, symbol, Style::default().fg(color));
             current_x += symbol_width as u16;
             col += symbol_width;
+            render_gap = self.segmented;
         }
 
-        // Render handle if enabled
         if self.show_handle && bar_width > 0 {
-            // Calculate the x position where the handle should be placed
-            // This represents the transition point between filled and empty
-            let mut handle_x = area.x;
-            let mut accumulated_cols = 0;
+            let handle_width = handle_width.min(bar_width);
+            let travel = bar_width - handle_width;
+            let handle_offset = (travel as f64 * percentage).round() as u16;
+            let handle_x = area.x + handle_offset;
 
-            // Walk through to find where filled_columns falls
-            while accumulated_cols < filled_columns && accumulated_cols < bar_width {
-                let symbol_width = if accumulated_cols < filled_columns {
-                    filled_width
-                } else {
-                    empty_width
-                };
-
-                // Stop if adding this symbol would overshoot the target
-                if accumulated_cols + symbol_width > filled_columns {
-                    break;
-                }
-
-                handle_x += symbol_width as u16;
-                accumulated_cols += symbol_width;
-            }
-
-            // Only render handle if it fits within the area
-            if handle_x >= area.x && handle_x + handle_width as u16 <= area.x + area.width {
-                buf.set_string(
-                    handle_x,
-                    bar_y,
-                    &self.handle_symbol,
-                    Style::default().fg(self.handle_color),
-                );
-            }
+            buf.set_stringn(
+                handle_x,
+                bar_y,
+                &self.handle_symbol,
+                handle_width,
+                Style::default().fg(self.handle_color),
+            );
         }
     }
 
     /// Renders a vertical slider
     fn render_vertical(&self, area: Rect, buf: &mut Buffer) {
-        if area.height < 1 {
+        if area.width == 0 || area.height == 0 {
             return;
         }
 
         let percentage = self.percentage();
         let bar_height = area.height as usize;
-
-        // Get display widths of symbols using unicode-width
-        let filled_width = self.filled_symbol.width().max(1);
-        let empty_width = self.empty_symbol.width().max(1);
-        let handle_width = self.handle_symbol.width().max(1);
-
-        // Calculate how many rows should be filled based on percentage
         let filled_rows = (bar_height as f64 * percentage) as usize;
 
-        // Use the maximum width of all symbols (filled, empty, and handle) for consistent centering
-        let max_symbol_width = filled_width.max(empty_width).max(handle_width) as u16;
+        // Terminal symbols always consume one row. Unicode display width only
+        // affects horizontal centering and clipping, never vertical progress.
+        let max_symbol_width = self
+            .filled_symbol
+            .width()
+            .max(self.empty_symbol.width())
+            .max(self.handle_symbol.width())
+            .max(1)
+            .min(area.width as usize) as u16;
+        let base_x = area.x + (area.width - max_symbol_width) / 2;
+        let bottom_y = area.y + area.height - 1;
 
-        // Center all symbols based on the maximum symbol width for perfect alignment
-        let base_x = area.x + (area.width.saturating_sub(max_symbol_width)) / 2;
-
-        // Render bar from bottom to top, track row position
-        let mut current_y = area.y + area.height - 1;
-        let mut row = 0;
-
-        while row < bar_height {
-            if current_y < area.y {
-                break;
-            }
-
-            let remaining_rows = bar_height - row;
-
-            // Determine which symbol to use based on current position
-            let (symbol, color, symbol_height) = if row < filled_rows {
-                (&self.filled_symbol, self.filled_color, filled_width)
-            } else {
-                (&self.empty_symbol, self.empty_color, empty_width)
-            };
-
-            // If this symbol would exceed the bar height, fill remaining space
-            if symbol_height > remaining_rows {
-                for _ in 0..remaining_rows {
-                    if current_y >= area.y {
-                        buf.set_string(base_x, current_y, " ", Style::default());
-                        current_y = current_y.saturating_sub(1);
-                    }
+        for row in 0..bar_height {
+            let y = bottom_y - row as u16;
+            if self.segmented && row % 2 == 1 {
+                for x in base_x..base_x + max_symbol_width {
+                    buf.set_string(x, y, " ", Style::default());
                 }
-                break;
+                continue;
             }
 
-            // Center the symbol within the max symbol width area
-            let symbol_width = symbol.width() as u16;
-            let symbol_x = base_x + (max_symbol_width.saturating_sub(symbol_width)) / 2;
+            let (symbol, color) = if row < filled_rows {
+                (&self.filled_symbol, self.filled_color)
+            } else {
+                (&self.empty_symbol, self.empty_color)
+            };
+            let symbol_width = symbol.width().min(max_symbol_width as usize) as u16;
+            let symbol_x = base_x + (max_symbol_width - symbol_width) / 2;
 
-            // Render the symbol
-            buf.set_string(symbol_x, current_y, symbol, Style::default().fg(color));
-            current_y = current_y.saturating_sub(symbol_height as u16);
-            row += symbol_height;
+            buf.set_stringn(
+                symbol_x,
+                y,
+                symbol,
+                max_symbol_width as usize,
+                Style::default().fg(color),
+            );
         }
 
-        // Render handle if enabled
-        if self.show_handle && bar_height > 0 {
-            // Calculate the y position where the handle should be placed
-            let mut handle_y = area.y + area.height - 1;
-            let mut accumulated_rows = 0;
+        if self.show_handle {
+            // 0% maps to the bottom row; 100% maps to the top row.
+            let handle_offset = filled_rows.min(bar_height - 1) as u16;
+            let handle_y = bottom_y - handle_offset;
+            let handle_width = self
+                .handle_symbol
+                .width()
+                .max(1)
+                .min(max_symbol_width as usize) as u16;
+            let handle_x = base_x + (max_symbol_width - handle_width) / 2;
 
-            // Walk through to find where filled_rows falls
-            while accumulated_rows < filled_rows && accumulated_rows < bar_height {
-                let symbol_height = if accumulated_rows < filled_rows {
-                    filled_width
-                } else {
-                    empty_width
-                };
-
-                // Stop if adding this symbol would overshoot the target
-                if accumulated_rows + symbol_height > filled_rows {
-                    break;
-                }
-
-                handle_y = handle_y.saturating_sub(symbol_height as u16);
-                accumulated_rows += symbol_height;
-            }
-
-            // Only render handle if it fits within the area
-            if handle_y >= area.y && handle_y < area.y + area.height {
-                // Center the handle within the max symbol width area for consistent alignment
-                let handle_width = self.handle_symbol.width() as u16;
-                let handle_x = base_x + (max_symbol_width.saturating_sub(handle_width)) / 2;
-
-                buf.set_string(
-                    handle_x,
-                    handle_y,
-                    &self.handle_symbol,
-                    Style::default().fg(self.handle_color),
-                );
-            }
+            buf.set_stringn(
+                handle_x,
+                handle_y,
+                &self.handle_symbol,
+                handle_width as usize,
+                Style::default().fg(self.handle_color),
+            );
         }
     }
 
@@ -780,10 +792,7 @@ impl<'a> Slider<'a> {
             // Center the label horizontally
             let label_width = label.width() as u16;
             let label_x = area.x + (area.width.saturating_sub(label_width)) / 2;
-
-            if self.is_within_buffer(buf, label_x, label_y) {
-                buf.set_string(label_x, label_y, label, Style::default());
-            }
+            self.render_text_clipped(buf, area, label_x, label_y, label);
         }
 
         // Render value if enabled
@@ -821,10 +830,7 @@ impl<'a> Slider<'a> {
                 }
                 VerticalValueAlignment::Right => area.x + area.width.saturating_sub(value_width),
             };
-
-            if self.is_within_buffer(buf, value_x, value_y) {
-                buf.set_string(value_x, value_y, &value_str, Style::default());
-            }
+            self.render_text_clipped(buf, area, value_x, value_y, &value_str);
         }
     }
 
@@ -930,10 +936,7 @@ impl<'a> Slider<'a> {
             } else {
                 area.y
             };
-
-            if self.is_within_buffer(buf, label_x, label_y) {
-                buf.set_string(label_x, label_y, label, Style::default());
-            }
+            self.render_text_clipped(buf, area, label_x, label_y, label);
         }
     }
 
@@ -950,20 +953,30 @@ impl<'a> Slider<'a> {
             let value_y = if is_horizontal {
                 area.y.saturating_sub(1)
             } else {
-                area.y + area.height
+                area.y.saturating_add(area.height)
             };
+            self.render_text_clipped(buf, area, value_x, value_y, &value_str);
+        }
+    }
 
-            if self.is_within_buffer(buf, value_x, value_y) {
-                buf.set_string(value_x, value_y, &value_str, Style::default());
-            }
+    fn render_text_clipped(&self, buf: &mut Buffer, area: Rect, x: u16, y: u16, text: &str) {
+        if !self.is_within_buffer(buf, x, y) {
+            return;
+        }
+
+        let area_right = area.x.saturating_add(area.width);
+        let buffer_right = buf.area.x.saturating_add(buf.area.width);
+        let max_width = area_right.min(buffer_right).saturating_sub(x) as usize;
+        if max_width > 0 {
+            buf.set_stringn(x, y, text, max_width, Style::default());
         }
     }
 
     fn is_within_buffer(&self, buf: &Buffer, x: u16, y: u16) -> bool {
         x >= buf.area.x
-            && x < buf.area.x + buf.area.width
+            && x < buf.area.x.saturating_add(buf.area.width)
             && y >= buf.area.y
-            && y < buf.area.y + buf.area.height
+            && y < buf.area.y.saturating_add(buf.area.height)
     }
 }
 
@@ -988,20 +1001,16 @@ impl<'a> Widget for Slider<'a> {
             return;
         }
 
-        // Render label and value if needed
-        match self.orientation {
-            SliderOrientation::Horizontal => {
-                self.render_label_and_value(area, buf);
-            }
-            SliderOrientation::Vertical => {
-                self.render_vertical_label_and_value(area, buf);
-            }
-        }
-
-        // Render the slider based on orientation
+        // Render the bar first so labels and values remain legible when a
+        // configured position intentionally overlaps the bar or block border.
         match self.orientation {
             SliderOrientation::Horizontal => self.render_horizontal(area, buf),
             SliderOrientation::Vertical => self.render_vertical(area, buf),
+        }
+
+        match self.orientation {
+            SliderOrientation::Horizontal => self.render_label_and_value(area, buf),
+            SliderOrientation::Vertical => self.render_vertical_label_and_value(area, buf),
         }
     }
 }
@@ -1121,6 +1130,59 @@ mod tests {
         assert_eq!(slider.filled_symbol, "█");
         assert_eq!(slider.empty_symbol, "░");
         assert_eq!(slider.handle_symbol, "▐");
+    }
+
+    #[test]
+    fn test_apply_style() {
+        let style = SliderStyle::segmented_blocks();
+        let slider = Slider::default().style(&style);
+
+        assert_eq!(slider.filled_symbol, style.filled_symbol);
+        assert_eq!(slider.empty_symbol, style.empty_symbol);
+        assert_eq!(slider.handle_symbol, style.handle_symbol);
+        assert_eq!(slider.filled_color, style.filled_color);
+        assert_eq!(slider.empty_color, style.empty_color);
+        assert_eq!(slider.handle_color, style.handle_color);
+        assert!(slider.segmented);
+    }
+
+    #[test]
+    fn test_render_segmented_style_leaves_gaps() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 5, 1);
+        let mut buf = Buffer::empty(area);
+        Slider::new(100.0, 0.0, 100.0)
+            .style(&SliderStyle::segmented_blocks())
+            .show_handle(false)
+            .render(area, &mut buf);
+
+        assert_eq!(buf[(0, 0)].symbol(), "█");
+        assert_eq!(buf[(1, 0)].symbol(), " ");
+        assert_eq!(buf[(2, 0)].symbol(), "█");
+        assert_eq!(buf[(3, 0)].symbol(), " ");
+        assert_eq!(buf[(4, 0)].symbol(), "█");
+    }
+
+    #[test]
+    fn test_render_vertical_segmented_style_leaves_gaps() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 1, 5);
+        let mut buf = Buffer::filled(area, ratatui::buffer::Cell::new("x"));
+        Slider::new(100.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .style(&SliderStyle::segmented_blocks())
+            .show_handle(false)
+            .render(area, &mut buf);
+
+        assert_eq!(buf[(0, 4)].symbol(), "█");
+        assert_eq!(buf[(0, 3)].symbol(), " ");
+        assert_eq!(buf[(0, 2)].symbol(), "█");
+        assert_eq!(buf[(0, 1)].symbol(), " ");
+        assert_eq!(buf[(0, 0)].symbol(), "█");
     }
 
     #[test]
@@ -1419,6 +1481,21 @@ mod tests {
     }
 
     #[test]
+    fn test_render_horizontal_handle_at_max_stays_visible() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let mut buf = Buffer::empty(Rect::new(0, 0, 10, 4));
+        let area = Rect::new(2, 2, 5, 1);
+        Slider::new(100.0, 0.0, 100.0)
+            .filled_symbol("-")
+            .handle_symbol("H")
+            .render(area, &mut buf);
+
+        assert_eq!(buf[(6, 2)].symbol(), "H");
+    }
+
+    #[test]
     fn test_render_horizontal_zero_width_no_panic() {
         use ratatui::buffer::Buffer;
         use ratatui::layout::Rect;
@@ -1565,6 +1642,41 @@ mod tests {
     }
 
     #[test]
+    fn test_render_vertical_handle_at_max_stays_visible_with_offset_area() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let mut buf = Buffer::empty(Rect::new(0, 0, 10, 10));
+        let area = Rect::new(2, 2, 3, 5);
+        Slider::new(100.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .filled_symbol("|")
+            .handle_symbol("H")
+            .render(area, &mut buf);
+
+        assert_eq!(buf[(3, 2)].symbol(), "H");
+    }
+
+    #[test]
+    fn test_render_vertical_wide_symbols_fill_every_row() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let mut buf = Buffer::empty(Rect::new(0, 0, 10, 10));
+        let area = Rect::new(2, 2, 3, 4);
+        Slider::new(50.0, 0.0, 100.0)
+            .orientation(SliderOrientation::Vertical)
+            .filled_symbol("界")
+            .empty_symbol("界")
+            .show_handle(false)
+            .render(area, &mut buf);
+
+        for y in area.y..area.y + area.height {
+            assert_eq!(buf[(2, y)].symbol(), "界", "missing symbol on row {y}");
+        }
+    }
+
+    #[test]
     fn test_render_vertical_zero_height_no_panic() {
         use ratatui::buffer::Buffer;
         use ratatui::layout::Rect;
@@ -1618,6 +1730,23 @@ mod tests {
     }
 
     #[test]
+    fn test_render_label_is_clipped_to_slider_width() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let mut buf = Buffer::empty(Rect::new(0, 0, 12, 4));
+        let area = Rect::new(2, 2, 3, 1);
+        Slider::default()
+            .label("abcdef")
+            .show_handle(false)
+            .render(area, &mut buf);
+
+        assert_eq!(buf[(2, 1)].symbol(), "a");
+        assert_eq!(buf[(4, 1)].symbol(), "c");
+        assert_eq!(buf[(5, 1)].symbol(), " ");
+    }
+
+    #[test]
     fn test_render_horizontal_with_label_and_value_left_aligned() {
         use ratatui::buffer::Buffer;
         use ratatui::layout::Alignment;
@@ -1632,6 +1761,9 @@ mod tests {
             .show_handle(false);
         let render_area = Rect::new(0, 2, 30, 1);
         slider.render(render_area, &mut buf);
+
+        assert_eq!(buf[(0, 1)].symbol(), "V");
+        assert_eq!(buf[(5, 1)].symbol(), "7");
     }
 
     #[test]
@@ -1649,6 +1781,9 @@ mod tests {
             .show_handle(false);
         let render_area = Rect::new(0, 2, 30, 1);
         slider.render(render_area, &mut buf);
+
+        assert_eq!(buf[(0, 1)].symbol(), "V");
+        assert_eq!(buf[(26, 1)].symbol(), "7");
     }
 
     // ── Rendering: vertical label and value ───────────────────────────────────
@@ -1668,6 +1803,8 @@ mod tests {
             .vertical_label_position(VerticalLabelPosition::Top)
             .show_value(false);
         slider.render(render_area, &mut buf);
+
+        assert_eq!(buf[(2, 1)].symbol(), "V");
     }
 
     #[test]
@@ -1685,6 +1822,8 @@ mod tests {
             .vertical_label_position(VerticalLabelPosition::Bottom)
             .show_value(false);
         slider.render(render_area, &mut buf);
+
+        assert_eq!(buf[(2, 12)].symbol(), "V");
     }
 
     #[test]
@@ -1701,6 +1840,8 @@ mod tests {
             .show_value(true)
             .vertical_value_position(VerticalValuePosition::Top);
         slider.render(render_area, &mut buf);
+
+        assert_eq!(buf[(1, 1)].symbol(), "5");
     }
 
     #[test]
@@ -1717,6 +1858,9 @@ mod tests {
             .show_value(true)
             .vertical_value_position(VerticalValuePosition::Middle);
         slider.render(render_area, &mut buf);
+
+        assert_eq!(buf[(1, 7)].symbol(), "5");
+        assert_eq!(buf[(2, 7)].symbol(), "0");
     }
 
     #[test]
@@ -1733,6 +1877,8 @@ mod tests {
             .show_value(true)
             .vertical_value_position(VerticalValuePosition::Bottom);
         slider.render(render_area, &mut buf);
+
+        assert_eq!(buf[(1, 12)].symbol(), "5");
     }
 
     #[test]
@@ -1752,6 +1898,9 @@ mod tests {
             .show_value(true)
             .vertical_value_position(VerticalValuePosition::Top);
         slider.render(render_area, &mut buf);
+
+        assert_eq!(buf[(2, 1)].symbol(), "V");
+        assert_eq!(buf[(1, 2)].symbol(), "5");
     }
 
     #[test]
@@ -1770,6 +1919,9 @@ mod tests {
             .show_value(true)
             .vertical_value_position(VerticalValuePosition::Bottom);
         slider.render(render_area, &mut buf);
+
+        assert_eq!(buf[(1, 12)].symbol(), "5");
+        assert_eq!(buf[(2, 13)].symbol(), "V");
     }
 
     #[test]
@@ -1787,6 +1939,9 @@ mod tests {
             .vertical_value_position(VerticalValuePosition::Middle)
             .vertical_value_alignment(VerticalValueAlignment::Left);
         slider.render(render_area, &mut buf);
+
+        assert_eq!(buf[(0, 7)].symbol(), "5");
+        assert_eq!(buf[(1, 7)].symbol(), "0");
     }
 
     #[test]
@@ -1804,6 +1959,9 @@ mod tests {
             .vertical_value_position(VerticalValuePosition::Middle)
             .vertical_value_alignment(VerticalValueAlignment::Right);
         slider.render(render_area, &mut buf);
+
+        assert_eq!(buf[(3, 7)].symbol(), "5");
+        assert_eq!(buf[(4, 7)].symbol(), "0");
     }
 
     // ── Rendering: block ──────────────────────────────────────────────────────
@@ -1832,6 +1990,18 @@ mod tests {
     }
 
     // ── Percentage edge cases ─────────────────────────────────────────────────
+
+    #[test]
+    #[should_panic(expected = "value must not be NaN")]
+    fn test_slider_rejects_nan_value() {
+        Slider::new(f64::NAN, 0.0, 100.0);
+    }
+
+    #[test]
+    #[should_panic(expected = "min and max must be finite")]
+    fn test_slider_rejects_infinite_bounds() {
+        Slider::new(0.0, f64::NEG_INFINITY, 100.0);
+    }
 
     #[test]
     fn test_percentage_equal_min_max() {

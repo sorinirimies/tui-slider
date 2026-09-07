@@ -28,9 +28,11 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tui-slider = "0.1"
-ratatui = "0.28"
+tui-slider = "0.3"
+ratatui = "0.30"
 ```
+
+Minimum supported Rust version: **1.88**.
 
 ## 🚀 Quick Start
 
@@ -121,7 +123,7 @@ let slider = Slider::from_state(&state)
 ### Vertical Style Variations
 Various vertical slider styles optimized for different use cases.
 
-![Vertical Styles Demo](examples/vhs/output/vertical.gif)
+![Vertical Styles Demo](examples/vhs/output/vertical_styles.gif)
 
 🚀 `cargo run --example vertical` | 📄 [View Source](examples/vertical.rs)
 
@@ -144,12 +146,10 @@ Create your own slider styles with custom RGB colors and symbol combinations.
 ![Custom Styles Demo](examples/vhs/output/custom.gif)
 
 ```rust
-use tui_slider::style::SliderStyle;
+use tui_slider::SliderStyle;
 
 let style = SliderStyle::horizontal_thick();
-let slider = Slider::from_state(&state)
-    .filled_symbol(style.filled_symbol)
-    .filled_color(style.filled_color);
+let slider = Slider::from_state(&state).style(&style);
 ```
 
 🚀 `cargo run --example custom` | 📄 [View Source](examples/custom_symbols.rs)
@@ -277,17 +277,19 @@ let percentage = state.percentage();
 - `label(text)` - Set label text
 - `show_value(bool)` - Show/hide value display
 - `show_handle(bool)` - Show/hide handle
+- `style(&SliderStyle)` - Apply symbols, colors, and segmented rendering
+- `segmented(bool)` - Enable/disable one-cell gaps between bar symbols
 - `filled_symbol(symbol)` - Set filled bar symbol
 - `empty_symbol(symbol)` - Set empty bar symbol
 - `handle_symbol(symbol)` - Set handle symbol
 - `filled_color(color)` - Set filled bar color
 - `empty_color(color)` - Set empty bar color
 - `handle_color(color)` - Set handle color
-- `show_handle(bool)` - Show/hide thumb indicator
-- `show_thumb(bool)` - Alias for show_handle
+- `show_thumb(bool)` - Alias for `show_handle`
 - `vertical_label_position(position)` - Set label position for vertical sliders
 - `vertical_value_position(position)` - Set value position for vertical sliders
 - `vertical_value_alignment(alignment)` - Set value alignment for vertical sliders
+- `horizontal_bar_alignment(alignment)` - Set bar row for horizontal sliders
 - `block(block)` - Add border block
 
 ### SliderState
@@ -306,11 +308,14 @@ let percentage = state.percentage();
 
 ## 🏗️ Architecture
 
-The library consists of three main components:
+The library consists of reusable components:
 
-- **Slider** - The widget that renders the slider
-- **SliderState** - Manages value, bounds, and state
-- **SliderOrientation** - Horizontal or Vertical orientation
+- **Slider** - Widget rendering, layout, symbols, colors, and handles
+- **SliderState** - Value, bounds, steps, percentages, and position conversion
+- **SliderStyle** - Reusable style presets and custom style configuration
+- **SliderOrientation** - Horizontal or vertical orientation
+- **Position types** - Label, value, and horizontal-bar alignment
+- **Border helpers** - Border sets, title alignment, and title positioning
 
 ## 🛠️ Development
 
@@ -318,19 +323,12 @@ This project uses [just](https://github.com/casey/just) as a command runner for 
 
 ### Quick Setup
 
-Run the interactive setup script to install `just` and configure your environment:
+Install development tools through the checked-in `justfile`:
 
 ```bash
-./scripts/setup-just.sh
+cargo install just
+just install-tools
 ```
-
-This script will:
-- Install `just` command runner (if not already installed)
-- Create a new justfile if one doesn't exist (with common commands)
-- Enhance existing justfile with missing commands (optional)
-- Install optional tools like `git-cliff` for changelog generation
-- Set up shell completion
-- Create backups before modifying files
 
 ### Manual Setup
 
