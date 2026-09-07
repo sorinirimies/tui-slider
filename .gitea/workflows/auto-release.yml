@@ -1,35 +1,36 @@
-name: Auto Release on Dependency Update
+name: Auto Patch Release
 
-# Fires when a dependency-update PR (e.g. the nightly workflow's PR) merges
-# into main/master, changing Cargo.lock. Bumps the patch version, updates the
-# changelog, tags the commit, and pushes — which triggers release.yml.
+# Explicit dispatch avoids needing a separate automation credential.
 on:
-  push:
-    branches:
-      - main
-      - master
-    paths:
-      - "Cargo.lock"
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch containing the merged dependency update
+        required: true
+        default: main
+        type: string
 
 env:
   CARGO_TERM_COLOR: always
 
 permissions:
+  actions: write
   contents: write
+
+concurrency:
+  group: dependency-auto-release
+  cancel-in-progress: false
 
 jobs:
   auto-release:
-    name: Bump version and tag
+    name: Bump patch version and tag
     runs-on: ubuntu-latest
-    # Skip commits made by this workflow itself (avoid infinite loop) and
-    # skip anything that isn't a merge/push we actually want to react to.
-    if: "!contains(github.event.head_commit.message, 'chore: bump version')"
     steps:
-      - name: Checkout
+      - name: Checkout merged dependency update
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ inputs.branch }}
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -39,7 +40,7 @@ jobs:
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Install cliff
+      - name: Install git-cliff
         run: cargo install git-cliff
 
       - name: Install Nushell
@@ -55,7 +56,7 @@ jobs:
       - name: Compute next patch version
         id: version
         run: |
-          current=$(grep -m1 '^version' Cargo.toml | sed -E 's/version = "(.*)"/\1/')
+          current=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[] | select(.name == "tui-slider") | .version')
           IFS='.' read -r major minor patch <<< "$current"
           next="$major.$minor.$((patch + 1))"
           echo "current=$current" >> "$GITHUB_OUTPUT"
@@ -65,15 +66,39 @@ jobs:
         run: nu scripts/bump_version.nu --yes ${{ steps.version.outputs.next }}
 
       - name: Push release commit and tag to Gitea
+        env:
+          BRANCH: ${{ inputs.branch }}
         run: |
-          git push origin HEAD:${{ github.ref_name }}
+          git push origin "HEAD:refs/heads/$BRANCH"
           git push origin "v${{ steps.version.outputs.next }}"
 
       - name: Push release commit and tag to GitHub mirror
-        if: ${{ env.GITHUB_REMOTE_URL != '' }}
         env:
           GITHUB_REMOTE_URL: ${{ secrets.GITHUB_REMOTE_URL }}
+          BRANCH: ${{ inputs.branch }}
         run: |
+          if [ -z "$GITHUB_REMOTE_URL" ]; then
+            echo "GITHUB_REMOTE_URL not set; skipping mirror push."
+            exit 0
+          fi
           git remote add github-ci "$GITHUB_REMOTE_URL"
-          git push github-ci HEAD:${{ github.ref_name }}
+          git push github-ci "HEAD:refs/heads/$BRANCH"
           git push github-ci "v${{ steps.version.outputs.next }}"
+
+      - name: Dispatch release build
+        env:
+          GITEA_TOKEN: ${{ github.token }}
+          BRANCH: ${{ inputs.branch }}
+          API_URL: ${{ github.server_url }}/api/v1
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          payload=$(jq -n \
+            --arg ref "$BRANCH" \
+            --arg tag "v${{ steps.version.outputs.next }}" \
+            '{ref: $ref, inputs: {tag: $tag}}')
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: token $GITEA_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data "$payload" \
+            "$API_URL/repos/$REPOSITORY/actions/workflows/release.yml/dispatches"

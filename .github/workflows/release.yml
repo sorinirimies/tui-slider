@@ -4,6 +4,15 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to build
+        required: true
+        type: string
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 permissions:
   contents: write
@@ -16,6 +25,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -26,7 +37,6 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Check formatting
-        if: matrix.os == 'ubuntu-latest'
         run: cargo fmt --all -- --check
 
       - name: Run clippy
@@ -44,6 +54,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -60,14 +71,15 @@ jobs:
           version: "*"
 
       - name: Prepare release artifacts
-        run: nu scripts/release_prepare.nu ${{ github.ref_name }}
+        run: nu scripts/release_prepare.nu ${{ env.RELEASE_TAG }}
 
       - name: Build release
         run: cargo build --release --all-features
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
           body_path: RELEASE_NOTES.md
           files: |
             LICENSE
@@ -82,7 +94,7 @@ jobs:
           CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
         run: |
           echo "Publishing to crates.io..."
-          cargo publish --token $CRATES_IO_TOKEN --allow-dirty
+          cargo publish --token "$CRATES_IO_TOKEN" --allow-dirty
 
       - name: Skip crates.io publish
         if: env.CRATES_IO_TOKEN == ''

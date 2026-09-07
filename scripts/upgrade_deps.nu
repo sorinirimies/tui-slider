@@ -2,10 +2,10 @@
 # Nightly dependency upgrade script for tui-slider.
 #
 # Phases:
-#   1. cargo upgrade --incompatible allow   (rewrite version pins in Cargo.toml)
-#   2. cargo update                         (resolve fresh Cargo.lock)
+#   1. cargo upgrade (rewrite direct dependency requirements to latest versions)
+#   2. cargo update  (resolve fresh Cargo.lock; reject any downgrade)
 #   3. Quality gate: fmt → clippy → tests
-#   4. Commit strategy depending on what changed and whether the gate passed
+#   4. Leave changes for CI, or commit and push locally
 #
 # Usage:
 #   nu scripts/upgrade_deps.nu
@@ -113,7 +113,8 @@ def main [
     --bot-name: string  = "github-actions[bot]",                          # Git author / committer name
     --bot-email: string = "github-actions[bot]@users.noreply.github.com", # Git author / committer email
     --remote: string    = "origin",                                       # Git remote to push to
-    --dry-run (-n),                                                       # Show what would be committed without pushing
+    --dry-run (-n),                                                       # Preview, then restore Cargo files
+    --no-commit,                                                          # Keep validated changes for CI to commit
 ] {
     # ── Colors ────────────────────────────────────────────────────────
     let green  = (ansi green)
@@ -135,14 +136,16 @@ def main [
         print ""
     }
 
-    # ── Pre-flight: ensure working tree is clean ──────────────────────
+    # ── Pre-flight: ensure Cargo inputs are clean ─────────────────────
     print $"($cyan)── Pre-flight ──($reset)"
-    let wt = (do { run-external "git" "status" "--porcelain" } | complete)
-    if ($wt.stdout | str trim | is-not-empty) {
-        print $"($red)  ✗ Working tree is dirty. Commit or stash changes first.($reset)"
+    let cargo_diff = (do {
+        run-external "git" "diff" "--quiet" "HEAD" "--" "Cargo.toml" "Cargo.lock"
+    } | complete)
+    if $cargo_diff.exit_code != 0 {
+        print $"($red)  ✗ Cargo.toml or Cargo.lock already has changes. Commit or stash them first.($reset)"
         exit 1
     }
-    print $"($green)  ✓ Working tree clean($reset)"
+    print $"($green)  ✓ Cargo.toml and Cargo.lock clean($reset)"
     print ""
 
     # Record current branch for the push at the end.
@@ -150,11 +153,16 @@ def main [
 
     # ── Phase 1: cargo upgrade ────────────────────────────────────────
     print $"($cyan)── Phase 1 · cargo upgrade ──($reset)"
-    print -n "  cargo upgrade --incompatible allow ... "
-    let upgrade = (do { run-external "cargo" "upgrade" "--incompatible" "allow" } | complete)
+    print -n "  cargo upgrade --incompatible allow --ignore-rust-version ... "
+    # Ignore the manifest MSRV when selecting versions. Without this flag,
+    # cargo-edit can rewrite already-newer requirements to older releases.
+    let upgrade = (do {
+        run-external "cargo" "upgrade" "--incompatible" "allow" "--ignore-rust-version"
+    } | complete)
     if $upgrade.exit_code != 0 {
         print $"($red)✗($reset)"
         print $"($red)($upgrade.stderr)($reset)"
+        run-external "git" "checkout" "HEAD" "--" "Cargo.toml" "Cargo.lock"
         error make { msg: "cargo upgrade failed" }
     }
     print $"($green)✓($reset)"
@@ -163,12 +171,23 @@ def main [
     # ── Phase 2: cargo update ─────────────────────────────────────────
     print $"($cyan)── Phase 2 · cargo update ──($reset)"
     print -n "  cargo update ... "
-    let update = (do { run-external "cargo" "update" } | complete)
+    let update = (do { run-external "cargo" "update" "--verbose" } | complete)
     if $update.exit_code != 0 {
         print $"($red)✗($reset)"
         print $"($red)($update.stderr)($reset)"
+        run-external "git" "checkout" "HEAD" "--" "Cargo.toml" "Cargo.lock"
         error make { msg: "cargo update failed" }
     }
+
+    let update_output = ([$update.stdout $update.stderr] | str join "\n")
+    if ($update_output | str contains "Downgrading ") {
+        print $"($red)✗($reset)"
+        print $"($red)Dependency downgrade detected; restoring Cargo.toml and Cargo.lock.($reset)"
+        print $update_output
+        run-external "git" "checkout" "HEAD" "--" "Cargo.toml" "Cargo.lock"
+        error make { msg: "dependency downgrade rejected" }
+    }
+
     print $"($green)✓($reset)"
     print ""
 
@@ -209,76 +228,36 @@ def main [
     if $gate_passed {
         print $"($green)($bold)  ✓ Quality gate passed($reset)"
     } else {
-        print $"($red)($bold)  ✗ Quality gate failed($reset)"
+        print $"($red)($bold)  ✗ Quality gate failed; restoring Cargo files($reset)"
+        run-external "git" "checkout" "HEAD" "--" "Cargo.toml" "Cargo.lock"
+        error make { msg: "quality gate did not pass" }
     }
     print ""
 
     # ── Phase 4: Commit strategy ──────────────────────────────────────
     print $"($cyan)── Phase 4 · Commit ──($reset)"
 
-    # Configure git identity for the bot.
-    run-external "git" "config" "user.name"  $bot_name
-    run-external "git" "config" "user.email" $bot_email
+    let files = if $toml_changed {
+        ["Cargo.toml" "Cargo.lock"]
+    } else {
+        ["Cargo.lock"]
+    }
 
-    if $gate_passed and $toml_changed {
-        # ── Gate PASSED + Cargo.toml changed → commit Cargo.toml + Cargo.lock
-        let files = ["Cargo.toml" "Cargo.lock"]
-        let msg = "chore(deps): upgrade dependencies (Cargo.toml + Cargo.lock)"
-
-        print $"  Strategy: ($green)commit (commit_label $files)($reset)"
-        do_commit_and_push $files $msg $branch $remote $dry_run
-
-    } else if (not $gate_passed) and $toml_changed {
-        # ── Gate FAILED + Cargo.toml changed → revert Cargo.toml, re-sync lock, commit lock only
-        print $"  Strategy: ($yellow)revert Cargo.toml, commit Cargo.lock only($reset)"
-
-        # Restore Cargo.toml to HEAD
-        run-external "git" "checkout" "HEAD" "--" "Cargo.toml"
-        print $"($yellow)  ↩ Cargo.toml reverted to HEAD($reset)"
-
-        # Re-sync the lock file against the restored Cargo.toml
-        print -n "  Re-syncing Cargo.lock ... "
-        let resync = (do { run-external "cargo" "update" } | complete)
-        if $resync.exit_code != 0 {
-            print $"($red)✗($reset)"
-            print $resync.stderr
-            exit 1
-        }
-        print $"($green)✓($reset)"
-
-        # Commit only the lock file if it still has changes
-        if (is_dirty "Cargo.lock") {
-            let msg = "chore(deps): update Cargo.lock (incompatible upgrades reverted)"
-            do_commit_and_push ["Cargo.lock"] $msg $branch $remote $dry_run
+    if $no_commit {
+        print $"($green)  ✓ Validated changes left in working tree for CI($reset)"
+    } else if $dry_run {
+        print $"($yellow)  [dry-run] would stage: (commit_label $files)($reset)"
+        print $"($yellow)  [dry-run] restoring Cargo.toml and Cargo.lock($reset)"
+        run-external "git" "checkout" "HEAD" "--" "Cargo.toml" "Cargo.lock"
+    } else {
+        run-external "git" "config" "user.name"  $bot_name
+        run-external "git" "config" "user.email" $bot_email
+        let msg = if $toml_changed {
+            "chore(deps): upgrade dependencies"
         } else {
-            print $"($yellow)  Cargo.lock unchanged after revert — nothing to commit($reset)"
+            "chore(deps): update Cargo.lock"
         }
-
-        # Always exit non-zero when the gate failed
-        print ""
-        print $"($red)($bold)  ✗ Exiting with failure \(quality gate did not pass\)($reset)"
-        print ""
-        exit 1
-
-    } else if $gate_passed and (not $toml_changed) and $lock_changed {
-        # ── Gate PASSED + only Cargo.lock changed → commit lock only
-        let msg = "chore(deps): update Cargo.lock"
-
-        print $"  Strategy: ($green)commit Cargo.lock only($reset)"
-        do_commit_and_push ["Cargo.lock"] $msg $branch $remote $dry_run
-
-    } else if (not $gate_passed) and (not $toml_changed) and $lock_changed {
-        # ── Gate FAILED + only lock changed → commit lock (compatible updates are safe),
-        #    but exit non-zero so CI notices
-        let msg = "chore(deps): update Cargo.lock"
-
-        print $"  Strategy: ($yellow)commit Cargo.lock only \(gate failed, compatible updates only\)($reset)"
-        do_commit_and_push ["Cargo.lock"] $msg $branch $remote $dry_run
-
-        print ""
-        print $"($red)($bold)  ✗ Exiting with failure \(quality gate did not pass\)($reset)"
-        print ""
-        exit 1
+        do_commit_and_push $files $msg $branch $remote false
     }
 
     # ── Summary ───────────────────────────────────────────────────────

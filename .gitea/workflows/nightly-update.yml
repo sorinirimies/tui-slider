@@ -2,59 +2,148 @@ name: Nightly Dependency Update
 
 on:
   schedule:
-    # Runs every night at 03:00 UTC
-    - cron: "0 3 * * *"
+    # Offset from GitHub to reduce duplicate releases when repositories mirror.
+    - cron: "30 3 * * *"
   workflow_dispatch:
+
+concurrency:
+  group: nightly-dependency-update
+  cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
+  UPDATE_BRANCH: chore/nightly-dependency-update
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
 jobs:
   update-dependencies:
-    name: Update dependencies
+    name: Update libraries and auto-merge
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
 
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Update Cargo.lock
-        run: cargo update
+      - name: Install cargo-edit
+        run: cargo install cargo-edit --locked
 
-      - name: Build
-        run: cargo build --all-features --all-targets
+      - name: Install Nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: "*"
 
-      - name: Run tests
-        run: cargo test --locked --all-features --all-targets
+      - name: Upgrade libraries without downgrades
+        run: nu scripts/upgrade_deps.nu --no-commit
+
+      - name: Reject non-library changes
+        run: |
+          if ! git diff --quiet -- . ':(exclude)Cargo.toml' ':(exclude)Cargo.lock'; then
+            echo "Nightly update changed files other than Cargo.toml/Cargo.lock:"
+            git diff --name-only
+            exit 1
+          fi
+
+      - name: Build updated dependency set
+        run: cargo build --locked --all-features --all-targets
 
       - name: Check for changes
         id: git-check
         run: |
-          if git diff --quiet -- Cargo.lock; then
+          if git diff --quiet -- Cargo.toml Cargo.lock; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      # Direct push, not a PR -- a PR here would need a human to merge it
-      # before auto-release.yml's Cargo.lock-path trigger ever fires, which
-      # defeats the point of a *nightly, unattended* update. Quality gate
-      # (build + test above) already passed before this runs.
-      - name: Commit and push dependency update
+      - name: Push dependency branch
         if: steps.git-check.outputs.changed == 'true'
         run: |
-          git config user.name  "gitea-actions[bot]"
+          git config user.name "gitea-actions[bot]"
           git config user.email "gitea-actions[bot]@noreply.gitea"
-          git add Cargo.lock
-          git commit -m "chore(deps): nightly dependency update"
-          git push origin HEAD:${{ github.ref_name }}
-          echo "✅ Dependency update pushed — auto-release.yml will bump + tag + release it."
+          git checkout -b "$UPDATE_BRANCH"
+          git add Cargo.toml Cargo.lock
+          git commit -m "chore(deps): nightly library update"
+          git push --force origin "HEAD:refs/heads/$UPDATE_BRANCH"
+
+      - name: Create and merge validated pull request
+        id: merge-pr
+        if: steps.git-check.outputs.changed == 'true'
+        env:
+          GITEA_TOKEN: ${{ github.token }}
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+          API_URL: ${{ github.server_url }}/api/v1
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          pulls=$(curl --fail-with-body --silent --show-error \
+            --header "Authorization: token $GITEA_TOKEN" \
+            "$API_URL/repos/$REPOSITORY/pulls?state=open&limit=50")
+
+          number=$(printf '%s' "$pulls" | jq -r \
+            --arg branch "$UPDATE_BRANCH" \
+            '.[] | select(.head.ref == $branch) | .number' | head -n 1)
+
+          if [ -z "$number" ]; then
+            payload=$(jq -n \
+              --arg head "$UPDATE_BRANCH" \
+              --arg base "$BASE_BRANCH" \
+              --arg title "chore(deps): nightly library update" \
+              --arg body $'Automated nightly library update.\n\n- Direct requirements upgraded\n- Lockfile refreshed\n- Downgrades rejected\n- Formatting, Clippy, tests, and build passed\n\nThis workflow merges the validated PR and explicitly dispatches the patch release.' \
+              '{head: $head, base: $base, title: $title, body: $body}')
+            created=$(curl --fail-with-body --silent --show-error \
+              --request POST \
+              --header "Authorization: token $GITEA_TOKEN" \
+              --header "Content-Type: application/json" \
+              --data "$payload" \
+              "$API_URL/repos/$REPOSITORY/pulls")
+            number=$(printf '%s' "$created" | jq -r '.number')
+          fi
+
+          merge_payload=$(jq -n '{Do: "squash", delete_branch_after_merge: true}')
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: token $GITEA_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data "$merge_payload" \
+            "$API_URL/repos/$REPOSITORY/pulls/$number/merge"
+
+          merged=$(curl --fail-with-body --silent --show-error \
+            --header "Authorization: token $GITEA_TOKEN" \
+            "$API_URL/repos/$REPOSITORY/pulls/$number" | jq -r '.merged')
+          if [ "$merged" != "true" ]; then
+            echo "Dependency PR #$number was not merged; refusing to release."
+            exit 1
+          fi
+          echo "merged=true" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch patch release
+        if: steps.merge-pr.outputs.merged == 'true'
+        env:
+          GITEA_TOKEN: ${{ github.token }}
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+          API_URL: ${{ github.server_url }}/api/v1
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          payload=$(jq -n \
+            --arg ref "$BASE_BRANCH" \
+            --arg branch "$BASE_BRANCH" \
+            '{ref: $ref, inputs: {branch: $branch}}')
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --header "Authorization: token $GITEA_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data "$payload" \
+            "$API_URL/repos/$REPOSITORY/actions/workflows/auto-release.yml/dispatches"
+          echo "Patch-release workflow dispatched."

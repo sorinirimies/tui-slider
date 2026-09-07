@@ -126,26 +126,29 @@ just upgrade-deps
 # Direct call (will commit and push)
 nu scripts/upgrade_deps.nu
 
-# Dry-run mode (show plan, don't commit)
+# Dry-run mode (validate, then restore Cargo files)
 nu scripts/upgrade_deps.nu --dry-run
 
-# Custom git identity (for CI)
+# Leave validated changes for a CI workflow to commit
+nu scripts/upgrade_deps.nu --no-commit
+
+# Custom git identity
 nu scripts/upgrade_deps.nu --bot-name "github-actions[bot]" --bot-email "github-actions[bot]@users.noreply.github.com"
 ```
 
 #### Phases
 
-1. **Phase 1** — `cargo upgrade --incompatible allow` (rewrites Cargo.toml version pins)
-2. **Phase 2** — `cargo update` (resolves a fresh Cargo.lock)
-3. **Quality gate** — fmt → clippy → tests
-4. **Commit strategy**:
+1. **Phase 1** — `cargo upgrade --incompatible allow --ignore-rust-version` rewrites direct dependency requirements without allowing MSRV filtering to select an older release.
+2. **Phase 2** — `cargo update --verbose` refreshes `Cargo.lock`; any reported downgrade aborts and restores both Cargo files.
+3. **Quality gate** — fmt → clippy → tests. Failure restores both Cargo files and never commits a partial update.
+4. **Output mode**:
 
-| Gate | Cargo.toml | Cargo.lock | Action | Exit |
-|------|-----------|------------|--------|------|
-| ✓ | changed | * | commit both | 0 |
-| ✗ | changed | * | revert toml, re-sync lock, commit lock only | 1 |
-| ✓ | clean | changed | commit lock only | 0 |
-| * | clean | clean | nothing to do | 0 |
+| Mode | Successful update behavior |
+|------|----------------------------|
+| Default | Commit `Cargo.toml`/`Cargo.lock` and push |
+| `--dry-run` | Show changed files, then restore them |
+| `--no-commit` | Leave validated Cargo changes for CI |
+| Any mode, no changes | Exit successfully without a commit |
 
 ---
 
