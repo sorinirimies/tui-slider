@@ -1,10 +1,20 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [0.3.3] - 2026-08-05
+## [0.3.4] - 2026-09-07
 
 ### Bug Fixes
 - Sync Cargo.lock tui-slider entry to 0.3.3
+- Sync Cargo.lock inside release_prepare.nu
+- Secrets context not allowed in step-level if: on auto-release.yml
+- Harden slider rendering and validation
+
+### Ci
+- Automate nightly dependency patch releases
+
+### Justfile
+- Add gitea-nexus-lab remote recipes (push/pull/sync/release)
+- Rename gitea -> gitea-microlab; add full gitea-microlab/-starscream/-nexus-lab parity
 
 ## [0.3.3] - 2026-08-05
 
