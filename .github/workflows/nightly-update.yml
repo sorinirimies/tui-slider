@@ -58,10 +58,15 @@ jobs:
       - name: Build updated dependency set
         run: cargo build --locked --all-features --all-targets
 
+      # `cargo upgrade` (cargo-edit) reserializes the whole Cargo.toml via
+      # toml_edit — it can reorder/reformat keys and whitespace even when no
+      # dependency version actually changed. Cargo.lock is the ground truth:
+      # it only changes when a resolved dependency version actually moves.
+      # Gate on Cargo.lock only; Cargo.toml is still committed alongside it.
       - name: Check for changes
         id: git-check
         run: |
-          if git diff --quiet -- Cargo.toml Cargo.lock; then
+          if git diff --quiet -- Cargo.lock; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
