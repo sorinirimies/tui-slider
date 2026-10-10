@@ -131,7 +131,7 @@ def main [
     print $"($cyan)── Initial Push ──($reset)"
 
     let answer = (input $"  Push all branches and tags to Gitea now? \(y/N\) ")
-    if ($answer | str trim | str downcase) == "y" {
+    if (($answer | str trim) =~ '(?i)^y$') {
         print ""
         info "Pushing branches to Gitea..."
 

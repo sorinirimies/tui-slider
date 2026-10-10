@@ -136,8 +136,8 @@ def main [
             info "Generate one with:"
             print "  ssh-keygen -t ed25519 -C \"your_email@example.com\""
             print ""
-            let cont = (input "Continue anyway? (y/N) " | str trim | str downcase)
-            if $cont != "y" {
+            let cont = (input "Continue anyway? (y/N) " | str trim)
+            if not ($cont =~ '(?i)^y$') {
                 fail "SSH keys required. Please set up SSH first."
             }
         }
@@ -200,9 +200,9 @@ def main [
     # ── Optional: push all branches + tags ───────────────────────────────────
     heading "Push to Gitea"
 
-    let push_answer = (input "Push all branches and tags to Gitea now? (y/N) " | str trim | str downcase)
+    let push_answer = (input "Push all branches and tags to Gitea now? (y/N) " | str trim)
 
-    if $push_answer == "y" {
+    if ($push_answer =~ '(?i)^y$') {
         info "Pushing all branches to Gitea..."
         let push_branches = (do { run-external "git" "-C" $project_dir "push" "gitea" "--all" } | complete)
         if $push_branches.exit_code == 0 {
@@ -242,9 +242,9 @@ def main [
             }
         }
     } else {
-        let setup_answer = (input "Set up .gitea/workflows from .github/workflows? (y/N) " | str trim | str downcase)
+        let setup_answer = (input "Set up .gitea/workflows from .github/workflows? (y/N) " | str trim)
 
-        if $setup_answer == "y" {
+        if ($setup_answer =~ '(?i)^y$') {
             mkdir $gitea_wf
             success "Created .gitea/workflows/"
 

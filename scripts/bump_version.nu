@@ -69,9 +69,9 @@ def main [
     # ── Confirmation ──────────────────────────────────────────────────
     if not $yes {
         let answer = (input $"($bold)Continue with version bump ($current_version) → ($new_version)? \(y/n\) ($reset)")
-        if ($answer | str trim | str downcase) != "y" {
+        if not (($answer | str trim) =~ '(?i)^y$') {
             print $"($yellow)Aborted.($reset)"
-            return
+            exit 1
         }
         print ""
     }
