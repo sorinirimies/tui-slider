@@ -215,6 +215,57 @@ push-all:
     git push gitea-nexus-lab main
     @echo "✅ Pushed to GitHub, Gitea Microlab, Gitea Starscream, and Gitea (nexus-lab)!"
 
+# Force-push the current branch to all remotes
+push-all-force:
+    #!/usr/bin/env sh
+    failed=""
+    git push --force origin main             || failed="$failed origin"
+    git push --force gitea-microlab main     || failed="$failed gitea-microlab"
+    git push --force gitea-starscream main   || failed="$failed gitea-starscream"
+    git push --force gitea-nexus-lab main    || failed="$failed gitea-nexus-lab"
+    if [ -n "$failed" ]; then
+        echo "⚠️  Failed to force-push to:$failed"
+    else
+        echo "✅ Force-pushed to GitHub, Gitea Microlab, Gitea Starscream, and Gitea (nexus-lab)!"
+    fi
+
+# Git: force-push to GitHub (origin)
+push-force:
+    git push --force origin main
+
+# Git: force-push to Gitea Microlab
+push-gitea-microlab-force:
+    git push --force gitea-microlab main
+
+# Git: force-push to Gitea (nexus-lab instance)
+push-gitea-nexus-lab-force:
+    git push --force gitea-nexus-lab main
+
+# Git: force-push to Gitea Starscream
+push-gitea-starscream-force:
+    git push --force gitea-starscream main
+
+# Git: force-push tags to GitHub
+push-tags-force:
+    git push --force origin --tags
+
+# Git: force-push tags to all remotes (continues on failure)
+push-tags-all-force:
+    #!/usr/bin/env sh
+    failed=""
+    git push --force origin --tags             || failed="$failed origin"
+    git push --force gitea-microlab --tags     || failed="$failed gitea-microlab"
+    git push --force gitea-starscream --tags   || failed="$failed gitea-starscream"
+    git push --force gitea-nexus-lab --tags    || failed="$failed gitea-nexus-lab"
+    if [ -n "$failed" ]; then
+        echo "⚠️  Failed to force-push tags to:$failed"
+    else
+        echo "✅ Tags force-pushed to all remotes!"
+    fi
+
+# Git: force-push branch + tags to all remotes (continues on failure)
+push-all-force-with-tags: push-all-force push-tags-all-force
+
 # Git: push tags to GitHub
 push-tags:
     git push origin --tags
@@ -301,6 +352,22 @@ sync-gitea-nexus-lab:
     git push gitea-nexus-lab main --force
     git push gitea-nexus-lab --tags --force
     @echo "✅ Gitea (nexus-lab) synced!"
+
+# Sync all Gitea instances with GitHub (force, continues on failure)
+sync-all-gitea:
+    #!/usr/bin/env sh
+    failed=""
+    git push gitea-microlab main --force           || failed="$failed gitea-microlab"
+    git push gitea-microlab --tags --force         || failed="$failed gitea-microlab-tags"
+    git push gitea-starscream main --force         || failed="$failed gitea-starscream"
+    git push gitea-starscream --tags --force       || failed="$failed gitea-starscream-tags"
+    git push gitea-nexus-lab main --force          || failed="$failed gitea-nexus-lab"
+    git push gitea-nexus-lab --tags --force        || failed="$failed gitea-nexus-lab-tags"
+    if [ -n "$failed" ]; then
+        echo "⚠️  Failed to sync:$failed"
+    else
+        echo "✅ All Gitea instances force-synced with GitHub."
+    fi
 
 # Show configured remotes
 remotes:
