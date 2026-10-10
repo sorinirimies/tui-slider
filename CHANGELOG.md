@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.3.5] - 2026-10-10
+
+### Bug Fixes
+- Gate nightly-update has_changes on Cargo.lock only
+- Drop deprecated str downcase; exit non-zero when bump is aborted
+
+### Ci
+- Release only on real Cargo.toml dependency changes; lock-only updates merge without release
+
 ## [0.3.4] - 2026-09-07
 
 ### Bug Fixes
@@ -8,6 +17,9 @@ All notable changes to this project will be documented in this file.
 - Sync Cargo.lock inside release_prepare.nu
 - Secrets context not allowed in step-level if: on auto-release.yml
 - Harden slider rendering and validation
+
+### Miscellaneous
+- Bump version to 0.3.4
 
 ### Ci
 - Automate nightly dependency patch releases
@@ -25,7 +37,6 @@ All notable changes to this project will be documented in this file.
 - Auto-release when dependency-update PR merges
 
 ### Miscellaneous
-- Update Cargo.lock and add nightly dependency update workflow
 - Bump version to 0.3.3
 
 ## [0.3.2] - 2026-03-11
