@@ -24,6 +24,8 @@ trim = true
 conventional_commits = true
 filter_unconventional = true
 commit_parsers = [
+    # Lock-only dependency refreshes never appear in the changelog
+    { message = "^chore\\(deps\\): update Cargo\\.lock", skip = true },
   { message = "^feat", group = "Features"},
   { message = "^fix", group = "Bug Fixes"},
   { message = "^doc", group = "Documentation"},

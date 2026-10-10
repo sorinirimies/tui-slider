@@ -2,7 +2,7 @@
 # Nightly dependency upgrade script for tui-slider.
 #
 # Phases:
-#   1. cargo upgrade (rewrite direct dependency requirements to latest versions)
+#   1. cargo upgrade (compatible-only; major bumps are a manual step)
 #   2. cargo update  (resolve fresh Cargo.lock; reject any downgrade)
 #   3. Quality gate: fmt → clippy → tests
 #   4. Leave changes for CI, or commit and push locally
@@ -153,11 +153,11 @@ def main [
 
     # ── Phase 1: cargo upgrade ────────────────────────────────────────
     print $"($cyan)── Phase 1 · cargo upgrade ──($reset)"
-    print -n "  cargo upgrade --incompatible allow --ignore-rust-version ... "
+    print -n "  cargo upgrade --ignore-rust-version ... "
     # Ignore the manifest MSRV when selecting versions. Without this flag,
     # cargo-edit can rewrite already-newer requirements to older releases.
     let upgrade = (do {
-        run-external "cargo" "upgrade" "--incompatible" "allow" "--ignore-rust-version"
+        run-external "cargo" "upgrade" "--ignore-rust-version"
     } | complete)
     if $upgrade.exit_code != 0 {
         print $"($red)✗($reset)"
