@@ -479,3 +479,7 @@ vhs-all:
 # Run all VHS tapes manually (legacy - explicitly lists each tape)
 vhs-all-manual: vhs-tui-slider vhs-horizontal vhs-vertical vhs-custom vhs-handles vhs-borders vhs-step-sizes vhs-title-alignment vhs-value-alignment vhs-vertical-positioning vhs-horizontal-bar-alignment
     @echo "✅ All demo GIFs generated!"
+
+# Security: dependency vulnerability scan (needs `cargo install cargo-audit`)
+audit:
+    cargo audit
