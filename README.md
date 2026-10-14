@@ -396,6 +396,15 @@ This project follows the "fail early" pattern for version bumps and releases:
 
 See [Justfile Best Practices & Patterns](docs/JUSTFILE_PATTERNS.md) for detailed documentation.
 
+## 🧪 Fuzzing
+
+Coverage-guided fuzz targets live in `fuzz/` (needs nightly + `cargo install cargo-fuzz`):
+
+```bash
+cargo +nightly fuzz list
+cargo +nightly fuzz run slider_render
+```
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

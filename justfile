@@ -483,3 +483,15 @@ vhs-all-manual: vhs-tui-slider vhs-horizontal vhs-vertical vhs-custom vhs-handle
 # Security: dependency vulnerability scan (needs `cargo install cargo-audit`)
 audit:
     cargo audit
+
+# Security: licenses, advisories, bans, sources (needs `cargo install cargo-deny`)
+deny:
+    cargo deny check
+
+# List fuzz targets (needs nightly + `cargo install cargo-fuzz`)
+fuzz-list:
+    cargo +nightly fuzz list
+
+# Run one fuzz target: just fuzz slider_render 30
+fuzz target seconds="30":
+    cargo +nightly fuzz run {{target}} -- -max_total_time={{seconds}}

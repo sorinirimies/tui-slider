@@ -1,0 +1,53 @@
+[package]
+name = "tui-slider-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+ratatui = { version = "0.30", default-features = false }
+tui-slider = { path = ".." }
+
+# Not part of the main crate (needs nightly).
+[workspace]
+
+[[bin]]
+name = "slider_render"
+path = "fuzz_targets/slider_render.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "slider_builders"
+path = "fuzz_targets/slider_builders.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "state_ops"
+path = "fuzz_targets/state_ops.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "state_position"
+path = "fuzz_targets/state_position.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "border_helpers"
+path = "fuzz_targets/border_helpers.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "style_presets"
+path = "fuzz_targets/style_presets.rs"
+test = false
+doc = false

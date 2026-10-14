@@ -61,3 +61,8 @@ Desktop.ini
 
 # Generated release notes (created fresh by release_prepare.nu / bump script)
 RELEASE_NOTES.md
+
+# cargo-fuzz
+fuzz/corpus/
+fuzz/artifacts/
+fuzz/target/
