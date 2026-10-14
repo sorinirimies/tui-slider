@@ -1,19 +1,33 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
-
-### Features
-- Shared theming via tui-nuances, behind the optional `theme` feature (off by default) (`Slider::theme`, `SliderStyle::theme`, `Themed`, `Theme` re-exports); `t`/`T` theme switching in examples
-
-## [0.3.5] - 2026-10-10
+## [0.4.0] - 2026-10-14
 
 ### Bug Fixes
 - Gate nightly-update has_changes on Cargo.lock only
 - Drop deprecated str downcase; exit non-zero when bump is aborted
 
+### Documentation
+- Re-record demos showing results only; reference tui-nuances version
+
+### Features
+- Shared theming via tui-nuances
+- Make theming an optional "theme" feature
+
+### Miscellaneous
+- Bump version to 0.3.5
+- Add force-push recipes (push-all-force, per-remote, tags, sync-all-gitea)
+- Depend on tui-nuances 0.1.5
+- Depend on tui-nuances 0.1.6
+- Depend on tui-nuances 0.1.6 from crates.io
+
 ### Ci
 - Release only on real Cargo.toml dependency changes; lock-only updates merge without release
+- Add cargo-audit workflow and just audit recipe
+- Prebuilt Nushell, cargo-deny + cargo-audit security workflow; add cargo-fuzz targets
+
+### Deps
+- Tui-nuances 0.1.4 (git)
 
 ## [0.3.4] - 2026-09-07
 
