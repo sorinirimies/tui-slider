@@ -33,6 +33,7 @@
 
 use crate::symbols;
 use ratatui::style::Color;
+#[cfg(feature = "theme")]
 use tui_nuances::{Theme, Themed};
 
 /// Style configuration for sliders
@@ -59,6 +60,7 @@ pub struct SliderStyle {
     pub segmented: bool,
 }
 
+#[cfg(feature = "theme")]
 impl Themed for SliderStyle {
     /// Maps `primary` → filled, `disabled` → empty, `foreground` → handle.
     /// Overrides all three colors; set explicit colors afterwards to win.
@@ -71,6 +73,7 @@ impl Themed for SliderStyle {
 }
 
 impl SliderStyle {
+    #[cfg(feature = "theme")]
     /// Recolors this style from a shared [`Theme`] (see [`Themed`]).
     /// Call color setters after this to override individual colors.
     pub fn theme(self, theme: &Theme) -> Self {

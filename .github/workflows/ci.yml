@@ -47,6 +47,12 @@ jobs:
           components: clippy
       - name: Run clippy action
         uses: clechasseur/rs-clippy-check@v4
+        with:
+          args: --all-features -- -D warnings
+      - name: clippy (default features)
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: build (no default features)
+        run: cargo build --locked --no-default-features
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2
   msrv:
@@ -86,7 +92,9 @@ jobs:
       - name: cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
-      - name: cargo test --locked
+      - name: cargo test --locked (default features)
+        run: cargo test --locked --all-targets
+      - name: cargo test --locked (all features)
         run: cargo test --locked --all-features --all-targets
       - name: Cache Cargo dependencies
         uses: Swatinem/rust-cache@v2

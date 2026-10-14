@@ -10,7 +10,7 @@ Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
 Hide
-Type "clear && cargo run --release --example custom"
+Type "clear && cargo run --release --features theme --example custom"
 Enter
 Sleep 5s
 Show

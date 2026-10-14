@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Features
-- Shared theming via tui-nuances (`Slider::theme`, `SliderStyle::theme`, `Themed`, `Theme` re-exports); `t`/`T` theme switching in examples
+- Shared theming via tui-nuances, behind the optional `theme` feature (off by default) (`Slider::theme`, `SliderStyle::theme`, `Themed`, `Theme` re-exports); `t`/`T` theme switching in examples
 
 ## [0.3.5] - 2026-10-10
 

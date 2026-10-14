@@ -23,7 +23,12 @@ exclude = [
 [dependencies]
 ratatui = { version = "0.30", default-features = false }
 unicode-width = "0.2"
-tui-nuances = { version = "0.1", git = "https://github.com/sorinirimies/tui-nuances" }
+tui-nuances = { version = "0.1", git = "https://github.com/sorinirimies/tui-nuances", optional = true }
+
+[features]
+default = []
+# Shared theming via tui-nuances (`.theme()`, `Themed`, `Theme` re-exports)
+theme = ["dep:tui-nuances"]
 
 [dev-dependencies]
 anyhow = "1.0"
@@ -33,42 +38,52 @@ ratatui = { version = "0.30", features = ["crossterm"] }
 [[example]]
 name = "horizontal"
 path = "examples/horizontal.rs"
+required-features = ["theme"]
 
 [[example]]
 name = "vertical"
 path = "examples/vertical.rs"
+required-features = ["theme"]
 
 [[example]]
 name = "custom"
 path = "examples/custom_symbols.rs"
+required-features = ["theme"]
 
 [[example]]
 name = "handles"
 path = "examples/handles.rs"
+required-features = ["theme"]
 
 [[example]]
 name = "vertical_positioning"
 path = "examples/vertical_positioning.rs"
+required-features = ["theme"]
 
 [[example]]
 name = "step_sizes"
 path = "examples/step_sizes.rs"
+required-features = ["theme"]
 
 [[example]]
 name = "borders"
 path = "examples/borders.rs"
+required-features = ["theme"]
 
 [[example]]
 name = "horizontal_bar_alignment"
 path = "examples/horizontal_bar_alignment.rs"
+required-features = ["theme"]
 
 [[example]]
 name = "title_alignment"
 path = "examples/title_alignment.rs"
+required-features = ["theme"]
 
 [[example]]
 name = "value_alignment"
 path = "examples/value_alignment.rs"
+required-features = ["theme"]
 
 [profile.dev]
 opt-level = 1

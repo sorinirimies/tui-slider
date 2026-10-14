@@ -32,6 +32,7 @@ use ratatui::{
     style::{Color, Style},
     widgets::{Block, Widget},
 };
+#[cfg(feature = "theme")]
 use tui_nuances::{Theme, Themed};
 use unicode_width::UnicodeWidthStr;
 
@@ -477,6 +478,7 @@ impl<'a> Slider<'a> {
         self
     }
 
+    #[cfg(feature = "theme")]
     /// Applies a shared [`Theme`] (see [`Themed`]).
     ///
     /// Colors set explicitly with [`Slider::filled_color`],
@@ -1012,6 +1014,7 @@ impl<'a> Slider<'a> {
     }
 }
 
+#[cfg(feature = "theme")]
 impl Themed for Slider<'_> {
     /// Maps `primary` → filled bar, `disabled` → empty bar, `foreground` →
     /// handle and label/value text, `border`/`surface`/`background` → block.

@@ -19,6 +19,7 @@ Whether you're building music players, audio mixers, settings panels, or progres
 - 📊 **[Value alignment](#value-alignment)** - Flexible value display positioning
 - 📍 **[Vertical positioning](#vertical-slider-positioning)** - Label and value positioning for vertical sliders
 - 🎨 **[Progress bars](#progress-bars)** - Use as progress indicators without handles
+- 🎨 **[Optional theming](#-theming)** - Shared `tui-nuances` themes behind the `theme` feature
 - 🔧 **Easy to use** - Minimal configuration required
 - 📊 **State management** - Built-in state for value tracking
 
@@ -239,9 +240,15 @@ Position horizontal slider bars at the top, center, or bottom of the container.
 ## 🎨 Theming
 
 `tui-slider` shares one [`Theme`](https://github.com/sorinirimies/tui-nuances) with the other
-components via the `tui-nuances` crate. Theming is optional; without it the look is unchanged.
+components via the `tui-nuances` crate. Theming is optional and **off by default**; enable the
+`theme` feature to use it. Without it the look is unchanged and `tui-nuances` is not built.
 
-```rust
+```toml
+[dependencies]
+tui-slider = { version = "0.3", features = ["theme"] }
+```
+
+```rust,ignore
 use tui_slider::{Slider, SliderStyle, Theme, Themed};
 
 let theme = Theme::by_name("tokyo-night").unwrap();
@@ -263,7 +270,7 @@ Most examples share similar keyboard controls:
 
 - **↑/↓** or **j/k** - Navigate between sliders
 - **←/→** or **h/l** - Adjust slider values
-- **t** / **T** - Next / previous theme (all built-in `tui-nuances` themes)
+- **t** / **T** - Next / previous theme (all built-in `tui-nuances` themes; examples need `--features theme`)
 - **q** or **ESC** - Quit the example
 
 Check each example's source code for specific controls and features.

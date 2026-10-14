@@ -10,7 +10,7 @@ Set Padding 20
 Set PlaybackSpeed 1
 
 Hide
-Type "clear && cargo run --release --example horizontal"
+Type "clear && cargo run --release --features theme --example horizontal"
 Enter
 Sleep 5s
 Show
@@ -55,7 +55,7 @@ Sleep 0.8s
 Hide
 Type "q"
 Sleep 0.2s
-Type "clear && cargo run --release --example vertical"
+Type "clear && cargo run --release --features theme --example vertical"
 Enter
 Sleep 5s
 Show

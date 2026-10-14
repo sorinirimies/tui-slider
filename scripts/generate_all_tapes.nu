@@ -28,7 +28,7 @@ def main [] {
 
     # Build examples first so GIFs never show compilation
     print $"($blue)🔨 Building examples...($reset)"
-    let build = (do { ^cargo build --release --examples } | complete)
+    let build = (do { ^cargo build --release --features theme --examples } | complete)
     if $build.exit_code != 0 {
         print $build.stderr
         error make { msg: $"($red)❌ cargo build --release --examples failed($reset)" }

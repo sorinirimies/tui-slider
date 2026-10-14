@@ -25,23 +25,23 @@ build-release:
 
 # Run horizontal slider example
 run:
-    cargo run --example horizontal
+    cargo run --features theme --example horizontal
 
 # Run horizontal slider example
 example-horizontal:
-    cargo run --example horizontal
+    cargo run --features theme --example horizontal
 
 # Run vertical slider example
 example-vertical:
-    cargo run --example vertical
+    cargo run --features theme --example vertical
 
 # Run custom slider example
 example-custom:
-    cargo run --example custom
+    cargo run --features theme --example custom
 
 # Run thumb toggle example
 example-thumb:
-    cargo run --example thumb_toggle
+    cargo run --features theme --example thumb_toggle
 
 # Run all examples
 examples: example-horizontal example-vertical example-custom example-thumb
@@ -68,7 +68,7 @@ fmt-check:
 
 # Run clippy linter
 clippy:
-    cargo clippy -- -D warnings
+    cargo clippy --all-features -- -D warnings
 
 # Run all checks (fmt, clippy, test)
 check-all: fmt-check clippy test
