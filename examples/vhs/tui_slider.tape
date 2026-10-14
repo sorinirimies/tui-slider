@@ -10,10 +10,15 @@ Set Padding 20
 Set PlaybackSpeed 1
 
 Hide
-Type "cargo run --release --example horizontal"
+Type "clear && cargo run --release --example horizontal"
 Enter
 Sleep 5s
 Show
+
+# Switch theme (t) to show shared theming
+Sleep 1s
+Type "t"
+Sleep 1s
 
 # Show horizontal sliders - page 1 (Standard Styles)
 Sleep 1.5s
@@ -50,7 +55,7 @@ Sleep 0.8s
 Hide
 Type "q"
 Sleep 0.2s
-Type "cargo run --release --example vertical"
+Type "clear && cargo run --release --example vertical"
 Enter
 Sleep 5s
 Show

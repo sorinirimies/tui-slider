@@ -10,10 +10,15 @@ Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
 Hide
-Type "cargo run --example horizontal"
+Type "clear && cargo run --release --example horizontal"
 Enter
-Sleep 2s
+Sleep 5s
 Show
+
+# Switch theme (t) to show shared theming
+Sleep 1s
+Type "t"
+Sleep 1s
 
 # Page 1: Standard Styles
 Sleep 1s

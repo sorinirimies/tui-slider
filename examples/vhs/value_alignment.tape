@@ -10,10 +10,15 @@ Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
 Hide
-Type "cargo run --example value_alignment"
+Type "clear && cargo run --release --example value_alignment"
 Enter
-Sleep 2s
+Sleep 5s
 Show
+
+# Switch theme (t) to show shared theming
+Sleep 1s
+Type "t"
+Sleep 1s
 
 # Show the interface with different value alignments
 Sleep 1s

@@ -10,10 +10,15 @@ Set PlaybackSpeed 1.5
 Set Theme "Catppuccin Mocha"
 
 Hide
-Type "cargo run --example vertical_positioning"
+Type "clear && cargo run --release --example vertical_positioning"
 Enter
-Sleep 2s
+Sleep 5s
 Show
+
+# Switch theme (t) to show shared theming
+Sleep 1s
+Type "t"
+Sleep 1s
 
 # Show the interface with all positioning combinations
 Sleep 1s

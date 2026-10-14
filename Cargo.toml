@@ -23,8 +23,7 @@ exclude = [
 [dependencies]
 ratatui = { version = "0.30", default-features = false }
 unicode-width = "0.2"
-# TODO: switch to the crates.io version after tui-nuances is published
-tui-nuances = { git = "https://github.com/sorinirimies/tui-nuances" }
+tui-nuances = { version = "0.1", git = "https://github.com/sorinirimies/tui-nuances" }
 
 [dev-dependencies]
 anyhow = "1.0"
