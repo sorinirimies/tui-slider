@@ -18,12 +18,14 @@ exclude = [
     "scripts/**",
     "cliff.toml",
     "justfile",
+    "fuzz/**",
+    "deny.toml",
 ]
 
 [dependencies]
 ratatui = { version = "0.30", default-features = false }
 unicode-width = "0.2"
-tui-nuances = { version = "0.1", git = "https://github.com/sorinirimies/tui-nuances", optional = true }
+tui-nuances = { version = "0.1.4", git = "https://github.com/sorinirimies/tui-nuances", optional = true }
 
 [features]
 default = []
