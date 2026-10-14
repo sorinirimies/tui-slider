@@ -79,6 +79,7 @@ pub use position::{
 pub use slider::Slider;
 pub use state::SliderState;
 pub use style::SliderStyle;
+pub use tui_nuances::{Theme, ThemeProvider, Themed};
 
 /// Prelude module for convenient imports
 pub mod prelude {
@@ -92,6 +93,7 @@ pub mod prelude {
     pub use crate::state::SliderState;
     pub use crate::style::{self, SliderStyle};
     pub use crate::symbols;
+    pub use tui_nuances::{Theme, ThemeProvider, Themed};
 }
 
 #[cfg(test)]

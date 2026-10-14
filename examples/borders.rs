@@ -19,8 +19,31 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::io;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use tui_slider::border::BorderStyle;
+use tui_slider::Theme;
 use tui_slider::{symbols, Slider, SliderOrientation, SliderState};
+
+static THEME_IDX: AtomicUsize = AtomicUsize::new(0);
+
+/// Current theme, cycled with `t` / `T`.
+fn theme() -> Theme {
+    let all = Theme::all();
+    all[THEME_IDX.load(Ordering::Relaxed) % all.len()].clone()
+}
+
+fn cycle_theme(forward: bool) {
+    let n = Theme::all().len();
+    let i = THEME_IDX.load(Ordering::Relaxed);
+    THEME_IDX.store(
+        if forward {
+            (i + 1) % n
+        } else {
+            (i + n - 1) % n
+        },
+        Ordering::Relaxed,
+    );
+}
 
 struct BorderExample {
     label: String,
@@ -289,6 +312,8 @@ where
         if event::poll(std::time::Duration::from_millis(16))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
+                    KeyCode::Char('t') => cycle_theme(true),
+                    KeyCode::Char('T') => cycle_theme(false),
                     KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                     KeyCode::Down | KeyCode::Char('j') => app.next(),
                     KeyCode::Up | KeyCode::Char('k') => app.previous(),
@@ -304,6 +329,10 @@ where
 }
 
 fn ui(f: &mut Frame, app: &App) {
+    f.render_widget(
+        ratatui::widgets::Block::default().style(theme().style()),
+        f.area(),
+    );
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(2)
@@ -327,7 +356,7 @@ fn ui(f: &mut Frame, app: &App) {
     // Help text
     let help = Paragraph::new(vec![
         Line::from("↑/↓ or j/k: Select | ←/→ or h/l: Adjust value"),
-        Line::from("n/PageDown: Next page | p/PageUp: Previous page | q/ESC: Quit"),
+        Line::from("n/PageDown: Next page | p/PageUp: Previous page | t/T: Theme | q/ESC: Quit"),
         Line::from(format!(
             "Page {}/{} - {} total border styles",
             app.current_page + 1,
@@ -391,6 +420,7 @@ fn render_examples(f: &mut Frame, app: &App, area: Rect) {
                     .title(format!(" {} - {} ", example.label, example.description));
 
                 let slider = Slider::from_state(&example.state)
+                    .theme(&theme())
                     .orientation(SliderOrientation::Horizontal)
                     .filled_symbol(symbols::FILLED_THICK_LINE)
                     .empty_symbol(symbols::EMPTY_THIN_LINE)
@@ -515,6 +545,7 @@ fn render_segmented_border(f: &mut Frame, example: &BorderExample, is_selected: 
     );
 
     let slider = Slider::from_state(&example.state)
+        .theme(&theme())
         .orientation(SliderOrientation::Horizontal)
         .filled_symbol(symbols::FILLED_THICK_LINE)
         .empty_symbol(symbols::EMPTY_THIN_LINE)
@@ -579,6 +610,7 @@ fn render_sides_only_border(f: &mut Frame, example: &BorderExample, is_selected:
     );
 
     let slider = Slider::from_state(&example.state)
+        .theme(&theme())
         .orientation(SliderOrientation::Horizontal)
         .filled_symbol(symbols::FILLED_THICK_LINE)
         .empty_symbol(symbols::EMPTY_THIN_LINE)

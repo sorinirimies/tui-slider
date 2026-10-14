@@ -66,6 +66,14 @@ Sleep 200ms
 
 Sleep 2s
 
+# Cycle themes
+Type "t"
+Sleep 700ms
+Type "t"
+Sleep 700ms
+Type "T"
+Sleep 700ms
+
 # Exit
 Type "q"
 Sleep 1s

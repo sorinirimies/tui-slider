@@ -18,7 +18,30 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::io;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use tui_slider::Theme;
 use tui_slider::{symbols, Slider, SliderOrientation, SliderState};
+
+static THEME_IDX: AtomicUsize = AtomicUsize::new(0);
+
+/// Current theme, cycled with `t` / `T`.
+fn theme() -> Theme {
+    let all = Theme::all();
+    all[THEME_IDX.load(Ordering::Relaxed) % all.len()].clone()
+}
+
+fn cycle_theme(forward: bool) {
+    let n = Theme::all().len();
+    let i = THEME_IDX.load(Ordering::Relaxed);
+    THEME_IDX.store(
+        if forward {
+            (i + 1) % n
+        } else {
+            (i + n - 1) % n
+        },
+        Ordering::Relaxed,
+    );
+}
 
 struct SliderConfig {
     label: String,
@@ -158,6 +181,8 @@ where
         if event::poll(std::time::Duration::from_millis(16))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
+                    KeyCode::Char('t') => cycle_theme(true),
+                    KeyCode::Char('T') => cycle_theme(false),
                     KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                     KeyCode::Down | KeyCode::Char('j') => app.next(),
                     KeyCode::Up | KeyCode::Char('k') => app.previous(),
@@ -176,6 +201,10 @@ where
 }
 
 fn ui(f: &mut Frame, app: &App) {
+    f.render_widget(
+        ratatui::widgets::Block::default().style(theme().style()),
+        f.area(),
+    );
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(2)
@@ -217,6 +246,8 @@ fn ui(f: &mut Frame, app: &App) {
             Span::raw(": Double step size  "),
             Span::styled("-", Style::default().fg(Color::Yellow)),
             Span::raw(": Halve step size  "),
+            Span::styled("t/T", Style::default().fg(Color::Yellow)),
+            Span::raw(": Theme  "),
             Span::styled("q/ESC", Style::default().fg(Color::Yellow)),
             Span::raw(": Quit"),
         ]),
@@ -273,6 +304,7 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
             .title(title);
 
         let slider = Slider::from_state(&config.state)
+            .theme(&theme())
             .orientation(SliderOrientation::Horizontal)
             .filled_symbol(symbols::FILLED_THICK_LINE)
             .empty_symbol(symbols::EMPTY_THIN_LINE)

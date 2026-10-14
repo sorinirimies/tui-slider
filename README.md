@@ -236,12 +236,34 @@ Position horizontal slider bars at the top, center, or bottom of the container.
 
 ---
 
+## 🎨 Theming
+
+`tui-slider` shares one [`Theme`](https://github.com/sorinirimies/tui-nuances) with the other
+components via the `tui-nuances` crate. Theming is optional; without it the look is unchanged.
+
+```rust
+use tui_slider::{Slider, SliderStyle, Theme, Themed};
+
+let theme = Theme::by_name("tokyo-night").unwrap();
+let slider = Slider::from_state(&state).theme(&theme);   // filled=primary, empty=disabled, handle/text=foreground
+let style = SliderStyle::blocks().theme(&theme);          // themed reusable style
+
+// Pass your app's theme through ThemeProvider (or `impl From<&AppTheme> for Theme`):
+let slider = Slider::from_state(&state).themed(&app_theme);
+```
+
+**Precedence:** colors set explicitly (`filled_color`, `empty_color`, `handle_color`, `style`) win over
+the theme, before or after `.theme()`. A `Block` gets the theme's border/surface as its base style;
+its own `border_style`/`title_style` still win. `SliderStyle::theme` overrides all three colors, so
+call its color setters afterwards.
+
 ## 🎮 Common Controls
 
 Most examples share similar keyboard controls:
 
 - **↑/↓** or **j/k** - Navigate between sliders
 - **←/→** or **h/l** - Adjust slider values
+- **t** / **T** - Next / previous theme (all built-in `tui-nuances` themes)
 - **q** or **ESC** - Quit the example
 
 Check each example's source code for specific controls and features.

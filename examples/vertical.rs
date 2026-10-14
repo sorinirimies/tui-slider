@@ -17,8 +17,31 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::io;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use tui_slider::style::SliderStyle;
+use tui_slider::Theme;
 use tui_slider::{Slider, SliderOrientation, SliderState};
+
+static THEME_IDX: AtomicUsize = AtomicUsize::new(0);
+
+/// Current theme, cycled with `t` / `T`.
+fn theme() -> Theme {
+    let all = Theme::all();
+    all[THEME_IDX.load(Ordering::Relaxed) % all.len()].clone()
+}
+
+fn cycle_theme(forward: bool) {
+    let n = Theme::all().len();
+    let i = THEME_IDX.load(Ordering::Relaxed);
+    THEME_IDX.store(
+        if forward {
+            (i + 1) % n
+        } else {
+            (i + n - 1) % n
+        },
+        Ordering::Relaxed,
+    );
+}
 
 struct App {
     sliders: Vec<(String, SliderState, SliderStyle)>,
@@ -153,6 +176,8 @@ where
         if event::poll(std::time::Duration::from_millis(16))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
+                    KeyCode::Char('t') => cycle_theme(true),
+                    KeyCode::Char('T') => cycle_theme(false),
                     KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                     KeyCode::Right | KeyCode::Char('l') => app.next(),
                     KeyCode::Left | KeyCode::Char('h') => app.previous(),
@@ -166,6 +191,10 @@ where
 }
 
 fn ui(f: &mut Frame, app: &App) {
+    f.render_widget(
+        ratatui::widgets::Block::default().style(theme().style()),
+        f.area(),
+    );
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(2)
@@ -187,7 +216,7 @@ fn ui(f: &mut Frame, app: &App) {
     f.render_widget(title, main_chunks[0]);
 
     // Help text
-    let help = Paragraph::new("←/→ or h/l: Select | ↑/↓ or k/j: Adjust | q/Esc: Quit")
+    let help = Paragraph::new("←/→ or h/l: Select | ↑/↓ or k/j: Adjust | t/T: Theme | q/Esc: Quit")
         .style(Style::default().fg(Color::Gray))
         .alignment(Alignment::Center);
     f.render_widget(help, main_chunks[2]);
@@ -273,8 +302,9 @@ fn render_sliders(f: &mut Frame, app: &App, area: ratatui::layout::Rect) {
             // Hide handle for last examples (Attack and Decay)
             let show_handle = i < 7;
             let slider = Slider::from_state(state)
+                .theme(&theme())
                 .orientation(SliderOrientation::Vertical)
-                .style(style)
+                .style(&style.clone().theme(&theme()))
                 .handle_color(if is_selected {
                     Color::White
                 } else {
@@ -340,8 +370,9 @@ fn render_segmented_slider(
         // Hide handle for last 2 examples (Attack and Decay)
         let show_handle = i < 9;
         let slider = Slider::from_state(state)
+            .theme(&theme())
             .orientation(SliderOrientation::Vertical)
-            .style(style)
+            .style(&style.clone().theme(&theme()))
             .handle_color(if is_selected {
                 Color::White
             } else {

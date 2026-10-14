@@ -17,8 +17,31 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::io;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use tui_slider::border::title_center;
+use tui_slider::Theme;
 use tui_slider::{symbols, Slider, SliderOrientation, SliderState};
+
+static THEME_IDX: AtomicUsize = AtomicUsize::new(0);
+
+/// Current theme, cycled with `t` / `T`.
+fn theme() -> Theme {
+    let all = Theme::all();
+    all[THEME_IDX.load(Ordering::Relaxed) % all.len()].clone()
+}
+
+fn cycle_theme(forward: bool) {
+    let n = Theme::all().len();
+    let i = THEME_IDX.load(Ordering::Relaxed);
+    THEME_IDX.store(
+        if forward {
+            (i + 1) % n
+        } else {
+            (i + n - 1) % n
+        },
+        Ordering::Relaxed,
+    );
+}
 
 struct SliderExample {
     label: String,
@@ -148,6 +171,8 @@ where
         if event::poll(std::time::Duration::from_millis(16))? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
+                    KeyCode::Char('t') => cycle_theme(true),
+                    KeyCode::Char('T') => cycle_theme(false),
                     KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
                     KeyCode::Down | KeyCode::Char('j') => app.next(),
                     KeyCode::Up | KeyCode::Char('k') => app.previous(),
@@ -161,6 +186,10 @@ where
 }
 
 fn ui(f: &mut Frame, app: &App) {
+    f.render_widget(
+        ratatui::widgets::Block::default().style(theme().style()),
+        f.area(),
+    );
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .margin(2)
@@ -182,7 +211,7 @@ fn ui(f: &mut Frame, app: &App) {
     f.render_widget(title, main_chunks[0]);
 
     // Help text
-    let help = Paragraph::new("↑/↓ or j/k: Select | ←/→ or h/l: Adjust | q/Esc: Quit")
+    let help = Paragraph::new("↑/↓ or j/k: Select | ←/→ or h/l: Adjust | t/T: Theme | q/Esc: Quit")
         .style(Style::default().fg(Color::Gray))
         .alignment(Alignment::Center);
     f.render_widget(help, main_chunks[2]);
@@ -242,6 +271,7 @@ fn render_regular_slider(
         .title(title);
 
     let slider = Slider::from_state(&example.state)
+        .theme(&theme())
         .orientation(SliderOrientation::Horizontal)
         .label(&example.label)
         .filled_symbol(symbols::FILLED_THICK_LINE)
@@ -283,6 +313,7 @@ fn render_progress_bar(
         .title(title);
 
     let slider = Slider::from_state(&example.state)
+        .theme(&theme())
         .orientation(SliderOrientation::Horizontal)
         .label(&example.label)
         .filled_symbol(symbols::FILLED_DARK_SHADE)

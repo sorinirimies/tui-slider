@@ -32,6 +32,7 @@ use ratatui::{
     style::{Color, Style},
     widgets::{Block, Widget},
 };
+use tui_nuances::{Theme, Themed};
 use unicode_width::UnicodeWidthStr;
 
 /// A simple slider widget for ratatui
@@ -131,7 +132,17 @@ pub struct Slider<'a> {
     vertical_value_alignment: VerticalValueAlignment,
     /// Vertical alignment of the bar in horizontal sliders
     horizontal_bar_alignment: HorizontalBarAlignment,
+    /// Bitmask of colors set explicitly by the user (these win over a theme)
+    explicit: u8,
+    /// Text (label/value) color from a theme; `None` keeps the terminal default
+    text_color: Option<Color>,
+    /// Base style for the block from a theme (`None` = untouched)
+    block_style: Option<Style>,
 }
+
+const EXPLICIT_FILLED: u8 = 1;
+const EXPLICIT_EMPTY: u8 = 2;
+const EXPLICIT_HANDLE: u8 = 4;
 
 impl<'a> Slider<'a> {
     fn assert_valid_bounds(min: f64, max: f64) {
@@ -196,6 +207,9 @@ impl<'a> Slider<'a> {
             vertical_value_position: VerticalValuePosition::default(),
             vertical_value_alignment: VerticalValueAlignment::default(),
             horizontal_bar_alignment: HorizontalBarAlignment::default(),
+            explicit: 0,
+            text_color: None,
+            block_style: None,
         }
     }
 
@@ -414,6 +428,7 @@ impl<'a> Slider<'a> {
     /// ```
     pub fn filled_color(mut self, color: Color) -> Self {
         self.filled_color = color;
+        self.explicit |= EXPLICIT_FILLED;
         self
     }
 
@@ -429,6 +444,7 @@ impl<'a> Slider<'a> {
     /// ```
     pub fn empty_color(mut self, color: Color) -> Self {
         self.empty_color = color;
+        self.explicit |= EXPLICIT_EMPTY;
         self
     }
 
@@ -444,6 +460,7 @@ impl<'a> Slider<'a> {
     /// ```
     pub fn handle_color(mut self, color: Color) -> Self {
         self.handle_color = color;
+        self.explicit |= EXPLICIT_HANDLE;
         self
     }
 
@@ -455,8 +472,19 @@ impl<'a> Slider<'a> {
         self.filled_color = style.filled_color;
         self.empty_color = style.empty_color;
         self.handle_color = style.handle_color;
+        self.explicit |= EXPLICIT_FILLED | EXPLICIT_EMPTY | EXPLICIT_HANDLE;
         self.segmented = style.segmented;
         self
+    }
+
+    /// Applies a shared [`Theme`] (see [`Themed`]).
+    ///
+    /// Colors set explicitly with [`Slider::filled_color`],
+    /// [`Slider::empty_color`], [`Slider::handle_color`] or
+    /// [`Slider::style`] win over the theme, whether they are set before or
+    /// after this call. Without a theme the default look is unchanged.
+    pub fn theme(self, theme: &Theme) -> Self {
+        self.apply_theme(theme)
     }
 
     /// Enables or disables one-cell gaps between rendered bar symbols.
@@ -968,7 +996,11 @@ impl<'a> Slider<'a> {
         let buffer_right = buf.area.x.saturating_add(buf.area.width);
         let max_width = area_right.min(buffer_right).saturating_sub(x) as usize;
         if max_width > 0 {
-            buf.set_stringn(x, y, text, max_width, Style::default());
+            let style = match self.text_color {
+                Some(color) => Style::default().fg(color),
+                None => Style::default(),
+            };
+            buf.set_stringn(x, y, text, max_width, style);
         }
     }
 
@@ -977,6 +1009,30 @@ impl<'a> Slider<'a> {
             && x < buf.area.x.saturating_add(buf.area.width)
             && y >= buf.area.y
             && y < buf.area.y.saturating_add(buf.area.height)
+    }
+}
+
+impl Themed for Slider<'_> {
+    /// Maps `primary` → filled bar, `disabled` → empty bar, `foreground` →
+    /// handle and label/value text, `border`/`surface`/`background` → block.
+    /// Explicitly set colors are kept.
+    fn apply_theme(mut self, theme: &Theme) -> Self {
+        if self.explicit & EXPLICIT_FILLED == 0 {
+            self.filled_color = theme.primary;
+        }
+        if self.explicit & EXPLICIT_EMPTY == 0 {
+            self.empty_color = theme.disabled;
+        }
+        if self.explicit & EXPLICIT_HANDLE == 0 {
+            self.handle_color = theme.foreground;
+        }
+        self.text_color = Some(theme.foreground);
+        let mut block = Style::default().fg(theme.border);
+        if let Some(bg) = theme.surface.or(theme.background) {
+            block = block.bg(bg);
+        }
+        self.block_style = Some(block);
+        self
     }
 }
 
@@ -991,7 +1047,11 @@ impl<'a> Widget for Slider<'a> {
         let area = match self.block {
             Some(ref block) => {
                 let inner = block.inner(area);
-                block.clone().render(area, buf);
+                let block = match self.block_style {
+                    Some(style) => block.clone().style(style),
+                    None => block.clone(),
+                };
+                block.render(area, buf);
                 inner
             }
             None => area,
