@@ -1416,8 +1416,8 @@ checksum = "9e1c906769ad99c88eaa54e728060edef082f8e358ff32030cb7c7d315e81109"
 
 [[package]]
 name = "tui-nuances"
-version = "0.1.0"
-source = "git+https://github.com/sorinirimies/tui-nuances#244789f8cf16bafd3bd661221ab8a50af5d8465d"
+version = "0.1.5"
+source = "git+https://github.com/sorinirimies/tui-nuances#883b906d754e7ba4299309bd63b6d9714731d8a0"
 dependencies = [
  "ratatui",
 ]
