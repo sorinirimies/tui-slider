@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2026-10-18
+
+### Bug Fixes
+- Align horizontal bar fill with handle position (fixes #1)
+
+### Miscellaneous
+- Skip unconfigured remotes in *-all recipes
+- Push/pull current branch instead of hardcoded main
+
 ## [0.4.0] - 2026-10-14
 
 ### Bug Fixes
@@ -20,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - Depend on tui-nuances 0.1.5
 - Depend on tui-nuances 0.1.6
 - Depend on tui-nuances 0.1.6 from crates.io
+- Bump version to 0.4.0
 
 ### Ci
 - Release only on real Cargo.toml dependency changes; lock-only updates merge without release
