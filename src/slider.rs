@@ -706,6 +706,37 @@ impl<'a> Slider<'a> {
         }
     }
 
+    /// Column span `(x, width)` occupied by the bar of a vertical slider.
+    ///
+    /// Labels and values are centred on this span (not on `area`), so text and
+    /// bar stay aligned whatever the parity of the area width.
+    fn vertical_bar_span(&self, area: Rect) -> (u16, u16) {
+        let width = self
+            .filled_symbol
+            .width()
+            .max(self.empty_symbol.width())
+            .max(self.handle_symbol.width())
+            .max(1)
+            .min(area.width as usize) as u16;
+        (area.x + (area.width - width) / 2, width)
+    }
+
+    /// Left column for `text_width` columns of text centred on the vertical bar.
+    ///
+    /// When the text and bar widths differ in parity an exact centre is
+    /// impossible; the text then always leans left, independent of the area
+    /// width, so every slider in a row looks the same.
+    fn center_on_bar(&self, area: Rect, text_width: u16) -> u16 {
+        let (bar_x, bar_w) = self.vertical_bar_span(area);
+        // Floor division: bar 1 / text 2 -> -1, bar 1 / text 3 -> -1, bar 1 / text 4 -> -2.
+        let offset = (bar_w as i32 - text_width as i32).div_euclid(2);
+        let x = bar_x as i32 + offset;
+        x.clamp(
+            area.x as i32,
+            (area.x + area.width.saturating_sub(1)) as i32,
+        ) as u16
+    }
+
     /// Renders a vertical slider
     fn render_vertical(&self, area: Rect, buf: &mut Buffer) {
         if area.width == 0 || area.height == 0 {
@@ -718,14 +749,7 @@ impl<'a> Slider<'a> {
 
         // Terminal symbols always consume one row. Unicode display width only
         // affects horizontal centering and clipping, never vertical progress.
-        let max_symbol_width = self
-            .filled_symbol
-            .width()
-            .max(self.empty_symbol.width())
-            .max(self.handle_symbol.width())
-            .max(1)
-            .min(area.width as usize) as u16;
-        let base_x = area.x + (area.width - max_symbol_width) / 2;
+        let (base_x, max_symbol_width) = self.vertical_bar_span(area);
         let bottom_y = area.y + area.height - 1;
 
         for row in 0..bar_height {
@@ -822,15 +846,14 @@ impl<'a> Slider<'a> {
             };
 
             // Center the label horizontally
-            let label_width = label.width() as u16;
-            let label_x = area.x + (area.width.saturating_sub(label_width)) / 2;
+            let label_x = self.center_on_bar(area, label.width() as u16);
             self.render_text_clipped(buf, area, label_x, label_y, label);
         }
 
         // Render value if enabled
         if self.show_value {
             let value_str = format!("{:.0}", self.value);
-            let value_width = value_str.len() as u16;
+            let value_width = value_str.width() as u16;
 
             // Calculate Y position based on vertical position setting
             // When stacked with label, adjust position
@@ -857,9 +880,7 @@ impl<'a> Slider<'a> {
             // Calculate X position based on alignment setting
             let value_x = match self.vertical_value_alignment {
                 VerticalValueAlignment::Left => area.x,
-                VerticalValueAlignment::Center => {
-                    area.x + (area.width.saturating_sub(value_width)) / 2
-                }
+                VerticalValueAlignment::Center => self.center_on_bar(area, value_width),
                 VerticalValueAlignment::Right => area.x + area.width.saturating_sub(value_width),
             };
             self.render_text_clipped(buf, area, value_x, value_y, &value_str);
@@ -1792,6 +1813,76 @@ mod tests {
                     }
                 }
             }
+        }
+    }
+
+    #[test]
+    fn test_vertical_label_and_value_are_centered_on_bar() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        // Text centre must match the bar centre for odd text widths, and for
+        // even widths the lean must not depend on the area width parity.
+        for label in ["A", "Vol", "Bass", "Compressor", "Gain", "Hi"] {
+            let tw = label.chars().count() as i32;
+            let mut leans = std::collections::HashSet::new();
+            for width in (tw.max(1) as u16)..=(tw as u16 + 8) {
+                let area = Rect::new(2, 3, width, 6);
+                let mut buf = Buffer::empty(Rect::new(0, 0, width + 6, 14));
+                Slider::new(50.0, 0.0, 100.0)
+                    .orientation(SliderOrientation::Vertical)
+                    .filled_symbol("#")
+                    .empty_symbol("-")
+                    .handle_symbol("H")
+                    .label(label)
+                    .vertical_label_position(VerticalLabelPosition::Bottom)
+                    .render(area, &mut buf);
+
+                let bar_x = (2..2 + width)
+                    .find(|&x| buf[(x, 3)].symbol() != " ")
+                    .expect("bar drawn") as i32;
+                let label_row: String = (0..width + 6).map(|x| buf[(x, 9)].symbol()).collect();
+                let text_x = label_row.find(label).expect("label drawn") as i32;
+                // lean in half-cells: text centre - bar centre
+                let lean2 = (2 * text_x + tw) - (2 * bar_x + 1);
+                if tw % 2 == 1 {
+                    assert_eq!(lean2, 0, "label {label:?} width {width} not centred");
+                } else if width as i32 > tw {
+                    // (a text filling the whole area cannot be offset from the bar)
+                    leans.insert(lean2);
+                }
+            }
+            assert!(
+                leans.len() <= 1,
+                "label {label:?} lean varies with area width: {leans:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_vertical_value_is_centered_on_bar() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        for width in 3..=12u16 {
+            let area = Rect::new(1, 2, width, 6);
+            let mut buf = Buffer::empty(Rect::new(0, 0, width + 4, 12));
+            Slider::new(100.0, 0.0, 100.0)
+                .orientation(SliderOrientation::Vertical)
+                .filled_symbol("#")
+                .empty_symbol("-")
+                .handle_symbol("H")
+                .show_value(true)
+                .vertical_value_position(VerticalValuePosition::Bottom)
+                .vertical_value_alignment(VerticalValueAlignment::Center)
+                .render(area, &mut buf);
+            let bar_x = (1..1 + width)
+                .find(|&x| buf[(x, 2)].symbol() != " ")
+                .unwrap();
+            let row: String = (0..width + 4).map(|x| buf[(x, 8)].symbol()).collect();
+            let text_x = row.find("100").unwrap() as u16;
+            // "100" is 3 wide: its middle character must sit under the bar.
+            assert_eq!(text_x + 1, bar_x, "width {width}");
         }
     }
 
