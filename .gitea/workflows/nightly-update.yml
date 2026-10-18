@@ -155,6 +155,25 @@ jobs:
           fi
           echo "merged=true" >> "$GITHUB_OUTPUT"
 
+      # Nothing to update (main already has it): close any stale update PR.
+      - name: Close stale update PR
+        if: steps.git-check.outputs.changed != 'true'
+        env:
+          GITEA_TOKEN: ${{ github.token }}
+          API_URL: ${{ github.server_url }}/api/v1
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          number=$(curl --silent --header "Authorization: token $GITEA_TOKEN" \
+            "$API_URL/repos/$REPOSITORY/pulls?state=open&limit=50" |
+            jq -r --arg b "$UPDATE_BRANCH" '.[] | select(.head.ref == $b) | .number' | head -n 1)
+          if [ -n "$number" ]; then
+            curl --fail-with-body --silent --show-error --request PATCH \
+              --header "Authorization: token $GITEA_TOKEN" \
+              --header "Content-Type: application/json" \
+              --data '{"state":"closed"}' "$API_URL/repos/$REPOSITORY/pulls/$number"
+            echo "Closed stale dependency PR #$number."
+          fi
+
       - name: Dispatch patch release
         if: steps.merge-pr.outputs.merged == 'true' && steps.git-check.outputs.release == 'true'
         env:
