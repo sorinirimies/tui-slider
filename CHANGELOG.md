@@ -1,6 +1,23 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.3] - 2026-10-18
+
+### Bug Fixes
+- Bump_version.nu rejects versions lower than current
+- Center label/value on the bar, not the area
+
+### Documentation
+- Regenerate demo GIFs, refresh README
+- Rewrite comprehensive demo as a studio mixer
+
+### Features
+- Vertical cell mapping, fix step float drift; chore(deps): update Cargo.lock
+- Crossterm event helpers; fix percentage for tiny/overflowing ranges
+
+### Ci
+- Install nushell from release tarball (setup-nu needs Node 20)
+
 ## [0.4.2] - 2026-10-18
 
 ### Documentation
@@ -11,6 +28,7 @@ All notable changes to this project will be documented in this file.
 
 ### Miscellaneous
 - Track Cargo.lock and ignore fuzz build/corpus output
+- Bump version to 0.4.2
 
 ## [0.4.1] - 2026-10-18
 
