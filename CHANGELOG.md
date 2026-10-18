@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.4] - 2026-10-18
+
+### Ci
+- Close stale nightly update PR when nothing to update
+
 ## [0.4.3] - 2026-10-18
 
 ### Bug Fixes
@@ -14,6 +19,9 @@ All notable changes to this project will be documented in this file.
 ### Features
 - Vertical cell mapping, fix step float drift; chore(deps): update Cargo.lock
 - Crossterm event helpers; fix percentage for tiny/overflowing ranges
+
+### Miscellaneous
+- Bump version to 0.4.3
 
 ### Ci
 - Install nushell from release tarball (setup-nu needs Node 20)
