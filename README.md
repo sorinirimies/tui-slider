@@ -29,7 +29,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tui-slider = "0.3"
+tui-slider = "0.4"
 ratatui = "0.30"
 ```
 
@@ -143,19 +143,13 @@ let slider = Slider::from_state(&state)
 
 ---
 
-### Vertical Style Variations
-Various vertical slider styles optimized for different use cases.
-
-![Vertical Styles Demo](examples/vhs/output/vertical_styles.gif)
-
-🚀 `cargo run --example vertical` | 📄 [View Source](examples/vertical.rs)
-
----
-
 ### Vertical Positioning
 Layout strategies and positioning techniques for vertical sliders.
 
 ![Vertical Positioning Demo](examples/vhs/output/vertical_positioning.gif)
+
+Labels and values are centred on the bar itself, so they stay aligned at any area width
+(even-width text on a one-column bar sits half a cell to the left, consistently).
 
 🚀 `cargo run --example vertical_positioning` | 📄 [View Source](examples/vertical_positioning.rs)
 
@@ -267,7 +261,7 @@ components via the `tui-nuances` crate. Theming is optional and **off by default
 
 ```toml
 [dependencies]
-tui-slider = { version = "0.3", features = ["theme"] }
+tui-slider = { version = "0.4", features = ["theme"] }
 ```
 
 ```rust,ignore
