@@ -514,6 +514,52 @@ impl SliderState {
         (self.percentage() * length as f64).round() as u16
     }
 
+    /// Sets the value from a terminal cell index within a bar `width` cells wide
+    ///
+    /// Unlike [`set_from_position`](Self::set_from_position), this matches how the
+    /// slider is rendered: cell `0` is the minimum and cell `width - 1` is the
+    /// maximum, so clicking the last cell reaches 100%. Cells beyond the bar are
+    /// clamped. A `width` of 0 is ignored.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let mut state = SliderState::new(0.0, 0.0, 100.0);
+    /// state.set_from_cell(9, 10);
+    /// assert_eq!(state.value(), 100.0);
+    /// state.set_from_cell(0, 10);
+    /// assert_eq!(state.value(), 0.0);
+    /// ```
+    pub fn set_from_cell(&mut self, cell: u16, width: u16) {
+        match width {
+            0 => {}
+            1 => self.set_percentage(0.0),
+            _ => self.set_percentage(cell as f64 / (width - 1) as f64),
+        }
+    }
+
+    /// Gets the terminal cell index of the handle within a bar `width` cells wide
+    ///
+    /// Matches the handle position used when rendering a horizontal slider with a
+    /// one-cell handle. Returns 0 for a `width` of 0 or 1.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(100.0, 0.0, 100.0);
+    /// assert_eq!(state.cell(10), 9);
+    /// ```
+    pub fn cell(&self, width: u16) -> u16 {
+        if width <= 1 {
+            return 0;
+        }
+        (self.percentage().clamp(0.0, 1.0) * (width - 1) as f64).round() as u16
+    }
+
     /// Returns the range (max - min)
     ///
     /// # Examples
@@ -711,6 +757,44 @@ impl Default for SliderState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_set_from_cell_reaches_both_ends() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_from_cell(0, 10);
+        assert_eq!(state.value(), 0.0);
+        state.set_from_cell(9, 10);
+        assert_eq!(state.value(), 100.0);
+        state.set_from_cell(50, 10);
+        assert_eq!(state.value(), 100.0, "out-of-range cell clamps");
+    }
+
+    #[test]
+    fn test_set_from_cell_degenerate_widths() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_from_cell(3, 0);
+        assert_eq!(state.value(), 50.0, "width 0 ignored");
+        state.set_from_cell(3, 1);
+        assert_eq!(state.value(), 0.0);
+    }
+
+    #[test]
+    fn test_cell_roundtrips_with_set_from_cell() {
+        for width in 2..=80u16 {
+            let mut state = SliderState::new(0.0, 0.0, 100.0);
+            for c in 0..width {
+                state.set_from_cell(c, width);
+                assert_eq!(state.cell(width), c, "width={width} cell={c}");
+            }
+        }
+    }
+
+    #[test]
+    fn test_cell_degenerate_widths() {
+        let state = SliderState::new(100.0, 0.0, 100.0);
+        assert_eq!(state.cell(0), 0);
+        assert_eq!(state.cell(1), 0);
+    }
 
     #[test]
     fn test_new_state() {
