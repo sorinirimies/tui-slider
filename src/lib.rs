@@ -64,6 +64,8 @@
 //! ```
 
 pub mod border;
+#[cfg(feature = "crossterm")]
+mod events;
 pub mod orientation;
 pub mod position;
 pub mod slider;

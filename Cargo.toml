@@ -26,11 +26,14 @@ exclude = [
 ratatui = { version = "0.30", default-features = false }
 unicode-width = "0.2"
 tui-nuances = { version = "0.1.6", optional = true }
+crossterm = { version = "0.29", optional = true }
 
 [features]
 default = []
 # Shared theming via tui-nuances (`.theme()`, `Themed`, `Theme` re-exports)
 theme = ["dep:tui-nuances"]
+# `SliderState::handle_key` / `handle_mouse` for crossterm events
+crossterm = ["dep:crossterm"]
 
 [dev-dependencies]
 anyhow = "1.0"

@@ -51,3 +51,9 @@ name = "style_presets"
 path = "fuzz_targets/style_presets.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "slider_invariants"
+path = "fuzz_targets/slider_invariants.rs"
+test = false
+doc = false

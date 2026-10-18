@@ -617,10 +617,7 @@ impl<'a> Slider<'a> {
 
     /// Calculates the percentage (0.0 to 1.0) of the current value
     fn percentage(&self) -> f64 {
-        if (self.max - self.min).abs() < f64::EPSILON {
-            return 0.0;
-        }
-        ((self.value - self.min) / (self.max - self.min)).clamp(0.0, 1.0)
+        crate::state::ratio(self.value, self.min, self.max).clamp(0.0, 1.0)
     }
 
     /// Renders a horizontal slider
@@ -1712,6 +1709,88 @@ mod tests {
                     .render(v_area, &mut buf);
                 let hy = (0..size).find(|&y| buf[(0, y)].symbol() == "H").unwrap();
                 assert_eq!(state.cell_vertical(size), hy, "vertical h={size} v={value}");
+            }
+        }
+    }
+
+    #[test]
+    fn test_render_horizontal_segmented_with_handle_keeps_pattern() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        // Gap cells are part of the segmented look; the handle may sit on
+        // one, but fill before it and empty cells after it never get mixed up.
+        for width in 2..=40u16 {
+            for value in 0..=100u32 {
+                let area = Rect::new(0, 0, width, 1);
+                let mut buf = Buffer::empty(area);
+                Slider::new(value as f64, 0.0, 100.0)
+                    .filled_symbol("#")
+                    .empty_symbol("-")
+                    .handle_symbol("H")
+                    .segmented(true)
+                    .show_handle(true)
+                    .render(area, &mut buf);
+                let hx = (0..width).find(|&x| buf[(x, 0)].symbol() == "H").unwrap();
+                for x in 0..hx {
+                    let sym = buf[(x, 0)].symbol();
+                    assert!(
+                        sym == "#" || sym == " ",
+                        "w={width} v={value} x={x}: {sym:?}"
+                    );
+                }
+                for x in hx + 1..width {
+                    let sym = buf[(x, 0)].symbol();
+                    assert!(
+                        sym == "-" || sym == " ",
+                        "w={width} v={value} x={x}: {sym:?}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_render_vertical_wide_symbols_stay_inside_area() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        for width in 1..=5u16 {
+            for height in 1..=12u16 {
+                for value in [0.0, 25.0, 50.0, 99.0, 100.0] {
+                    let area = Rect::new(2, 1, width, height);
+                    let buf_area = Rect::new(0, 0, width + 4, height + 2);
+                    let mut buf = Buffer::empty(buf_area);
+                    Slider::new(value, 0.0, 100.0)
+                        .orientation(SliderOrientation::Vertical)
+                        .filled_symbol("😀")
+                        .empty_symbol("字")
+                        .handle_symbol("🔵")
+                        .show_handle(true)
+                        .render(area, &mut buf);
+                    // Nothing outside the slider area may be touched.
+                    for y in 0..buf_area.height {
+                        for x in 0..buf_area.width {
+                            let inside = x >= 2 && x < 2 + width && y >= 1 && y < 1 + height;
+                            if !inside {
+                                assert_eq!(
+                                    buf[(x, y)].symbol(),
+                                    " ",
+                                    "wrote outside area: w={width} h={height} v={value} at ({x},{y})"
+                                );
+                            }
+                        }
+                    }
+                    // Every row inside holds a symbol (no missing rows). A 2-column
+                    // glyph cannot be drawn in a 1-column area, so skip that case.
+                    for y in (1..1 + height).filter(|_| width >= 2) {
+                        let row: String = (2..2 + width).map(|x| buf[(x, y)].symbol()).collect();
+                        assert!(
+                            !row.trim().is_empty(),
+                            "empty row: w={width} h={height} v={value} y={y}"
+                        );
+                    }
+                }
             }
         }
     }

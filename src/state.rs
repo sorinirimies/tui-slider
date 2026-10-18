@@ -83,6 +83,20 @@ pub struct SliderState {
     step: f64,
 }
 
+/// `(value - min) / (max - min)` that also works for tiny ranges (no `EPSILON`
+/// cutoff) and for ranges whose width overflows `f64` (e.g. `-1e308..1e308`).
+/// Returns 0.0 for an empty range.
+pub(crate) fn ratio(value: f64, min: f64, max: f64) -> f64 {
+    let range = max - min;
+    if range == 0.0 || range.is_nan() {
+        return 0.0;
+    }
+    if range.is_infinite() {
+        return (value / 2.0 - min / 2.0) / (max / 2.0 - min / 2.0);
+    }
+    (value - min) / range
+}
+
 impl SliderState {
     fn assert_valid_bounds(min: f64, max: f64) {
         assert!(
@@ -275,10 +289,7 @@ impl SliderState {
     /// assert_eq!(state.percentage(), 0.25);
     /// ```
     pub fn percentage(&self) -> f64 {
-        if (self.max - self.min).abs() < f64::EPSILON {
-            return 0.0;
-        }
-        (self.value - self.min) / (self.max - self.min)
+        ratio(self.value, self.min, self.max)
     }
 
     /// Sets the value from a percentage (0.0 to 1.0)
@@ -816,6 +827,25 @@ impl Default for SliderState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_percentage_tiny_range_is_not_zeroed() {
+        // Previously any range below f64::EPSILON reported 0%.
+        let s = SliderState::new(0.5e-20, 0.0, 1.0e-20);
+        assert!((s.percentage() - 0.5).abs() < 1e-12);
+        let s = SliderState::new(1.0e-20, 0.0, 1.0e-20);
+        assert_eq!(s.percentage(), 1.0);
+    }
+
+    #[test]
+    fn test_percentage_overflowing_range() {
+        let s = SliderState::new(0.0, -1.0e308, 1.0e308);
+        assert!((s.percentage() - 0.5).abs() < 1e-12);
+        let s = SliderState::new(1.0e308, -1.0e308, 1.0e308);
+        assert_eq!(s.percentage(), 1.0);
+        let s = SliderState::new(-1.0e308, -1.0e308, 1.0e308);
+        assert_eq!(s.percentage(), 0.0);
+    }
 
     #[test]
     fn test_step_up_has_no_float_drift() {

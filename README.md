@@ -33,6 +33,28 @@ tui-slider = "0.3"
 ratatui = "0.30"
 ```
 
+Optional features:
+
+| Feature | Adds |
+|---|---|
+| `theme` | shared theming via `tui-nuances` (`.theme()`, `Themed`) |
+| `crossterm` | `SliderState::handle_key` / `handle_mouse` for crossterm events |
+
+```toml
+tui-slider = { version = "0.4", features = ["crossterm"] }
+```
+
+```rust
+match event::read()? {
+    Event::Key(key) => { state.handle_key(key); }
+    Event::Mouse(m) => { state.handle_mouse(m, slider_area, SliderOrientation::Horizontal); }
+    _ => {}
+}
+```
+
+Keys: arrows step, `PageUp`/`PageDown` move 10 steps, `Home`/`End` jump to min/max.
+Mouse: click or drag to set, scroll wheel to step.
+
 Minimum supported Rust version: **1.88**.
 
 ## 🚀 Quick Start
