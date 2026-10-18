@@ -294,7 +294,16 @@ let current = state.value();
 
 // Get as percentage (0.0 to 1.0)
 let percentage = state.percentage();
+
+// Mouse support: map a terminal column to a value and back.
+// Cell 0 is min and the last cell (width - 1) is max, matching the rendered handle.
+let bar_width = 40;
+state.set_from_cell(39, bar_width); // click on last cell -> 100%
+let handle_column = state.cell(bar_width); // 39
 ```
+
+> `set_from_position` / `position` map `0..=length` instead, so the last cell of a bar never
+> reaches 100%. Prefer `set_from_cell` / `cell` for terminal columns.
 
 ## 🎯 API Overview
 
