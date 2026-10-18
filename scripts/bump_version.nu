@@ -4,6 +4,8 @@
 # Example: nu scripts/bump_version.nu 0.4.0
 # Example: nu scripts/bump_version.nu --yes 0.4.0
 
+use semver.nu [semver-cmp]
+
 def main [
     new_version: string,  # Target version in semver format (e.g., 0.4.0)
     --yes (-y),           # Skip confirmation prompt
@@ -46,10 +48,16 @@ def main [
     print $"  New version:     ($green)($new_version)($reset)"
     print ""
 
-    # ── Guard: already at requested version ───────────────────────────
-    if $current_version == $new_version {
+    # ── Guard: new version must be greater than current ───────────────
+    let cmp = (semver-cmp $new_version $current_version)
+    if $cmp == 0 {
         error make {
             msg: $"($red)Error: Already at version ($new_version)($reset)\nNothing to do."
+        }
+    }
+    if $cmp < 0 {
+        error make {
+            msg: $"($red)Error: New version ($new_version) is lower than current version ($current_version)($reset)\nVersion bumps must increase the version."
         }
     }
 
