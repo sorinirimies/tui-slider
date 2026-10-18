@@ -644,7 +644,14 @@ impl<'a> Slider<'a> {
         let handle_width = self.handle_symbol.width().max(1);
 
         // Calculate how many columns should be filled based on percentage
-        let filled_columns = (bar_width as f64 * percentage) as usize;
+        // Handle position uses the same rounding so the bar always ends at the handle
+        let handle_span = handle_width.min(bar_width);
+        let handle_offset = ((bar_width - handle_span) as f64 * percentage).round() as usize;
+        let filled_columns = if self.show_handle {
+            handle_offset
+        } else {
+            (bar_width as f64 * percentage) as usize
+        };
 
         // Calculate the Y position for the bar based on horizontal_bar_alignment
         let bar_y = match self.horizontal_bar_alignment {
@@ -690,9 +697,7 @@ impl<'a> Slider<'a> {
 
         if self.show_handle && bar_width > 0 {
             let handle_width = handle_width.min(bar_width);
-            let travel = bar_width - handle_width;
-            let handle_offset = (travel as f64 * percentage).round() as u16;
-            let handle_x = area.x + handle_offset;
+            let handle_x = area.x + handle_offset as u16;
 
             buf.set_stringn(
                 handle_x,
@@ -1541,6 +1546,156 @@ mod tests {
         // The buffer should contain a handle symbol somewhere
         let has_handle = (0..20u16).any(|x| buf[(x, 0)].symbol() == "●");
         assert!(has_handle, "handle symbol should be rendered");
+    }
+
+    #[test]
+    fn test_render_horizontal_no_gap_between_bar_and_handle() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        // Regression: bar width was floored while handle offset was rounded,
+        // leaving a one-cell gap before the handle at some positions.
+        for width in 2..=60u16 {
+            for value in 0..=100u32 {
+                let area = Rect::new(0, 0, width, 1);
+                let mut buf = Buffer::empty(area);
+                Slider::new(value as f64, 0.0, 100.0)
+                    .filled_symbol("#")
+                    .empty_symbol("-")
+                    .handle_symbol("H")
+                    .show_handle(true)
+                    .render(area, &mut buf);
+
+                let hx = (0..width).find(|&x| buf[(x, 0)].symbol() == "H").unwrap();
+                for x in 0..hx {
+                    assert_eq!(
+                        buf[(x, 0)].symbol(),
+                        "#",
+                        "gap before handle: width={width} value={value} x={x}"
+                    );
+                }
+                for x in hx + 1..width {
+                    assert_eq!(
+                        buf[(x, 0)].symbol(),
+                        "-",
+                        "filled cell after handle: width={width} value={value} x={x}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_render_horizontal_handle_position_is_monotonic_and_in_bounds() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        for width in 1..=40u16 {
+            let mut prev = 0u16;
+            for value in 0..=100u32 {
+                let area = Rect::new(3, 1, width, 1);
+                let mut buf = Buffer::empty(Rect::new(0, 0, width + 6, 3));
+                Slider::new(value as f64, 0.0, 100.0)
+                    .handle_symbol("H")
+                    .show_handle(true)
+                    .render(area, &mut buf);
+                let hx = (3..3 + width)
+                    .find(|&x| buf[(x, 1)].symbol() == "H")
+                    .expect("handle must be inside area");
+                assert!(
+                    hx >= prev,
+                    "handle moved backwards: width={width} value={value}"
+                );
+                prev = hx;
+            }
+            assert_eq!(prev, 3 + width - 1, "handle must reach last cell at max");
+        }
+    }
+
+    #[test]
+    fn test_render_horizontal_wide_handle_no_gap() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        for value in 0..=100u32 {
+            let area = Rect::new(0, 0, 20, 1);
+            let mut buf = Buffer::empty(area);
+            Slider::new(value as f64, 0.0, 100.0)
+                .filled_symbol("#")
+                .empty_symbol("-")
+                .handle_symbol("😀")
+                .show_handle(true)
+                .render(area, &mut buf);
+            let hx = (0..20u16)
+                .find(|&x| buf[(x, 0)].symbol() == "😀")
+                .expect("wide handle rendered");
+            assert!(hx <= 18, "wide handle must fit: value={value}");
+            for x in 0..hx {
+                assert_eq!(buf[(x, 0)].symbol(), "#", "gap: value={value} x={x}");
+            }
+        }
+    }
+
+    #[test]
+    fn test_render_horizontal_without_handle_fills_proportionally() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 10, 1);
+        let mut buf = Buffer::empty(area);
+        Slider::new(50.0, 0.0, 100.0)
+            .filled_symbol("#")
+            .empty_symbol("-")
+            .show_handle(false)
+            .render(area, &mut buf);
+        let row: String = (0..10u16)
+            .map(|x| buf[(x, 0)].symbol().to_string())
+            .collect();
+        assert_eq!(row, "#####-----");
+    }
+
+    #[test]
+    fn test_render_vertical_handle_sits_on_top_of_fill() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        for height in 2..=30u16 {
+            for value in 0..=100u32 {
+                let area = Rect::new(0, 0, 1, height);
+                let mut buf = Buffer::empty(area);
+                Slider::new(value as f64, 0.0, 100.0)
+                    .orientation(SliderOrientation::Vertical)
+                    .filled_symbol("#")
+                    .empty_symbol("-")
+                    .handle_symbol("H")
+                    .show_handle(true)
+                    .render(area, &mut buf);
+                let hy = (0..height)
+                    .find(|&y| buf[(0, y)].symbol() == "H")
+                    .expect("handle rendered");
+                // everything below handle is filled, above is empty
+                for y in hy + 1..height {
+                    assert_eq!(buf[(0, y)].symbol(), "#", "h={height} v={value} y={y}");
+                }
+                for y in 0..hy {
+                    assert_eq!(buf[(0, y)].symbol(), "-", "h={height} v={value} y={y}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_render_horizontal_handle_at_zero_is_first_cell() {
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        let area = Rect::new(0, 0, 10, 1);
+        let mut buf = Buffer::empty(area);
+        Slider::new(0.0, 0.0, 100.0)
+            .handle_symbol("H")
+            .show_handle(true)
+            .render(area, &mut buf);
+        assert_eq!(buf[(0, 0)].symbol(), "H");
     }
 
     #[test]
