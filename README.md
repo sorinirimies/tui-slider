@@ -300,6 +300,10 @@ let percentage = state.percentage();
 let bar_width = 40;
 state.set_from_cell(39, bar_width); // click on last cell -> 100%
 let handle_column = state.cell(bar_width); // 39
+
+// Vertical sliders: row 0 is the top (max), the last row is the bottom (min)
+state.set_from_cell_vertical(0, 12); // click on top row -> 100%
+let handle_row = state.cell_vertical(12); // 0
 ```
 
 > `set_from_position` / `position` map `0..=length` instead, so the last cell of a bar never

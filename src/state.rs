@@ -96,6 +96,15 @@ impl SliderState {
         assert!(!value.is_nan(), "value must not be NaN");
     }
 
+    /// Removes floating point drift (e.g. `0.30000000000000004` -> `0.3`)
+    /// by keeping 12 significant digits.
+    fn tidy(x: f64) -> f64 {
+        if x == 0.0 || !x.is_finite() {
+            return x;
+        }
+        format!("{x:.11e}").parse().unwrap_or(x)
+    }
+
     fn assert_valid_step(step: f64) {
         assert!(
             step.is_finite() && step > 0.0,
@@ -318,7 +327,7 @@ impl SliderState {
             step.is_finite() && step >= 0.0,
             "step must be finite and non-negative"
         );
-        self.set_value(self.value + step);
+        self.set_value(Self::tidy(self.value + step));
     }
 
     /// Increases the value by the configured step size
@@ -362,7 +371,7 @@ impl SliderState {
             step.is_finite() && step >= 0.0,
             "step must be finite and non-negative"
         );
-        self.set_value(self.value - step);
+        self.set_value(Self::tidy(self.value - step));
     }
 
     /// Decreases the value by the configured step size
@@ -558,6 +567,56 @@ impl SliderState {
             return 0;
         }
         (self.percentage().clamp(0.0, 1.0) * (width - 1) as f64).round() as u16
+    }
+
+    /// Sets the value from a terminal row index within a vertical bar `height` cells tall
+    ///
+    /// Vertical sliders grow upwards, so row `0` (the top) is the maximum and row
+    /// `height - 1` (the bottom) is the minimum. This matches the rendered handle.
+    /// Rows beyond the bar are clamped. A `height` of 0 is ignored.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let mut state = SliderState::new(0.0, 0.0, 100.0);
+    /// state.set_from_cell_vertical(0, 10);
+    /// assert_eq!(state.value(), 100.0);
+    /// state.set_from_cell_vertical(9, 10);
+    /// assert_eq!(state.value(), 0.0);
+    /// ```
+    pub fn set_from_cell_vertical(&mut self, row: u16, height: u16) {
+        match height {
+            0 => {}
+            1 => self.set_percentage(0.0),
+            _ => {
+                let from_bottom = (height - 1).saturating_sub(row.min(height - 1));
+                self.set_percentage(from_bottom as f64 / (height - 1) as f64);
+            }
+        }
+    }
+
+    /// Gets the terminal row index of the handle within a vertical bar `height` cells tall
+    ///
+    /// Row `0` is the top of the bar. Matches the handle position used when
+    /// rendering a vertical slider. Returns 0 for a `height` of 0.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_slider::SliderState;
+    ///
+    /// let state = SliderState::new(100.0, 0.0, 100.0);
+    /// assert_eq!(state.cell_vertical(10), 0);
+    /// ```
+    pub fn cell_vertical(&self, height: u16) -> u16 {
+        if height == 0 {
+            return 0;
+        }
+        let from_bottom =
+            ((self.percentage().clamp(0.0, 1.0) * height as f64) as u16).min(height - 1);
+        height - 1 - from_bottom
     }
 
     /// Returns the range (max - min)
@@ -757,6 +816,58 @@ impl Default for SliderState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_step_up_has_no_float_drift() {
+        let mut state = SliderState::with_step(0.0, 0.0, 1.0, 0.1);
+        for _ in 0..3 {
+            state.step_up();
+        }
+        assert_eq!(state.value(), 0.3);
+        for _ in 0..7 {
+            state.step_up();
+        }
+        assert_eq!(state.value(), 1.0);
+        for _ in 0..10 {
+            state.step_down();
+        }
+        assert_eq!(state.value(), 0.0);
+    }
+
+    #[test]
+    fn test_increase_large_and_negative_values_stay_exact() {
+        let mut state = SliderState::new(-1.0, -2.0, 1.0e12);
+        state.increase(0.1);
+        assert_eq!(state.value(), -0.9);
+        state.set_value(1.0e11);
+        state.increase(1.0);
+        assert_eq!(state.value(), 1.0e11 + 1.0);
+    }
+
+    #[test]
+    fn test_set_from_cell_vertical_top_is_max() {
+        let mut state = SliderState::new(50.0, 0.0, 100.0);
+        state.set_from_cell_vertical(0, 10);
+        assert_eq!(state.value(), 100.0);
+        state.set_from_cell_vertical(9, 10);
+        assert_eq!(state.value(), 0.0);
+        state.set_from_cell_vertical(99, 10);
+        assert_eq!(state.value(), 0.0, "out-of-range row clamps to bottom");
+        state.set_from_cell_vertical(3, 0);
+        assert_eq!(state.value(), 0.0, "height 0 ignored");
+    }
+
+    #[test]
+    fn test_cell_vertical_roundtrip() {
+        for height in 2..=60u16 {
+            let mut state = SliderState::new(0.0, 0.0, 100.0);
+            for row in 0..height {
+                state.set_from_cell_vertical(row, height);
+                assert_eq!(state.cell_vertical(height), row, "h={height} row={row}");
+            }
+        }
+        assert_eq!(SliderState::new(0.0, 0.0, 1.0).cell_vertical(0), 0);
+    }
 
     #[test]
     fn test_set_from_cell_reaches_both_ends() {

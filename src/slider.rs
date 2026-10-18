@@ -1685,6 +1685,38 @@ mod tests {
     }
 
     #[test]
+    fn test_state_cell_matches_rendered_handle() {
+        use crate::SliderState;
+        use ratatui::buffer::Buffer;
+        use ratatui::layout::Rect;
+
+        for size in 2..=40u16 {
+            for value in 0..=100u32 {
+                let state = SliderState::new(value as f64, 0.0, 100.0);
+
+                let h_area = Rect::new(0, 0, size, 1);
+                let mut buf = Buffer::empty(h_area);
+                Slider::new(value as f64, 0.0, 100.0)
+                    .handle_symbol("H")
+                    .show_handle(true)
+                    .render(h_area, &mut buf);
+                let hx = (0..size).find(|&x| buf[(x, 0)].symbol() == "H").unwrap();
+                assert_eq!(state.cell(size), hx, "horizontal w={size} v={value}");
+
+                let v_area = Rect::new(0, 0, 1, size);
+                let mut buf = Buffer::empty(v_area);
+                Slider::new(value as f64, 0.0, 100.0)
+                    .orientation(SliderOrientation::Vertical)
+                    .handle_symbol("H")
+                    .show_handle(true)
+                    .render(v_area, &mut buf);
+                let hy = (0..size).find(|&y| buf[(0, y)].symbol() == "H").unwrap();
+                assert_eq!(state.cell_vertical(size), hy, "vertical h={size} v={value}");
+            }
+        }
+    }
+
+    #[test]
     fn test_render_horizontal_handle_at_zero_is_first_cell() {
         use ratatui::buffer::Buffer;
         use ratatui::layout::Rect;
