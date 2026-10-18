@@ -85,8 +85,17 @@ fn main() {
 
 > 📚 **[Examples Source Code →](examples/)** - View all example implementations
 
+### 🎛️ Comprehensive Demo
+A small studio mixer: vertical channel faders, horizontal controls (negative range, `0.1` steps,
+segmented bars), keyboard **and mouse** control via the `crossterm` feature, and theme switching.
+
+![Comprehensive Demo](examples/vhs/output/comprehensive_demo.gif)
+
+🚀 `cargo run --example comprehensive --features theme,crossterm` | 📄 [View Source](examples/comprehensive.rs)
+
 ### 🎯 Quick Navigation
 
+- [Comprehensive Demo](#️-comprehensive-demo)
 - [Horizontal Sliders](#horizontal-sliders)
 - [Vertical Sliders](#vertical-sliders)
 - [Styling & Customization](#styling--customization)

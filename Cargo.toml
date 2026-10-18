@@ -41,6 +41,11 @@ crossterm = "0.29"
 ratatui = { version = "0.30", features = ["crossterm"] }
 
 [[example]]
+name = "comprehensive"
+path = "examples/comprehensive.rs"
+required-features = ["theme", "crossterm"]
+
+[[example]]
 name = "horizontal"
 path = "examples/horizontal.rs"
 required-features = ["theme"]

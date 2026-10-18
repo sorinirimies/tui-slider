@@ -524,13 +524,19 @@ vhs-vertical-positioning:
 
 
 
+# Run the VHS tape to generate the comprehensive studio-mixer demo
+vhs-comprehensive:
+    @echo "Running VHS tape to generate comprehensive demo..."
+    vhs examples/vhs/comprehensive.tape
+    @echo "✅ Demo generated at examples/vhs/output/comprehensive_demo.gif"
+
 # Run all VHS tapes to generate all demo GIFs (automatically discovers all .tape files)
 vhs-all:
     @echo "🎬 Running automated VHS tape generation..."
     nu scripts/generate_all_tapes.nu
 
 # Run all VHS tapes manually (legacy - explicitly lists each tape)
-vhs-all-manual: vhs-tui-slider vhs-horizontal vhs-vertical vhs-custom vhs-handles vhs-borders vhs-step-sizes vhs-title-alignment vhs-value-alignment vhs-vertical-positioning vhs-horizontal-bar-alignment
+vhs-all-manual: vhs-tui-slider vhs-horizontal vhs-vertical vhs-custom vhs-handles vhs-borders vhs-step-sizes vhs-title-alignment vhs-value-alignment vhs-vertical-positioning vhs-horizontal-bar-alignment vhs-comprehensive
     @echo "✅ All demo GIFs generated!"
 
 # Security: dependency vulnerability scan (needs `cargo install cargo-audit`)
