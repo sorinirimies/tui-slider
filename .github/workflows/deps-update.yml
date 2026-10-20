@@ -1,0 +1,164 @@
+# ─────────────────────────────────────────────────────────────────────
+#  Dependency Update — tui-slider
+#  Nightly job that upgrades dependencies, runs the quality gate, bumps the
+#  patch version, and pushes a commit + tag directly to main. Pushing the
+#  vX.Y.Z tag automatically triggers release.yml (build, GitHub Release,
+#  crates.io publish).
+#
+#  Schedule: every day at 02:00 UTC.
+#  Can also be triggered manually via workflow_dispatch.
+# ─────────────────────────────────────────────────────────────────────
+
+name: Dependency Update
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: deps-update
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  deps-update:
+    name: Upgrade dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-edit
+        run: |
+          cargo install cargo-edit --locked
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Install Nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: "0.111.0"
+
+      - name: Pre-warm cargo registry (refresh index + fetch sources)
+        run: |
+          cargo update
+          cargo fetch
+
+      # Use compatible-only upgrades (no --incompatible) so versions never go
+      # backwards.  This respects existing semver constraints in Cargo.toml and
+      # only bumps within the allowed range.
+      - name: Upgrade workspace dependency pins
+        run: |
+          cargo metadata --no-deps --format-version 1 | jq -S -c '[.packages[].dependencies[] | {name,req,kind,features,optional,target,uses_default_features}] | sort_by(.name,.kind)' > "$RUNNER_TEMP/deps_before.json"
+          cargo upgrade
+
+      - name: Sync Cargo.lock
+        run: cargo update
+
+      # `cargo upgrade` (cargo-edit) reserializes the whole Cargo.toml via
+      # toml_edit — it can reorder/reformat keys and whitespace even when no
+      # dependency version actually changed. That alone must NOT count as a
+      # real update (it can cause empty releases to get tagged). Cargo.lock is
+      # the ground truth: it only changes when a resolved dependency version
+      # actually moves. Gate on Cargo.lock only; Cargo.toml is still committed
+      # alongside it for consistency.
+      - name: Check for changes
+        id: changes
+        run: |
+          cargo metadata --no-deps --format-version 1 | jq -S -c '[.packages[].dependencies[] | {name,req,kind,features,optional,target,uses_default_features}] | sort_by(.name,.kind)' > "$RUNNER_TEMP/deps_after.json"
+          if cmp -s "$RUNNER_TEMP/deps_before.json" "$RUNNER_TEMP/deps_after.json"; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "📦 Cargo.toml dependency requirements changed → patch release."
+          fi
+          if git diff --quiet Cargo.lock && [ "$(cmp -s "$RUNNER_TEMP/deps_before.json" "$RUNNER_TEMP/deps_after.json"; echo $?)" = 0 ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️  No dependency changes detected."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "📦 Dependency changes detected."
+            git diff --stat
+          fi
+
+      - name: Check formatting
+        if: steps.changes.outputs.changed == 'true'
+        run: cargo fmt --check
+
+      - name: Clippy
+        if: steps.changes.outputs.changed == 'true'
+        run: cargo clippy --all-features -- -D warnings
+
+      - name: Tests
+        if: steps.changes.outputs.changed == 'true'
+        run: cargo test --all-features
+
+      # Bump the patch version, regenerate CHANGELOG.md, commit and tag.
+      # Pushing the resulting vX.Y.Z tag triggers release.yml automatically.
+      - name: Compute next patch version
+        if: steps.changes.outputs.release == 'true'
+        id: nextver
+        run: |
+          CURRENT=$(nu scripts/version.nu)
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          NEXT="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          echo "next=${NEXT}" >> "$GITHUB_OUTPUT"
+          echo "📈 Version bump: ${CURRENT} → ${NEXT}"
+
+      - name: Configure git identity
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version, commit and tag
+        if: steps.changes.outputs.release == 'true'
+        run: nu scripts/bump_version.nu --yes ${{ steps.nextver.outputs.next }}
+
+      # Lock-only change: keep main current but do NOT bump/tag/release.
+      # Discard any cosmetic Cargo.toml reserialization from `cargo upgrade`.
+      - name: Commit lock-only update
+        if: steps.changes.outputs.changed == 'true' && steps.changes.outputs.release != 'true'
+        run: |
+          git checkout -- Cargo.toml
+          git add Cargo.lock
+          git commit -m "chore(deps): update Cargo.lock"
+
+      - name: Push commit and tag
+        if: steps.changes.outputs.changed == 'true'
+        run: git push origin main --follow-tags
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      # Pushes authored by GITHUB_TOKEN do NOT trigger other workflows (GitHub's
+      # anti-recursion guard), so unless GH_PAT is set the vX.Y.Z tag push above
+      # will silently NOT start release.yml. Explicitly dispatch it instead —
+      # workflow_dispatch via the API is exempt from that restriction.
+      - name: Trigger release workflow for the new tag
+        if: steps.changes.outputs.release == 'true'
+        run: |
+          TAG="v${{ steps.nextver.outputs.next }}"
+          echo "🚀 Dispatching release.yml for ${TAG}…"
+          gh workflow run release.yml --repo "${{ github.repository }}" -f tag="${TAG}"
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
