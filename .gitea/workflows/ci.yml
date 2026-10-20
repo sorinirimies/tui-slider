@@ -45,10 +45,8 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - name: Run clippy action
-        uses: clechasseur/rs-clippy-check@v4
-        with:
-          args: --all-features -- -D warnings
+      - name: clippy (all features)
+        run: cargo clippy --locked --all-features --all-targets -- -D warnings
       - name: clippy (default features)
         run: cargo clippy --locked --all-targets -- -D warnings
       - name: build (no default features)
