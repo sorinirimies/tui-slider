@@ -24,31 +24,10 @@ use ratatui::{
     Frame, Terminal,
 };
 use std::io;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use tui_slider::Theme;
 use tui_slider::{
     Slider, SliderOrientation, SliderState, VerticalLabelPosition, VerticalValuePosition,
 };
-
-static THEME_IDX: AtomicUsize = AtomicUsize::new(0);
-
-fn theme() -> Theme {
-    let all = Theme::all();
-    all[THEME_IDX.load(Ordering::Relaxed) % all.len()].clone()
-}
-
-fn cycle_theme(forward: bool) {
-    let n = Theme::all().len();
-    let i = THEME_IDX.load(Ordering::Relaxed);
-    THEME_IDX.store(
-        if forward {
-            (i + 1) % n
-        } else {
-            (i + n - 1) % n
-        },
-        Ordering::Relaxed,
-    );
-}
+use tui_slider::{Theme, ThemeSwitcher};
 
 #[derive(Clone, Copy, PartialEq)]
 enum Look {
@@ -97,6 +76,7 @@ impl Control {
 struct App {
     controls: Vec<Control>,
     selected: usize,
+    themes: ThemeSwitcher,
 }
 
 const CHANNELS: usize = 6;
@@ -172,6 +152,7 @@ impl App {
                 ),
             ],
             selected: 0,
+            themes: ThemeSwitcher::new(),
         }
     }
 
@@ -212,8 +193,12 @@ where
         match event::read()? {
             Event::Key(key) if key.kind != KeyEventKind::Release => match key.code {
                 KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                KeyCode::Char('t') => cycle_theme(true),
-                KeyCode::Char('T') => cycle_theme(false),
+                KeyCode::Char('t') => {
+                    app.themes.next();
+                }
+                KeyCode::Char('T') => {
+                    app.themes.prev();
+                }
                 KeyCode::Tab | KeyCode::Char('l') => app.select(1),
                 KeyCode::BackTab | KeyCode::Char('h') => app.select(-1),
                 // Arrows, PageUp/PageDown, Home/End adjust the selected control.
@@ -245,7 +230,7 @@ where
 }
 
 fn ui(f: &mut Frame, app: &mut App) {
-    let th = theme();
+    let th = app.themes.current().clone().downgrade_for_terminal();
     f.render_widget(Block::default().style(th.style()), f.area());
 
     let rows = Layout::default()
@@ -259,12 +244,8 @@ fn ui(f: &mut Frame, app: &mut App) {
         .split(f.area());
 
     f.render_widget(
-        Paragraph::new("tui-slider · Studio Mixer")
-            .style(
-                Style::default()
-                    .fg(Color::Cyan)
-                    .add_modifier(Modifier::BOLD),
-            )
+        Paragraph::new(format!("tui-slider · Studio Mixer · theme: {}", th.name))
+            .style(th.title_style())
             .alignment(Alignment::Center),
         rows[0],
     );
@@ -274,8 +255,8 @@ fn ui(f: &mut Frame, app: &mut App) {
         .constraints([Constraint::Percentage(52), Constraint::Percentage(48)])
         .split(rows[1]);
 
-    render_channels(f, app, cols[0]);
-    render_controls(f, app, cols[1]);
+    render_channels(f, app, &th, cols[0]);
+    render_controls(f, app, &th, cols[1]);
 
     f.render_widget(
         Paragraph::new("Tab/h/l: select · ←→↑↓ PgUp/PgDn Home/End: adjust · click/drag/scroll · t/T: theme · q: quit")
@@ -285,8 +266,7 @@ fn ui(f: &mut Frame, app: &mut App) {
     );
 }
 
-fn panel(selected: bool, title: &str) -> Block<'static> {
-    let th = theme();
+fn panel(th: &Theme, selected: bool, title: &str) -> Block<'static> {
     Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -300,8 +280,8 @@ fn panel(selected: bool, title: &str) -> Block<'static> {
         .title(title.to_string())
 }
 
-fn render_channels(f: &mut Frame, app: &mut App, area: Rect) {
-    let outer = panel(false, " Channel strip ");
+fn render_channels(f: &mut Frame, app: &mut App, th: &Theme, area: Rect) {
+    let outer = panel(th, false, " Channel strip ");
     let inner = outer.inner(area);
     f.render_widget(outer, area);
 
@@ -312,7 +292,7 @@ fn render_channels(f: &mut Frame, app: &mut App, area: Rect) {
 
     for i in 0..CHANNELS {
         let selected = i == app.selected;
-        let block = panel(selected, "");
+        let block = panel(th, selected, "");
         let box_area = cells[i];
         let inside = block.inner(box_area);
         f.render_widget(block, box_area);
@@ -328,7 +308,7 @@ fn render_channels(f: &mut Frame, app: &mut App, area: Rect) {
         c.area = bar;
 
         let slider = Slider::from_state(&c.state)
-            .theme(&theme())
+            .theme(th)
             .orientation(SliderOrientation::Vertical)
             .label(c.name)
             .show_value(true)
@@ -344,8 +324,8 @@ fn render_channels(f: &mut Frame, app: &mut App, area: Rect) {
     }
 }
 
-fn render_controls(f: &mut Frame, app: &mut App, area: Rect) {
-    let outer = panel(false, " Controls ");
+fn render_controls(f: &mut Frame, app: &mut App, th: &Theme, area: Rect) {
+    let outer = panel(th, false, " Controls ");
     let inner = outer.inner(area);
     f.render_widget(outer, area);
 
@@ -358,13 +338,13 @@ fn render_controls(f: &mut Frame, app: &mut App, area: Rect) {
     for k in 0..n {
         let i = CHANNELS + k;
         let selected = i == app.selected;
-        let block = panel(selected, &format!(" {} ", app.controls[i].name));
+        let block = panel(th, selected, &format!(" {} ", app.controls[i].name));
         let bar = block.inner(cells[k]);
         let c = &mut app.controls[i];
         c.area = bar;
 
         let mut slider = Slider::from_state(&c.state)
-            .theme(&theme())
+            .theme(th)
             .orientation(SliderOrientation::Horizontal)
             .show_value(true)
             .filled_color(c.color)
