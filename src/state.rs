@@ -312,7 +312,15 @@ impl SliderState {
     pub fn set_percentage(&mut self, percentage: f64) {
         assert!(!percentage.is_nan(), "percentage must not be NaN");
         let clamped_percentage = percentage.clamp(0.0, 1.0);
-        self.set_value(self.min + (self.max - self.min) * clamped_percentage);
+        // Interpolate without computing `max - min`, which overflows to
+        // infinity (and yields NaN when multiplied by 0) for huge ranges.
+        let value =
+            if self.max - self.min == f64::INFINITY || self.max - self.min == f64::NEG_INFINITY {
+                self.min * (1.0 - clamped_percentage) + self.max * clamped_percentage
+            } else {
+                self.min + (self.max - self.min) * clamped_percentage
+            };
+        self.set_value(value);
     }
 
     /// Increases the value by a step
@@ -826,6 +834,15 @@ impl Default for SliderState {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn set_percentage_huge_range_is_not_nan() {
+        let mut s = SliderState::new(0.0, -1e308, 1e308);
+        s.set_percentage(0.0);
+        assert_eq!(s.value(), -1e308);
+        s.set_percentage(1.0);
+        assert_eq!(s.value(), 1e308);
+    }
+
     use super::*;
 
     #[test]
