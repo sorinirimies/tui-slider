@@ -29,7 +29,7 @@ tui-nuances = { version = "0.1.7", optional = true }
 crossterm = { version = "0.29", optional = true }
 
 [features]
-default = []
+default = ["theme"]
 # Shared theming via tui-nuances (`.theme()`, `Themed`, `Theme` re-exports)
 theme = ["dep:tui-nuances"]
 # `SliderState::handle_key` / `handle_mouse` for crossterm events
