@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -40,7 +40,7 @@ jobs:
       checks: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -59,7 +59,7 @@ jobs:
     name: msrv
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install minimum supported Rust
         uses: dtolnay/rust-toolchain@1.88.0
       - name: Check library on MSRV
@@ -74,7 +74,7 @@ jobs:
     name: doc
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Rust nightly
         uses: dtolnay/rust-toolchain@nightly
       - name: Run cargo doc
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     name: test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
       # enable this ci template to run regardless of whether the lockfile is checked in or not
