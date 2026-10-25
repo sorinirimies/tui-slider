@@ -19,7 +19,7 @@ use crossterm::{
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    style::{Color, Modifier},
     widgets::{Block, BorderType, Borders, Paragraph},
     Frame, Terminal,
 };
