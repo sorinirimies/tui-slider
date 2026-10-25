@@ -142,15 +142,42 @@ Right
 Sleep 200ms
 Sleep 1s
 
-# Themes
+# Themes: cycle through shared themes; the focused panel border follows each theme
+Sleep 500ms
 Type "t"
-Sleep 900ms
+Sleep 1200ms
+Tab
+Sleep 300ms
 Type "t"
-Sleep 900ms
+Sleep 1200ms
+Tab
+Sleep 300ms
 Type "t"
-Sleep 900ms
+Sleep 1200ms
+Tab
+Sleep 300ms
+Type "t"
+Sleep 1200ms
+Tab
+Sleep 300ms
+Type "t"
+Sleep 1200ms
+Tab
+Sleep 300ms
+Type "t"
+Sleep 1200ms
+Tab
+Sleep 300ms
+Type "t"
+Sleep 1200ms
+Tab
+Sleep 300ms
+Type "t"
+Sleep 1200ms
+Tab
+Sleep 300ms
 Type "T"
-Sleep 600ms
+Sleep 800ms
 Type "T"
 Sleep 1s
 
