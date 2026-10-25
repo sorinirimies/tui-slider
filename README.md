@@ -1,7 +1,7 @@
 # tui-slider
 
 [![Crates.io](https://img.shields.io/crates/v/tui-slider)](https://crates.io/crates/tui-slider)
-[![Downloads](https://img.shields.io/crates/d/tui-slider)](https://crates.io/crates/tui-slider)
+[![tui-slider installs](https://img.shields.io/crates/d/tui-slider?label=tui-slider%20installs&logo=rust&color=orange)](https://crates.io/crates/tui-slider)
 [![Documentation](https://docs.rs/tui-slider/badge.svg)](https://docs.rs/tui-slider)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Release](https://github.com/sorinirimies/tui-slider/actions/workflows/release.yml/badge.svg)](https://github.com/sorinirimies/tui-slider/actions/workflows/release.yml)
