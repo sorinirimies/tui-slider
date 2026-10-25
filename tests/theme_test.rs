@@ -72,3 +72,24 @@ fn all_themes_render() {
         let _ = Slider::default().style(&SliderStyle::wave().theme(&t));
     }
 }
+
+#[test]
+fn focused_uses_focus_colors() {
+    let t = Theme::nord();
+    let base = || Slider::new(50.0, 0.0, 100.0).theme(&t);
+    let unfocused = render(base());
+    let focused = render(base().focused(true));
+    assert_ne!(unfocused, focused);
+    assert!(fg_set(&focused).contains(&t.selection_bg));
+    // explicit handle color wins
+    let explicit = render(base().handle_color(Color::Red).focused(true));
+    assert!(!fg_set(&explicit).contains(&t.selection_bg));
+}
+
+#[test]
+fn focused_without_theme_is_noop() {
+    assert_eq!(
+        render(Slider::new(50.0, 0.0, 100.0)),
+        render(Slider::new(50.0, 0.0, 100.0).focused(true))
+    );
+}

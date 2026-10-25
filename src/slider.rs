@@ -139,6 +139,10 @@ pub struct Slider<'a> {
     text_color: Option<Color>,
     /// Base style for the block from a theme (`None` = untouched)
     block_style: Option<Style>,
+    /// Whether the slider is focused (only visible when a theme is applied)
+    focused: bool,
+    /// `(border_focused, selection_bg)` from a theme
+    focus_colors: Option<(Color, Color)>,
 }
 
 const EXPLICIT_FILLED: u8 = 1;
@@ -211,6 +215,8 @@ impl<'a> Slider<'a> {
             explicit: 0,
             text_color: None,
             block_style: None,
+            focused: false,
+            focus_colors: None,
         }
     }
 
@@ -487,6 +493,17 @@ impl<'a> Slider<'a> {
     /// after this call. Without a theme the default look is unchanged.
     pub fn theme(self, theme: &Theme) -> Self {
         self.apply_theme(theme)
+    }
+
+    /// Marks the slider as focused.
+    ///
+    /// With a theme applied, a focused slider uses the theme's
+    /// `border_focused` for its block border and `selection_bg` for the
+    /// handle (unless the handle color was set explicitly). Without a theme
+    /// this has no visual effect.
+    pub fn focused(mut self, focused: bool) -> Self {
+        self.focused = focused;
+        self
     }
 
     /// Enables or disables one-cell gaps between rendered bar symbols.
@@ -1058,6 +1075,7 @@ impl Themed for Slider<'_> {
             block = block.bg(bg);
         }
         self.block_style = Some(block);
+        self.focus_colors = Some((theme.border_focused, theme.selection_bg));
         self
     }
 }
@@ -1069,7 +1087,17 @@ impl<'a> Default for Slider<'a> {
 }
 
 impl<'a> Widget for Slider<'a> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render(mut self, area: Rect, buf: &mut Buffer) {
+        if self.focused {
+            if let Some((border, selection)) = self.focus_colors {
+                if let Some(style) = self.block_style.as_mut() {
+                    *style = style.fg(border);
+                }
+                if self.explicit & EXPLICIT_HANDLE == 0 {
+                    self.handle_color = selection;
+                }
+            }
+        }
         let area = match self.block {
             Some(ref block) => {
                 let inner = block.inner(area);

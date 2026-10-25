@@ -271,9 +271,7 @@ fn panel(th: &Theme, selected: bool, title: &str) -> Block<'static> {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(if selected {
-            Style::default()
-                .fg(Color::Yellow)
-                .add_modifier(Modifier::BOLD)
+            th.border_style(true).add_modifier(Modifier::BOLD)
         } else {
             th.border_style(false)
         })
@@ -309,6 +307,7 @@ fn render_channels(f: &mut Frame, app: &mut App, th: &Theme, area: Rect) {
 
         let slider = Slider::from_state(&c.state)
             .theme(th)
+            .focused(selected)
             .orientation(SliderOrientation::Vertical)
             .label(c.name)
             .show_value(true)
@@ -345,6 +344,7 @@ fn render_controls(f: &mut Frame, app: &mut App, th: &Theme, area: Rect) {
 
         let mut slider = Slider::from_state(&c.state)
             .theme(th)
+            .focused(selected)
             .orientation(SliderOrientation::Horizontal)
             .show_value(true)
             .filled_color(c.color)
