@@ -36,6 +36,10 @@ use ratatui::style::Color;
 #[cfg(feature = "theme")]
 use tui_nuances::{Theme, Themed};
 
+const EXPLICIT_FILLED: u8 = 1;
+const EXPLICIT_EMPTY: u8 = 2;
+const EXPLICIT_HANDLE: u8 = 4;
+
 /// Style configuration for sliders
 ///
 /// This struct defines the visual appearance of a slider, including symbols and colors.
@@ -58,16 +62,25 @@ pub struct SliderStyle {
     pub handle_color: Color,
     /// Whether to render as discrete segments with spaces
     pub segmented: bool,
+    /// Colors set explicitly through the builder setters (win over a theme)
+    explicit: u8,
 }
 
 #[cfg(feature = "theme")]
 impl Themed for SliderStyle {
     /// Maps `primary` → filled, `disabled` → empty, `foreground` → handle.
-    /// Overrides all three colors; set explicit colors afterwards to win.
+    /// Colors set with [`SliderStyle::filled_color`], [`SliderStyle::empty_color`]
+    /// or [`SliderStyle::handle_color`] are kept, in either call order.
     fn apply_theme(mut self, theme: &Theme) -> Self {
-        self.filled_color = theme.primary;
-        self.empty_color = theme.disabled;
-        self.handle_color = theme.foreground;
+        if self.explicit & EXPLICIT_FILLED == 0 {
+            self.filled_color = theme.primary;
+        }
+        if self.explicit & EXPLICIT_EMPTY == 0 {
+            self.empty_color = theme.disabled;
+        }
+        if self.explicit & EXPLICIT_HANDLE == 0 {
+            self.handle_color = theme.foreground;
+        }
         self
     }
 }
@@ -75,7 +88,7 @@ impl Themed for SliderStyle {
 impl SliderStyle {
     #[cfg(feature = "theme")]
     /// Recolors this style from a shared [`Theme`] (see [`Themed`]).
-    /// Call color setters after this to override individual colors.
+    /// Colors set explicitly via the color setters win, in either call order.
     pub fn theme(self, theme: &Theme) -> Self {
         self.apply_theme(theme)
     }
@@ -91,6 +104,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -105,6 +119,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -119,6 +134,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -133,6 +149,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -147,6 +164,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::Cyan,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -161,6 +179,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -175,6 +194,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -189,6 +209,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::Yellow,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -203,6 +224,7 @@ impl SliderStyle {
             empty_color: Color::Rgb(60, 60, 60),
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -217,6 +239,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::Cyan,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -231,6 +254,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -245,6 +269,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -259,6 +284,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: true,
+            explicit: 0,
         }
     }
 
@@ -273,6 +299,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: true,
+            explicit: 0,
         }
     }
 
@@ -287,6 +314,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::Yellow,
             segmented: true,
+            explicit: 0,
         }
     }
 
@@ -301,6 +329,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: true,
+            explicit: 0,
         }
     }
 
@@ -315,6 +344,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::Cyan,
             segmented: true,
+            explicit: 0,
         }
     }
 
@@ -329,6 +359,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: true,
+            explicit: 0,
         }
     }
 
@@ -343,6 +374,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::Cyan,
             segmented: true,
+            explicit: 0,
         }
     }
 
@@ -357,6 +389,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: true,
+            explicit: 0,
         }
     }
 
@@ -371,6 +404,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: true,
+            explicit: 0,
         }
     }
 
@@ -401,6 +435,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -425,18 +460,21 @@ impl SliderStyle {
     /// Set the filled color for the custom style
     pub fn filled_color(mut self, color: Color) -> Self {
         self.filled_color = color;
+        self.explicit |= EXPLICIT_FILLED;
         self
     }
 
     /// Set the empty color for the custom style
     pub fn empty_color(mut self, color: Color) -> Self {
         self.empty_color = color;
+        self.explicit |= EXPLICIT_EMPTY;
         self
     }
 
     /// Set the handle color for the custom style
     pub fn handle_color(mut self, color: Color) -> Self {
         self.handle_color = color;
+        self.explicit |= EXPLICIT_HANDLE;
         self
     }
 
@@ -462,6 +500,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -476,6 +515,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -490,6 +530,7 @@ impl SliderStyle {
             empty_color: Color::Rgb(40, 40, 40),
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -504,6 +545,7 @@ impl SliderStyle {
             empty_color: Color::Rgb(40, 40, 40),
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -518,6 +560,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -532,6 +575,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -546,6 +590,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -560,6 +605,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 }
@@ -579,6 +625,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -593,6 +640,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -607,6 +655,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -621,6 +670,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -635,6 +685,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -649,6 +700,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 }
@@ -668,6 +720,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -682,6 +735,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -696,6 +750,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -710,6 +765,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -724,6 +780,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -738,6 +795,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 
@@ -752,6 +810,7 @@ impl SliderStyle {
             empty_color: Color::DarkGray,
             handle_color: Color::White,
             segmented: false,
+            explicit: 0,
         }
     }
 }

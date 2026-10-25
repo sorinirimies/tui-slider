@@ -93,3 +93,14 @@ fn focused_without_theme_is_noop() {
         render(Slider::new(50.0, 0.0, 100.0).focused(true))
     );
 }
+
+#[test]
+fn style_explicit_wins_either_order() {
+    let t = Theme::dracula();
+    let a = SliderStyle::custom("a").filled_color(Color::Red).theme(&t);
+    let b = SliderStyle::custom("a").theme(&t).filled_color(Color::Red);
+    assert_eq!(a.filled_color, Color::Red);
+    assert_eq!(b.filled_color, Color::Red);
+    assert_eq!(a.empty_color, t.disabled);
+    assert_eq!(a.handle_color, t.foreground);
+}
