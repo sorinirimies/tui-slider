@@ -1,6 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [0.4.7] - 2026-10-28
+
+### Miscellaneous
+- Bump tui-nuances to 0.1.10
+
+## [0.4.6] - 2026-10-26
+
+### Miscellaneous
+- Bump version to 0.4.6
+
 ## [0.4.5] - 2026-10-26
 
 ### Bug Fixes
