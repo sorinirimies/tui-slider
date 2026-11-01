@@ -6,6 +6,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Release](https://github.com/sorinirimies/tui-slider/actions/workflows/release.yml/badge.svg)](https://github.com/sorinirimies/tui-slider/actions/workflows/release.yml)
 [![CI](https://github.com/sorinirimies/tui-slider/actions/workflows/ci.yml/badge.svg)](https://github.com/sorinirimies/tui-slider/actions/workflows/ci.yml)
+[![Audit](https://github.com/sorinirimies/tui-slider/actions/workflows/security.yml/badge.svg)](https://github.com/sorinirimies/tui-slider/actions/workflows/security.yml)
+[![Fuzz](https://github.com/sorinirimies/tui-slider/actions/workflows/fuzz.yml/badge.svg)](https://github.com/sorinirimies/tui-slider/actions/workflows/fuzz.yml)
 
 A highly customizable and configurable slider widget for [ratatui](https://github.com/ratatui-org/ratatui) that puts you in full control of every visual aspect.
 
