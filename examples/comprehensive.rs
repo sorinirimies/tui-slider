@@ -14,14 +14,14 @@ use crossterm::{
         self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, MouseEventKind,
     },
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{
+    Frame, Terminal,
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier},
     widgets::{Block, BorderType, Borders, Paragraph},
-    Frame, Terminal,
 };
 use std::io;
 use tui_slider::{
@@ -212,14 +212,13 @@ where
                     m.kind,
                     MouseEventKind::Down(_) | MouseEventKind::ScrollUp | MouseEventKind::ScrollDown
                 );
-                if pressed {
-                    if let Some(i) = app
+                if pressed
+                    && let Some(i) = app
                         .controls
                         .iter()
                         .position(|c| c.contains(m.column, m.row))
-                    {
-                        app.selected = i;
-                    }
+                {
+                    app.selected = i;
                 }
                 let c = &mut app.controls[app.selected];
                 c.state.handle_mouse(m, c.area, c.orientation);

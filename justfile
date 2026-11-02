@@ -1,556 +1,285 @@
-# tui-slider - A simple TUI slider component library for ratatui
-#
-# Prerequisites: cargo install just && cargo install nu
-# Usage: just <task> or just --list
-# Patterns: See docs/JUSTFILE_PATTERNS.md for best practices
+# tui-slider — task runner
+# Recipes run in Nushell; anything longer than a line lives in scripts/*.nu (tested).
+# Install: cargo install just nu git-cliff   — then `just install-tools`
+# Usage:   just <task>
 
-# Default task - show available commands
+set shell := ["nu", "-c"]
+
+# ── Default ───────────────────────────────────────────────────────────────────
+
 default:
     @just --list
 
-# Install required tools (just, git-cliff)
+# ── Tool checks ───────────────────────────────────────────────────────────────
+
+_check-git-cliff:
+    @nu scripts/tools.nu check git-cliff
+
+# Install the development tools (git-cliff, cargo-audit/deny/fuzz/llvm-cov/outdated)
 install-tools:
-    @echo "Installing required tools..."
-    @command -v just >/dev/null 2>&1 || cargo install just
-    @command -v git-cliff >/dev/null 2>&1 || cargo install git-cliff
-    @echo "✅ All tools installed!"
+    nu scripts/tools.nu install
 
-# Build the project
+# ── Build ─────────────────────────────────────────────────────────────────────
+
+# Check without building
+check:
+    cargo check --workspace
+
+# Build (dev)
 build:
-    cargo build
+    cargo build --workspace
 
-# Build release version
+# Release build of the library
 build-release:
     cargo build --release
 
-# Run horizontal slider example
-run:
-    cargo run --features theme --example horizontal
+# Run an example with every feature on (e.g. just example basic); list them with just examples
+example name *args:
+    cargo run -q --all-features --example {{ name }} -- {{ args }}
 
-# Run horizontal slider example
-example-horizontal:
-    cargo run --features theme --example horizontal
+# List the examples (their [[example]] names, which can differ from the file names)
+examples:
+    @do { ^cargo run -q --example } | complete | get stderr | lines | where {|l| $l starts-with "    " } | str trim | str join (char nl)
 
-# Run vertical slider example
-example-vertical:
-    cargo run --features theme --example vertical
+# ── Test & quality ────────────────────────────────────────────────────────────
 
-# Run custom slider example
-example-custom:
-    cargo run --features theme --example custom
-
-# Run thumb toggle example
-example-thumb:
-    cargo run --features theme --example thumb_toggle
-
-# Run all examples
-examples: example-horizontal example-vertical example-custom example-thumb
-
-# Run tests
+# Rust tests
 test:
-    cargo test
+    cargo test --workspace --all-features
 
-# Run tests with coverage
-test-coverage:
-    cargo tarpaulin --out Html --output-dir coverage
+# Nushell script tests
+test-nu:
+    nu scripts/tests/run_all.nu
 
-# Check code without building
-check:
-    cargo check
-
-# Format code
 fmt:
-    cargo fmt
+    cargo fmt --all
 
-# Check if code is formatted
 fmt-check:
-    cargo fmt --check
+    cargo fmt --all -- --check
 
-# Run clippy linter
+# Clippy, warnings are errors
 clippy:
-    cargo clippy --all-features -- -D warnings
+    cargo clippy --workspace --all-targets --all-features -- -D warnings
 
-# Run all checks (fmt, clippy, test)
-check-all: fmt-check clippy test
-    @echo "✅ All checks passed!"
+# Rust and Nu tests
+test-all-nu: test test-nu
+    @echo "✅ All Rust and Nu tests passed!"
 
-# Clean build artifacts
-clean:
-    cargo clean
+# Line coverage (needs cargo-llvm-cov); writes target/llvm-cov/html
+coverage:
+    cargo llvm-cov --workspace --html
+    @echo "→ target/llvm-cov/html/index.html"
 
-# Check if git-cliff is installed
-check-git-cliff:
-    @command -v git-cliff >/dev/null 2>&1 || { echo "❌ git-cliff not found. Install with: cargo install git-cliff"; exit 1; }
-
-# Generate full changelog from all tags
-changelog: check-git-cliff
-    @echo "Generating full changelog..."
-    git-cliff -o CHANGELOG.md
-    @echo "✅ Changelog generated!"
-
-# Generate changelog for unreleased commits only
-changelog-unreleased: check-git-cliff
-    @echo "Generating unreleased changelog..."
-    git-cliff --unreleased --prepend CHANGELOG.md
-    @echo "✅ Unreleased changelog generated!"
-
-# Generate changelog for specific version tag
-changelog-version version: check-git-cliff
-    @echo "Generating changelog for version {{version}}..."
-    git-cliff --tag v{{version}} -o CHANGELOG.md
-    @echo "✅ Changelog generated for version {{version}}!"
-
-# Preview changelog without writing to file
-changelog-preview: check-git-cliff
-    @git-cliff
-
-# Preview unreleased changes
-changelog-preview-unreleased: check-git-cliff
-    @git-cliff --unreleased
-
-# Generate changelog for latest tag only
-changelog-latest: check-git-cliff
-    @echo "Generating changelog for latest tag..."
-    git-cliff --latest -o CHANGELOG.md
-    @echo "✅ Latest changelog generated!"
-
-# Update changelog with all commits (force regenerate)
-changelog-update: check-git-cliff
-    @echo "Regenerating complete changelog from all tags..."
-    git-cliff --output CHANGELOG.md
-    @echo "✅ Changelog updated from all git history!"
-
-# Bump version (usage: just bump 0.2.0)
-# Note: Runs check-all first to ensure code quality before version bump (fail early)
-bump version: check-all check-git-cliff
-    @echo "Bumping version to {{version}}..."
-    nu scripts/bump_version.nu {{version}}
-
-# Quick release: format, check, test, and build
-release-check: fmt clippy test build-release
-    @echo "✅ Ready for release!"
-
-# Publish to crates.io (dry run)
-publish-dry:
-    cargo publish --dry-run
-
-# Publish to crates.io
-publish:
-    cargo publish
-
-# Run pre-publish readiness checks
-check-publish:
-    nu scripts/check_publish.nu
-
-# Upgrade dependencies (nightly-style: upgrade pins, sync lock, quality gate)
-upgrade-deps:
-    nu scripts/upgrade_deps.nu --dry-run
-
-# Update dependencies
-update:
-    cargo update
-
-# Show outdated dependencies
-outdated:
-    cargo outdated
-
-# Generate documentation
+# Docs for the workspace, warnings are errors (what docs.rs would reject)
 doc:
-    cargo doc --no-deps --open
+    $env.RUSTDOCFLAGS = "-D warnings"; cargo doc --no-deps --workspace
 
-# Watch and auto-run on file changes (requires cargo-watch)
-watch:
-    cargo watch -x "run --example horizontal"
+# Everything CI runs (fmt check, clippy, tests, versions, nu tests)
+check-all: fmt
+    nu scripts/ci/quality_gate.nu
 
-# Git: commit current changes
-commit message:
-    git add .
-    git commit -m "{{message}}"
-
-# Git: pull from GitHub (origin)
-pull:
-    git pull origin "$(git branch --show-current)"
-
-# Git: pull from Gitea Microlab
-pull-gitea-microlab:
-    git pull gitea-microlab "$(git branch --show-current)"
-
-# Git: pull from Gitea (nexus-lab instance)
-pull-gitea-nexus-lab:
-    git pull gitea-nexus-lab "$(git branch --show-current)"
-
-# Git: pull from Gitea Starscream
-pull-gitea-starscream:
-    git pull gitea-starscream "$(git branch --show-current)"
-
-# Git: pull from all remotes (Gitea first, then GitHub)
-pull-all:
-    #!/usr/bin/env sh
-    failed=""; ok_=""; skipped=""
-    for r in gitea-microlab gitea-starscream gitea-nexus-lab origin; do
-        if ! git remote get-url "$r" >/dev/null 2>&1; then
-            echo "↷ skipping $r (not configured here; add with: git remote add $r <url>)"
-            skipped="$skipped $r"; continue
-        fi
-        echo "→ pulling from $r"
-        if git pull "$r" "$(git branch --show-current)"; then ok_="$ok_ $r"; else failed="$failed $r"; fi
-    done
-    echo ""
-    [ -n "$ok_" ] && echo "✅ Pulled from:$ok_"
-    [ -n "$skipped" ] && echo "ℹ️  Skipped (not configured):$skipped"
-    if [ -n "$failed" ]; then echo "⚠️  Failed:$failed"; exit 1; fi
-
-# Git: push to GitHub (origin)
-push:
-    git push origin "$(git branch --show-current)"
-
-# Git: push to Gitea Microlab
-push-gitea-microlab:
-    git push gitea-microlab "$(git branch --show-current)"
-
-# Git: push to Gitea (nexus-lab instance)
-push-gitea-nexus-lab:
-    git push gitea-nexus-lab "$(git branch --show-current)"
-
-# Git: push to Gitea Starscream
-push-gitea-starscream:
-    git push gitea-starscream "$(git branch --show-current)"
-
-# Git: push to GitHub, Gitea, and Gitea (nexus-lab)
-push-all:
-    #!/usr/bin/env sh
-    failed=""; ok_=""; skipped=""
-    for r in origin gitea-microlab gitea-starscream gitea-nexus-lab; do
-        if ! git remote get-url "$r" >/dev/null 2>&1; then
-            echo "↷ skipping $r (not configured here; add with: git remote add $r <url>)"
-            skipped="$skipped $r"; continue
-        fi
-        echo "→ pushing to $r"
-        if git push "$r" "$(git branch --show-current)"; then ok_="$ok_ $r"; else failed="$failed $r"; fi
-    done
-    echo ""
-    [ -n "$ok_" ] && echo "✅ Pushed to:$ok_"
-    [ -n "$skipped" ] && echo "ℹ️  Skipped (not configured):$skipped"
-    if [ -n "$failed" ]; then echo "⚠️  Failed:$failed"; exit 1; fi
-
-# Force-push the current branch to all remotes
-push-all-force:
-    #!/usr/bin/env sh
-    git_try() {
-        r=$1; shift
-        if git remote get-url "$r" >/dev/null 2>&1; then "$@"; else echo "↷ skipping $r (not configured here; add with: git remote add $r <url>)"; skipped="$skipped $r"; fi
-    }
-    skipped=""
-    failed=""
-    git_try origin git push --force origin "$(git branch --show-current)"             || failed="$failed origin"
-    git_try gitea-microlab git push --force gitea-microlab "$(git branch --show-current)"     || failed="$failed gitea-microlab"
-    git_try gitea-starscream git push --force gitea-starscream "$(git branch --show-current)"   || failed="$failed gitea-starscream"
-    git_try gitea-nexus-lab git push --force gitea-nexus-lab "$(git branch --show-current)"    || failed="$failed gitea-nexus-lab"
-    if [ -n "$skipped" ]; then echo "ℹ️  Skipped (not configured):$skipped"; fi
-    if [ -n "$failed" ]; then
-        echo "⚠️  Failed to force-push to:$failed"
-    else
-        echo "✅ Force-pushed to GitHub, Gitea Microlab, Gitea Starscream, and Gitea (nexus-lab)!"
-    fi
-
-# Git: force-push to GitHub (origin)
-push-force:
-    git push --force origin "$(git branch --show-current)"
-
-# Git: force-push to Gitea Microlab
-push-gitea-microlab-force:
-    git push --force gitea-microlab "$(git branch --show-current)"
-
-# Git: force-push to Gitea (nexus-lab instance)
-push-gitea-nexus-lab-force:
-    git push --force gitea-nexus-lab "$(git branch --show-current)"
-
-# Git: force-push to Gitea Starscream
-push-gitea-starscream-force:
-    git push --force gitea-starscream "$(git branch --show-current)"
-
-# Git: force-push tags to GitHub
-push-tags-force:
-    git push --force origin --tags
-
-# Git: force-push tags to all remotes (continues on failure)
-push-tags-all-force:
-    #!/usr/bin/env sh
-    git_try() {
-        r=$1; shift
-        if git remote get-url "$r" >/dev/null 2>&1; then "$@"; else echo "↷ skipping $r (not configured here; add with: git remote add $r <url>)"; skipped="$skipped $r"; fi
-    }
-    skipped=""
-    failed=""
-    git_try origin git push --force origin --tags             || failed="$failed origin"
-    git_try gitea-microlab git push --force gitea-microlab --tags     || failed="$failed gitea-microlab"
-    git_try gitea-starscream git push --force gitea-starscream --tags   || failed="$failed gitea-starscream"
-    git_try gitea-nexus-lab git push --force gitea-nexus-lab --tags    || failed="$failed gitea-nexus-lab"
-    if [ -n "$skipped" ]; then echo "ℹ️  Skipped (not configured):$skipped"; fi
-    if [ -n "$failed" ]; then
-        echo "⚠️  Failed to force-push tags to:$failed"
-    else
-        echo "✅ Tags force-pushed to all remotes!"
-    fi
-
-# Git: force-push branch + tags to all remotes (continues on failure)
-push-all-force-with-tags: push-all-force push-tags-all-force
-
-# Git: push tags to GitHub
-push-tags:
-    git push origin --tags
-
-# Git: push tags to all remotes
-push-tags-all:
-    #!/usr/bin/env sh
-    failed=""; ok_=""; skipped=""
-    for r in origin gitea-microlab gitea-starscream gitea-nexus-lab; do
-        if ! git remote get-url "$r" >/dev/null 2>&1; then
-            echo "↷ skipping $r (not configured here; add with: git remote add $r <url>)"
-            skipped="$skipped $r"; continue
-        fi
-        echo "→ pushing tags to $r"
-        if git push "$r" --tags; then ok_="$ok_ $r"; else failed="$failed $r"; fi
-    done
-    echo ""
-    [ -n "$ok_" ] && echo "✅ Tags pushed to:$ok_"
-    [ -n "$skipped" ] && echo "ℹ️  Skipped (not configured):$skipped"
-    if [ -n "$failed" ]; then echo "⚠️  Failed:$failed"; exit 1; fi
-
-# Full release workflow: bump version and push to GitHub
-release version: (bump version)
-    @echo "Pushing to GitHub..."
-    git push origin "$(git branch --show-current)"
-    git push origin v{{version}}
-    @echo "✅ Release v{{version}} complete on GitHub!"
-
-# Full release workflow: bump version and push to Gitea Microlab
-release-gitea-microlab version: (bump version)
-    @echo "Pushing to Gitea Microlab..."
-    git push gitea-microlab "$(git branch --show-current)"
-    git push gitea-microlab v{{version}}
-    @echo "✅ Release v{{version}} complete on Gitea Microlab!"
-
-# Full release workflow: bump version and push to Gitea (nexus-lab instance)
-release-gitea-nexus-lab version: (bump version)
-    @echo "Pushing to Gitea (nexus-lab)..."
-    git push gitea-nexus-lab "$(git branch --show-current)"
-    git push gitea-nexus-lab v{{version}}
-    @echo "✅ Release v{{version}} complete on Gitea (nexus-lab)!"
-
-# Full release workflow: bump version and push to Gitea Starscream
-release-gitea-starscream version: (bump version)
-    @echo "Pushing to Gitea Starscream..."
-    git push gitea-starscream "$(git branch --show-current)"
-    git push gitea-starscream v{{version}}
-    @echo "✅ Release v{{version}} complete on Gitea Starscream!"
-
-# Full release workflow: bump version and push to GitHub, Gitea, and Gitea (nexus-lab)
-release-all version: (bump version)
-    #!/usr/bin/env sh
-    failed=""; ok_=""; skipped=""
-    for r in origin gitea-microlab gitea-starscream gitea-nexus-lab; do
-        if ! git remote get-url "$r" >/dev/null 2>&1; then
-            echo "↷ skipping $r (not configured here; add with: git remote add $r <url>)"
-            skipped="$skipped $r"; continue
-        fi
-        echo "→ releasing to $r"
-        if git push "$r" "$(git branch --show-current)" && git push "$r" v{{version}}; then ok_="$ok_ $r"; else failed="$failed $r"; fi
-    done
-    echo ""
-    [ -n "$ok_" ] && echo "✅ Release done on:$ok_"
-    [ -n "$skipped" ] && echo "ℹ️  Skipped (not configured):$skipped"
-    if [ -n "$failed" ]; then echo "⚠️  Failed:$failed"; exit 1; fi
-
-# Push release to all remotes (without bumping)
-push-release-all:
-    #!/usr/bin/env sh
-    failed=""; ok_=""; skipped=""
-    for r in origin gitea-microlab gitea-starscream gitea-nexus-lab; do
-        if ! git remote get-url "$r" >/dev/null 2>&1; then
-            echo "↷ skipping $r (not configured here; add with: git remote add $r <url>)"
-            skipped="$skipped $r"; continue
-        fi
-        echo "→ releasing to $r"
-        if git push "$r" "$(git branch --show-current)" && git push "$r" --tags; then ok_="$ok_ $r"; else failed="$failed $r"; fi
-    done
-    echo ""
-    [ -n "$ok_" ] && echo "✅ Release done on:$ok_"
-    [ -n "$skipped" ] && echo "ℹ️  Skipped (not configured):$skipped"
-    if [ -n "$failed" ]; then echo "⚠️  Failed:$failed"; exit 1; fi
-
-# Sync Gitea Microlab with GitHub (force)
-sync-gitea-microlab:
-    @echo "Syncing Gitea Microlab with GitHub..."
-    git push gitea-microlab "$(git branch --show-current)" --force
-    git push gitea-microlab --tags --force
-    @echo "✅ Gitea Microlab synced!"
-
-# Sync Gitea Starscream with GitHub (force)
-sync-gitea-starscream:
-    @echo "Syncing Gitea Starscream with GitHub..."
-    git push gitea-starscream "$(git branch --show-current)" --force
-    git push gitea-starscream --tags --force
-    @echo "✅ Gitea Starscream synced!"
-
-# Sync Gitea (nexus-lab instance) with GitHub (force)
-sync-gitea-nexus-lab:
-    @echo "Syncing Gitea (nexus-lab) with GitHub..."
-    git push gitea-nexus-lab "$(git branch --show-current)" --force
-    git push gitea-nexus-lab --tags --force
-    @echo "✅ Gitea (nexus-lab) synced!"
-
-# Sync all Gitea instances with GitHub (force, continues on failure)
-sync-all-gitea:
-    #!/usr/bin/env sh
-    git_try() {
-        r=$1; shift
-        if git remote get-url "$r" >/dev/null 2>&1; then "$@"; else echo "↷ skipping $r (not configured here; add with: git remote add $r <url>)"; skipped="$skipped $r"; fi
-    }
-    skipped=""
-    failed=""
-    git_try gitea-microlab git push gitea-microlab "$(git branch --show-current)" --force           || failed="$failed gitea-microlab"
-    git_try gitea-microlab git push gitea-microlab --tags --force         || failed="$failed gitea-microlab-tags"
-    git_try gitea-starscream git push gitea-starscream "$(git branch --show-current)" --force         || failed="$failed gitea-starscream"
-    git_try gitea-starscream git push gitea-starscream --tags --force       || failed="$failed gitea-starscream-tags"
-    git_try gitea-nexus-lab git push gitea-nexus-lab "$(git branch --show-current)" --force          || failed="$failed gitea-nexus-lab"
-    git_try gitea-nexus-lab git push gitea-nexus-lab --tags --force        || failed="$failed gitea-nexus-lab-tags"
-    if [ -n "$skipped" ]; then echo "ℹ️  Skipped (not configured):$skipped"; fi
-    if [ -n "$failed" ]; then
-        echo "⚠️  Failed to sync:$failed"
-    else
-        echo "✅ All Gitea instances force-synced with GitHub."
-    fi
-
-# Show configured remotes
-remotes:
-    @echo "Configured git remotes:"
-    @git remote -v
-
-# Setup Gitea remote (provide your Gitea URL)
-setup-gitea url:
-    @echo "Adding Gitea remote..."
-    git remote add gitea-microlab {{url}}
-    @echo "✅ Gitea remote added!"
-    @echo "Test with: git push gitea-microlab main"
-
-# Show current version
-version:
-    @nu scripts/version.nu
-
-# Show git-cliff info
-cliff-info:
-    @echo "Git-cliff configuration:"
-    @echo "  Config file: cliff.toml"
-    @echo "  Installed: $(command -v git-cliff >/dev/null 2>&1 && echo '✅ Yes' || echo '❌ No (run: just install-tools)')"
-    @command -v git-cliff >/dev/null 2>&1 && git-cliff --version || true
-
-# Show project info
-info:
-    @echo "Project: tui-slider"
-    @echo "Version: $(just version)"
-    @echo "Author: Sorin Albu-Irimies"
-    @echo "License: MIT"
-
-# View changelog
-view-changelog:
-    @cat CHANGELOG.md
-
-# Run the VHS tape to generate demo GIF for horizontal slider
-vhs-horizontal:
-    @echo "Running VHS tape to generate horizontal demo..."
-    vhs examples/vhs/horizontal.tape
-    @echo "✅ Demo generated at examples/vhs/output/horizontal.gif"
-
-# Run the VHS tape to generate demo GIF for vertical slider
-vhs-vertical:
-    @echo "Running VHS tape to generate vertical demo..."
-    vhs examples/vhs/vertical.tape
-    @echo "✅ Demo generated at examples/vhs/output/vertical.gif"
-
-# Run the VHS tape to generate demo GIF for custom slider
-vhs-custom:
-    @echo "Running VHS tape to generate custom demo..."
-    vhs examples/vhs/custom_symbols.tape
-    @echo "✅ Demo generated at examples/vhs/output/custom.gif"
-
-# Run the VHS tape to generate demo GIF for handles (with/without comparison)
-vhs-handles:
-    @echo "Running VHS tape to generate handles demo..."
-    vhs examples/vhs/handles.tape
-    @echo "✅ Demo generated at examples/vhs/output/handles.gif"
-
-# Run the VHS tape to generate demo GIF for borders (styles and colors)
-vhs-borders:
-    @echo "Running VHS tape to generate borders demo..."
-    vhs examples/vhs/borders.tape
-    @echo "✅ Demo generated at examples/vhs/output/borders.gif"
-
-# Run the VHS tape to generate the main tui-slider demo GIF (horizontal and vertical sliders showcase)
-vhs-tui-slider:
-    @echo "Running VHS tape to generate tui-slider demo..."
-    vhs examples/vhs/tui_slider.tape
-    @echo "✅ Demo generated at examples/vhs/output/tui-slider.gif"
-
-# Run the VHS tape to generate demo GIF for step sizes
-vhs-step-sizes:
-    @echo "Running VHS tape to generate step sizes demo..."
-    vhs examples/vhs/step_sizes.tape
-    @echo "✅ Demo generated at examples/vhs/output/step_sizes.gif"
-
-# Run the VHS tape to generate demo GIF for title alignment
-vhs-title-alignment:
-    @echo "Running VHS tape to generate title alignment demo..."
-    vhs examples/vhs/title_alignment.tape
-    @echo "✅ Demo generated at examples/vhs/output/title_alignment.gif"
-
-# Run the VHS tape to generate demo GIF for value alignment
-vhs-value-alignment:
-    @echo "Running VHS tape to generate value alignment demo..."
-    vhs examples/vhs/value_alignment.tape
-    @echo "✅ Demo generated at examples/vhs/output/value_alignment.gif"
-
-# Run the VHS tape to generate demo GIF for horizontal bar alignment
-vhs-horizontal-bar-alignment:
-    @echo "Running VHS tape to generate horizontal bar alignment demo..."
-    vhs examples/vhs/horizontal_bar_alignment.tape
-    @echo "✅ Demo generated at examples/vhs/output/horizontal_bar_alignment.gif"
-
-# Run the VHS tape to generate demo GIF for vertical positioning
-vhs-vertical-positioning:
-    @echo "Running VHS tape to generate vertical positioning demo..."
-    vhs examples/vhs/vertical_positioning.tape
-    @echo "✅ Demo generated at examples/vhs/output/vertical_positioning.gif"
-
-
-
-# Run the VHS tape to generate the comprehensive studio-mixer demo
-vhs-comprehensive:
-    @echo "Running VHS tape to generate comprehensive demo..."
-    vhs examples/vhs/comprehensive.tape
-    @echo "✅ Demo generated at examples/vhs/output/comprehensive_demo.gif"
-
-# Run all VHS tapes to generate all demo GIFs (automatically discovers all .tape files)
-vhs-all:
-    @echo "🎬 Running automated VHS tape generation..."
-    nu scripts/generate_all_tapes.nu
-
-# Run all VHS tapes manually (legacy - explicitly lists each tape)
-vhs-all-manual: vhs-tui-slider vhs-horizontal vhs-vertical vhs-custom vhs-handles vhs-borders vhs-step-sizes vhs-title-alignment vhs-value-alignment vhs-vertical-positioning vhs-horizontal-bar-alignment vhs-comprehensive
-    @echo "✅ All demo GIFs generated!"
-
-# Security: dependency vulnerability scan (needs `cargo install cargo-audit`)
+# Security: known vulnerabilities (cargo install cargo-audit)
 audit:
     cargo audit
 
-# Security: licenses, advisories, bans, sources (needs `cargo install cargo-deny`)
+# Security: licenses, advisories, bans, sources (cargo install cargo-deny)
 deny:
     cargo deny check
 
-# List fuzz targets (needs nightly + `cargo install cargo-fuzz`)
+# Fuzz one target (e.g. just fuzz parse 60); needs nightly + cargo-fuzz
+fuzz target secs="60":
+    cargo +nightly fuzz run {{ target }} -- -max_total_time={{ secs }}
+
+# Every fuzz target for a short while
+fuzz-all secs="30":
+    nu scripts/ci/fuzz_all.nu --secs {{ secs }}
+
+# List the fuzz targets
 fuzz-list:
     cargo +nightly fuzz list
 
-# Run one fuzz target: just fuzz slider_render 30
-fuzz target seconds="30":
-    cargo +nightly fuzz run {{target}} -- -max_total_time={{seconds}}
+# Security + fuzz locally, like the nightly workflows
+nightly-local: audit deny fuzz-all
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
+
+# Update Cargo.lock and fuzz/Cargo.lock (semver-compatible only)
+update:
+    nu scripts/ci/deps_update.nu update
+
+# Show outdated dependencies (needs cargo-outdated)
+outdated:
+    cargo outdated --workspace
+
+# What the nightly workflow does: update, full gate, commit and push if green
+update-deps: update check-all
+    nu scripts/ci/deps_update.nu commit (git config user.name) (git config user.email)
+
+# ── Nightly workflows on demand ───────────────────────────────────────────────
+
+# Run a GitHub workflow now (deps-update | security | fuzz | ci), needs gh
+gh-run workflow="deps-update":
+    gh workflow run {{ workflow }}.yml
+    @echo "✅ Dispatched {{ workflow }} — gh run watch"
+
+# Run a Gitea workflow now (deps-update | security | fuzz); needs GITEA_URL + GITEA_TOKEN
+gitea-run workflow="deps-update":
+    nu scripts/gitea_run.nu {{ workflow }}
+
+# The nightly dependency update, now, on both hosts
+deps-update-now: (gh-run "deps-update")
+    -just gitea-run deps-update
+
+# Security audit workflow, now, on both hosts
+security-now: (gh-run "security")
+    -just gitea-run security
+
+# Fuzz workflow, now, on both hosts
+fuzz-now: (gh-run "fuzz")
+    -just gitea-run fuzz
+
+# ── Changelog ─────────────────────────────────────────────────────────────────
+
+# Regenerate CHANGELOG.md from all tags
+changelog: _check-git-cliff
+    git-cliff --output CHANGELOG.md
+
+# Preview the next release's changelog
+changelog-preview: _check-git-cliff
+    @git-cliff --unreleased
+
+# Prepend only the unreleased commits to CHANGELOG.md
+changelog-unreleased: _check-git-cliff
+    git-cliff --unreleased --prepend CHANGELOG.md
+
+# Show the latest release's entry
+changelog-latest: _check-git-cliff
+    @git-cliff --latest
+
+# ── Version & release ─────────────────────────────────────────────────────────
+
+# Current version (Cargo.toml)
+version:
+    @nu scripts/version.nu
+
+# Check Cargo.toml and EXTRA_MANIFESTS agree (and a tag, if given)
+check-versions tag="":
+    nu scripts/ci/check_versions.nu {{ tag }}
+
+# Validate that a version gives a valid vX.Y.Z tag
+validate-tag version:
+    nu scripts/ci/validate_tag.nu "v{{ version }}"
+
+# What would be released, without changing anything
+release-preview: _check-git-cliff
+    @print $"Current version: (nu scripts/version.nu)\n"
+    @git-cliff --unreleased
+    @echo "Ships: tui-slider (crates.io, docs on docs.rs)"
+
+# Everything in check-all plus a release build and the docs
+check-release: check-all build-release doc
+    @echo "✅ Release gate passed"
+
+# Dry-run the crates.io publish
+publish-dry:
+    cargo publish --dry-run -p tui-slider
+
+# Bump Cargo.toml (+ EXTRA_MANIFESTS) + Cargo.lock, regenerate the changelog, commit and tag
+bump version: _check-git-cliff check-all
+    nu scripts/bump_version.nu --yes --skip-checks {{ version }}
+
+# Bump, tag and push to GitHub — starts the Release workflow
+release version: (bump version)
+    git push --follow-tags origin (git branch --show-current)
+    @print "✅ v{{ version }} pushed — the Release workflow publishes to crates.io."
+
+# First release of the version already in Cargo.toml (no bump), pushed to GitHub
+release-initial: _check-git-cliff check-all
+    nu scripts/release_initial.nu
+    git push --follow-tags origin (git branch --show-current)
+
+# Bump, tag and push to every remote — starts the Release workflows on both hosts
+release-all version: (bump version) push-all
+
+# Bump, tag and push to Gitea only
+release-gitea-starscream version: (bump version)
+    git push --follow-tags gitea-starscream (git branch --show-current)
+
+# First release, pushed to every remote
+release-initial-all: _check-git-cliff check-all
+    nu scripts/release_initial.nu
+    nu scripts/remotes.nu push
+
+# Re-run the GitHub Release workflow for an existing tag (e.g. just release-retrigger 0.1.0)
+release-retrigger version:
+    gh workflow run release.yml --field tag=v{{ version }}
+
+
+# ── Git remotes (GitHub = origin, Gitea = gitea-starscream; no mirroring) ─────
+
+# Push the current branch + tags to every configured remote (continues on failure)
+push-all:
+    nu scripts/remotes.nu push
+
+# Show all configured remotes
+remotes:
+    @git remote -v
+
+# Push the current branch to GitHub
+push:
+    git push origin (git branch --show-current)
+
+# Push the current branch to Gitea Starscream
+push-gitea-starscream:
+    git push gitea-starscream (git branch --show-current)
+
+# Push all tags to GitHub
+push-tags:
+    git push origin --tags
+
+# Push all tags to every remote (continues on failure)
+push-tags-all:
+    nu scripts/remotes.nu push-tags
+
+# Latest commit + tags to every remote, after the gate (no bump)
+push-release-all: check-all push-all
+
+# Force-push the current branch to every remote (no lease — be sure!)
+push-all-force:
+    nu scripts/remotes.nu push --force
+
+# Pull the current branch from GitHub
+pull:
+    git pull origin (git branch --show-current)
+
+# Pull the current branch from Gitea Starscream
+pull-gitea-starscream:
+    git pull gitea-starscream (git branch --show-current)
+
+# Pull the current branch from every remote (continues on failure)
+pull-all:
+    nu scripts/remotes.nu pull
+
+# Force-sync Gitea Starscream with this checkout (branch + tags) — the nightlies diverge
+sync-gitea-starscream:
+    git push gitea-starscream (git branch --show-current) --force
+    git push gitea-starscream --tags --force
+
+# Add the missing remotes
+setup-remotes:
+    nu scripts/remotes.nu setup
+
+# Remove build artifacts
+clean:
+    cargo clean
+    rm -rf dist
+
+# ── Project extras ─────────────────────────────────────────────────────────────
+
+# Record every VHS demo in examples/vhs (needs vhs)
+vhs-all:
+    nu scripts/generate_all_tapes.nu
+
+# Record one VHS demo (e.g. just vhs horizontal)
+vhs name:
+    vhs examples/vhs/{{ name }}.tape

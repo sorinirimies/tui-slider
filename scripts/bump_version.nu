@@ -1,252 +1,199 @@
 #!/usr/bin/env nu
-# Automated version bump script for tui-slider
-# Usage: nu scripts/bump_version.nu [--yes] <new_version>
-# Example: nu scripts/bump_version.nu 0.4.0
-# Example: nu scripts/bump_version.nu --yes 0.4.0
+# ──────────────────────────────────────────────────────────────────────────────
+# tui-slider — Bump the version
+# ──────────────────────────────────────────────────────────────────────────────
+# Usage:
+#   nu scripts/bump_version.nu <new_version> [--yes] [--skip-checks] [--check]
+#
+# One version, everywhere (the release workflow checks it):
+#   * the version in Cargo.toml: `[workspace.package]` (every crate inherits it),
+#     or `[package]` for a single crate at the root
+#   * the top-level `version` of each file in check_versions.nu's EXTRA_MANIFESTS
+#     (e.g. a Zed extension.toml, a package.json)
+#   * Cargo.lock
+#
+# Order: validate (cheap) → quality gate on the untouched tree → edit, changelog,
+# commit and tag. Any failure after the first edit is rolled back, so a failed
+# bump never leaves a half-bumped tree behind.
+#
+# Flags:
+#   --check        only validate (well-formed, strictly newer), then exit
+#   --yes          non-interactive
+#   --skip-checks  the caller already ran the gate (`just bump` runs check-all)
+# ──────────────────────────────────────────────────────────────────────────────
 
-use semver.nu [semver-cmp]
+# Is `version` MAJOR.MINOR.PATCH with an optional pre-release?
+export def is_semver [version: string]: nothing -> bool {
+    $version =~ '^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$'
+}
+
+# Compare two semvers: 1 if a > b, -1 if a < b, 0 if equal (pre-releases sort
+# below their release, identifiers compare numerically when both are numbers).
+export def compare_versions [a: string, b: string]: nothing -> int {
+    let core = {|v| $v | split row "-" | first | split row "." | each {|x| $x | into int } }
+    let pa = (do $core $a)
+    let pb = (do $core $b)
+    for i in 0..2 {
+        if ($pa | get $i) > ($pb | get $i) { return 1 }
+        if ($pa | get $i) < ($pb | get $i) { return (-1) }
+    }
+    let ra = ($a | split row "-" | skip 1 | str join "-")
+    let rb = ($b | split row "-" | skip 1 | str join "-")
+    if $ra == $rb { return 0 }
+    if ($ra | is-empty) { return 1 }
+    if ($rb | is-empty) { return (-1) }
+    let ia = ($ra | split row ".")
+    let ib = ($rb | split row ".")
+    let n = ([($ia | length) ($ib | length)] | math min)
+    for i in 0..<$n {
+        let x = ($ia | get $i)
+        let y = ($ib | get $i)
+        if $x == $y { continue }
+        let xn = ($x =~ '^\d+$')
+        let yn = ($y =~ '^\d+$')
+        if $xn and $yn { return (if ($x | into int) > ($y | into int) { 1 } else { -1 }) }
+        if $xn { return (-1) }
+        if $yn { return 1 }
+        return (if $x > $y { 1 } else { -1 })
+    }
+    if ($ia | length) > ($ib | length) { 1 } else if ($ia | length) < ($ib | length) { -1 } else { 0 }
+}
+
+# Set `version` inside `[workspace.package]` of a Cargo.toml text, or inside
+# `[package]` when there is no workspace version (only there: dependency
+# versions are left alone).
+export def set_workspace_version [text: string, version: string]: nothing -> string {
+    let section = if ($text | lines | any {|l| ($l | str trim) == "[workspace.package]" }) { "[workspace.package]" } else { "[package]" }
+    mut in_section = false
+    mut out = []
+    for line in ($text | lines) {
+        let trimmed = ($line | str trim)
+        if ($trimmed | str starts-with "[") {
+            $in_section = ($trimmed == $section)
+        }
+        if $in_section and ($trimmed =~ '^version\s*=') {
+            $out = ($out | append ($line | str replace --regex '"[^"]*"' $'"($version)"'))
+        } else {
+            $out = ($out | append $line)
+        }
+    }
+    ($out | str join "\n") + "\n"
+}
+
+# Set the first top-level `version = "…"` of a TOML text (extension.toml & co).
+export def set_extension_version [text: string, version: string]: nothing -> string {
+    mut done = false
+    mut out = []
+    for line in ($text | lines) {
+        if (not $done) and ($line =~ '^version\s*=') {
+            $out = ($out | append $'version = "($version)"')
+            $done = true
+        } else {
+            $out = ($out | append $line)
+        }
+    }
+    ($out | str join "\n") + "\n"
+}
+
+use ci/check_versions.nu [EXTRA_MANIFESTS]
+use version.nu [cargo_version]
+
+const TOUCHED = ["Cargo.toml" "Cargo.lock" "fuzz/Cargo.lock" "CHANGELOG.md"]
+
+def run_checks [] {
+    print $"(ansi cyan)── quality gate: nothing is bumped until it is green ──(ansi reset)"
+    nu scripts/ci/quality_gate.nu
+}
+
+def roll_back [start: string, tag: string] {
+    print $"(ansi red)✗ Bump failed — rolling back.(ansi reset)"
+    do --ignore-errors { ^git tag -d $tag | ignore }
+    ^git reset --hard $start
+}
 
 def main [
-    new_version: string,  # Target version in semver format (e.g., 0.4.0)
-    --yes (-y),           # Skip confirmation prompt
+    new_version: string,  # New version, X.Y.Z
+    --yes (-y),           # Non-interactive
+    --skip-checks,        # The caller already ran the quality gate
+    --check,              # Only validate, then exit
 ] {
-    # ── Colors ────────────────────────────────────────────────────────
-    let red = (ansi red)
-    let green = (ansi green)
-    let yellow = (ansi yellow)
-    let cyan = (ansi cyan)
-    let bold = (ansi attr_bold)
-    let reset = (ansi reset)
+    let current = (cargo_version (open Cargo.toml))
+    let tag = $"v($new_version)"
+    print $"  Current version : (ansi yellow)($current)(ansi reset)"
+    print $"  New version     : (ansi green)($new_version)(ansi reset)"
 
-    # ── Validate version format ───────────────────────────────────────
-    if not ($new_version =~ '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$') {
-        error make {
-            msg: $"($red)Error: Invalid version format '($new_version)'($reset)\nVersion must be X.Y.Z or X.Y.Z-suffix \(e.g., 0.4.0 or 0.4.0-beta.1\)"
-        }
+    if not (is_semver $new_version) {
+        print $"(ansi red)Error:(ansi reset) '($new_version)' is not a valid semantic version."
+        exit 1
     }
-
-    # ── Header ────────────────────────────────────────────────────────
-    print ""
-    print $"($cyan)════════════════════════════════════════($reset)"
-    print $"($cyan)  tui-slider Version Bump($reset)"
-    print $"($cyan)════════════════════════════════════════($reset)"
-    print ""
-
-    # ── Read current version from Cargo.toml ──────────────────────────
-    let cargo_content = (open Cargo.toml --raw)
-    let current_version = (
-        $cargo_content
-        | lines
-        | where {|l| $l =~ '^version\s*=' }
-        | first
-        | parse --regex 'version\s*=\s*"(?P<v>[^"]+)"'
-        | get v
-        | first
-    )
-
-    print $"  Current version: ($yellow)($current_version)($reset)"
-    print $"  New version:     ($green)($new_version)($reset)"
-    print ""
-
-    # ── Guard: new version must be greater than current ───────────────
-    let cmp = (semver-cmp $new_version $current_version)
+    let cmp = (compare_versions $new_version $current)
     if $cmp == 0 {
-        error make {
-            msg: $"($red)Error: Already at version ($new_version)($reset)\nNothing to do."
-        }
+        print $"(ansi red)Error:(ansi reset) ($new_version) is already the current version."
+        exit 1
     }
     if $cmp < 0 {
-        error make {
-            msg: $"($red)Error: New version ($new_version) is lower than current version ($current_version)($reset)\nVersion bumps must increase the version."
-        }
+        print $"(ansi red)Error:(ansi reset) ($new_version) is older than ($current); a bump must go up."
+        exit 1
     }
+    print $"(ansi green)✓(ansi reset) ($new_version) is valid and newer than ($current)."
+    if $check { return }
 
-    # ── Guard: tag already exists ─────────────────────────────────────
-    let tag_name = $"v($new_version)"
-    let existing_tags = (do { run-external "git" "tag" } | complete)
-    if $existing_tags.exit_code != 0 {
-        error make { msg: $"($red)Error: Failed to list git tags. Is this a git repository?($reset)" }
+    if (^git tag --list $tag | str trim | is-not-empty) {
+        print $"(ansi red)Error:(ansi reset) tag ($tag) already exists."
+        exit 1
     }
-    let tags = ($existing_tags.stdout | lines)
-    if ($tags | any {|t| $t == $tag_name }) {
-        error make {
-            msg: $"($red)Error: Tag '($tag_name)' already exists($reset)\nDelete it first with: git tag -d ($tag_name)"
-        }
+    # A tag someone else pushed would make our push fail after the commit.
+    let remote = do { ^git ls-remote --tags origin $"refs/tags/($tag)" } | complete
+    if $remote.exit_code == 0 and ($remote.stdout | str trim | is-not-empty) {
+        print $"(ansi red)Error:(ansi reset) tag ($tag) already exists on origin."
+        exit 1
     }
-
-    # ── Confirmation ──────────────────────────────────────────────────
+    if (^git status --porcelain | str trim | is-not-empty) {
+        print $"(ansi red)Error:(ansi reset) the working tree is dirty — commit or stash first."
+        exit 1
+    }
     if not $yes {
-        let answer = (input $"($bold)Continue with version bump ($current_version) → ($new_version)? \(y/n\) ($reset)")
-        if not (($answer | str trim) =~ '(?i)^y$') {
-            print $"($yellow)Aborted.($reset)"
-            exit 1
-        }
-        print ""
+        let answer = (input $"Bump to ($new_version), commit and tag ($tag)? [y/N] ")
+        if ($answer | str lowercase) != "y" { print "Aborted."; exit 1 }
+    }
+    let start = (^git rev-parse HEAD | str trim)
+
+    if $skip_checks {
+        print $"(ansi yellow)⚠(ansi reset) --skip-checks: assuming the gate already ran."
+    } else {
+        run_checks
     }
 
-    # ── Step 1/8: Update Cargo.toml ───────────────────────────────────
-    print $"($cyan)Step 1/8: Updating Cargo.toml...($reset)"
-    let updated_cargo = (
-        $cargo_content
-        | str replace --regex '(?m)^version\s*=\s*"[^"]+"' $'version = "($new_version)"'
-    )
-    $updated_cargo | save --force Cargo.toml
-    print $"($green)  ✓ Cargo.toml updated($reset)"
+    try {
+        set_workspace_version (open Cargo.toml --raw) $new_version | save --force Cargo.toml
+        for f in $EXTRA_MANIFESTS {
+            set_extension_version (open $f --raw) $new_version | save --force $f
+        }
+        print $"(ansi green)✓(ansi reset) Cargo.toml ($EXTRA_MANIFESTS | str join ' ') → ($new_version)"
 
-    # ── Step 2/8: Update README.md badges ─────────────────────────────
-    print ""
-    print $"($cyan)Step 2/8: Updating README.md badges...($reset)"
-    if ("README.md" | path exists) {
-        let readme_content = (open README.md --raw)
-        if ($readme_content =~ 'version-[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?-blue') {
-            let updated_readme = (
-                $readme_content
-                | str replace --all --regex 'version-[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?-blue' $"version-($new_version)-blue"
-            )
-            $updated_readme | save --force README.md
-            print $"($green)  ✓ README.md badges updated($reset)"
+        ^cargo update --workspace
+        ^cargo metadata --locked --format-version 1 | ignore
+        # fuzz/ is its own workspace and records our crate's version too; resolving
+        # it refreshes the path dependency without upgrading anything else.
+        if ("fuzz/Cargo.toml" | path exists) {
+            do { cd fuzz; ^cargo metadata --format-version 1 | ignore }
+        }
+        print $"(ansi green)✓(ansi reset) Cargo.lock updated."
+
+        if (which git-cliff | is-not-empty) {
+            ^git-cliff --output CHANGELOG.md --tag $tag
+            print $"(ansi green)✓(ansi reset) CHANGELOG.md regenerated."
         } else {
-            print $"($yellow)  ⚠ No version badges found in README.md($reset)"
+            print $"(ansi yellow)⚠(ansi reset) git-cliff not found — CHANGELOG.md unchanged."
         }
-    } else {
-        print $"($yellow)  ⚠ README.md not found, skipping($reset)"
+
+        ^git add ...($TOUCHED | where {|f| $f | path exists }) ...$EXTRA_MANIFESTS
+        ^git commit -m $"chore: bump version to ($new_version)"
+        ^git tag -a $tag -m $"Release ($tag)"
+        print $"(ansi green)✓(ansi reset) Committed and tagged ($tag)."
+    } catch {|err|
+        roll_back $start $tag
+        error make --unspanned { msg: $"bump to ($new_version) failed and was rolled back: ($err.msg)" }
     }
-
-    # ── Step 3/8: Update Cargo.lock ───────────────────────────────────
-    print ""
-    print $"($cyan)Step 3/8: Updating Cargo.lock...($reset)"
-    let lock_result = (do { run-external "cargo" "update" "-p" "tui-slider" } | complete)
-    if $lock_result.exit_code != 0 {
-        print $"($red)  ✗ Failed to update Cargo.lock($reset)"
-        print $lock_result.stderr
-        error make { msg: $"($red)cargo update failed($reset)" }
-    }
-    print $"($green)  ✓ Cargo.lock updated($reset)"
-
-    # ── Step 4/8: cargo fmt ───────────────────────────────────────────
-    print ""
-    print $"($cyan)Step 4/8: Running cargo fmt...($reset)"
-    let fmt_result = (do { run-external "cargo" "fmt" } | complete)
-    if $fmt_result.exit_code != 0 {
-        print $"($red)  ✗ cargo fmt failed($reset)"
-        print $fmt_result.stderr
-        error make { msg: $"($red)cargo fmt failed($reset)" }
-    }
-    print $"($green)  ✓ Code formatted($reset)"
-
-    # ── Step 5/8: cargo clippy ────────────────────────────────────────
-    print ""
-    print $"($cyan)Step 5/8: Running cargo clippy...($reset)"
-    let clippy_result = (do { run-external "cargo" "clippy" "--all-targets" "--all-features" "--" "-D" "warnings" } | complete)
-    if $clippy_result.exit_code != 0 {
-        print $"($red)  ✗ Clippy found issues. Please fix them before continuing.($reset)"
-        print $clippy_result.stderr
-        error make { msg: $"($red)cargo clippy failed with warnings or errors($reset)" }
-    }
-    print $"($green)  ✓ Clippy passed($reset)"
-
-    # ── Step 6/8: cargo test ──────────────────────────────────────────
-    print ""
-    print $"($cyan)Step 6/8: Running tests...($reset)"
-    let test_result = (do { run-external "cargo" "test" "--all-features" "--all-targets" } | complete)
-    if $test_result.exit_code != 0 {
-        print $"($red)  ✗ Tests failed. Please fix them before continuing.($reset)"
-        print $test_result.stderr
-        error make { msg: $"($red)cargo test failed($reset)" }
-    }
-    print $"($green)  ✓ All tests passed($reset)"
-
-    # ── Step 7/8: Generate CHANGELOG.md ───────────────────────────────
-    print ""
-    print $"($cyan)Step 7/8: Generating CHANGELOG.md...($reset)"
-    if (which git-cliff | length) > 0 {
-        let cliff_result = (do { run-external "git-cliff" "--tag" $tag_name "-o" "CHANGELOG.md" } | complete)
-        if $cliff_result.exit_code != 0 {
-            print $"($yellow)  ⚠ git-cliff exited with errors, changelog may be incomplete($reset)"
-            print $cliff_result.stderr
-        } else {
-            print $"($green)  ✓ CHANGELOG.md generated($reset)"
-        }
-    } else {
-        print $"($yellow)  ⚠ git-cliff not found — skipping changelog generation($reset)"
-        print $"($yellow)    Install it with: cargo install git-cliff($reset)"
-    }
-
-    # ── Step 8/8: Git commit + tag ────────────────────────────────────
-    print ""
-    print $"($cyan)Step 8/8: Creating git commit and tag...($reset)"
-
-    # Collect files that exist for staging
-    let files_to_stage = (
-        ["Cargo.toml" "Cargo.lock" "README.md" "CHANGELOG.md"]
-        | where {|f| ($f | path exists) }
-    )
-
-    # Check if there are uncommitted changes in our target files
-    let diff_args = (["git" "diff" "--quiet"] | append $files_to_stage)
-    let diff_result = (do { run-external ($diff_args | first) ...($diff_args | skip 1) } | complete)
-
-    if $diff_result.exit_code != 0 {
-        # There are changes to commit
-        let add_args = (["git" "add"] | append $files_to_stage)
-        run-external ($add_args | first) ...($add_args | skip 1)
-
-        let commit_msg = ([
-            $"chore: bump version to ($new_version)"
-            ""
-            "- Update version in Cargo.toml and README.md"
-            "- Update Cargo.lock"
-            "- Generate updated CHANGELOG.md"
-        ] | str join "\n")
-
-        let commit_result = (do { run-external "git" "commit" "-m" $commit_msg } | complete)
-        if $commit_result.exit_code != 0 {
-            print $"($red)  ✗ git commit failed($reset)"
-            print $commit_result.stderr
-            error make { msg: $"($red)git commit failed($reset)" }
-        }
-        print $"($green)  ✓ Changes committed($reset)"
-    } else {
-        print $"($yellow)  ⚠ No changes to commit($reset)"
-    }
-
-    # Create annotated tag
-    let tag_msg = ([
-        $"Release ($tag_name)"
-        ""
-        $"Includes all changes documented in CHANGELOG.md for version ($new_version)."
-    ] | str join "\n")
-
-    let tag_result = (do { run-external "git" "tag" "-a" $tag_name "-m" $tag_msg } | complete)
-    if $tag_result.exit_code != 0 {
-        print $"($red)  ✗ Failed to create tag ($tag_name)($reset)"
-        print $tag_result.stderr
-        error make { msg: $"($red)git tag failed($reset)" }
-    }
-    print $"($green)  ✓ Tag ($tag_name) created($reset)"
-
-    # ── Summary ───────────────────────────────────────────────────────
-    print ""
-    print $"($cyan)════════════════════════════════════════($reset)"
-    print $"($green)  ✓ Version bump complete! 🚀($reset)"
-    print $"($cyan)════════════════════════════════════════($reset)"
-    print ""
-    print $"($yellow)Next steps:($reset)"
-    print ""
-    print $"  1. Review the changes:"
-    print $"     ($cyan)git show($reset)"
-    print $"     ($cyan)git log --oneline -5($reset)"
-    print ""
-    print $"  2. Push to origin \(GitHub\):"
-    print $"     ($cyan)git push origin main($reset)"
-    print $"     ($cyan)git push origin ($tag_name)($reset)"
-    print ""
-    print $"  3. Push to gitea \(if configured\):"
-    print $"     ($cyan)git push gitea main($reset)"
-    print $"     ($cyan)git push gitea ($tag_name)($reset)"
-    print ""
-    print $"  4. Publish to crates.io:"
-    print $"     ($cyan)cargo publish --dry-run($reset)"
-    print $"     ($cyan)cargo publish($reset)"
-    print ""
+    print $"  Next: git push --follow-tags origin main"
 }

@@ -1088,14 +1088,14 @@ impl<'a> Default for Slider<'a> {
 
 impl<'a> Widget for Slider<'a> {
     fn render(mut self, area: Rect, buf: &mut Buffer) {
-        if self.focused {
-            if let Some((border, selection)) = self.focus_colors {
-                if let Some(style) = self.block_style.as_mut() {
-                    *style = style.fg(border);
-                }
-                if self.explicit & EXPLICIT_HANDLE == 0 {
-                    self.handle_color = selection;
-                }
+        if self.focused
+            && let Some((border, selection)) = self.focus_colors
+        {
+            if let Some(style) = self.block_style.as_mut() {
+                *style = style.fg(border);
+            }
+            if self.explicit & EXPLICIT_HANDLE == 0 {
+                self.handle_color = selection;
             }
         }
         let area = match self.block {
@@ -1612,7 +1612,9 @@ mod tests {
                     .show_handle(true)
                     .render(area, &mut buf);
 
-                let hx = (0..width).find(|&x| buf[(x, 0)].symbol() == "H").unwrap();
+                let hx = (0..width)
+                    .find(|&x| buf[(x, 0)].symbol() == "H")
+                    .expect("the handle is drawn");
                 for x in 0..hx {
                     assert_eq!(
                         buf[(x, 0)].symbol(),
@@ -1746,7 +1748,9 @@ mod tests {
                     .handle_symbol("H")
                     .show_handle(true)
                     .render(h_area, &mut buf);
-                let hx = (0..size).find(|&x| buf[(x, 0)].symbol() == "H").unwrap();
+                let hx = (0..size)
+                    .find(|&x| buf[(x, 0)].symbol() == "H")
+                    .expect("the handle is drawn");
                 assert_eq!(state.cell(size), hx, "horizontal w={size} v={value}");
 
                 let v_area = Rect::new(0, 0, 1, size);
@@ -1756,7 +1760,9 @@ mod tests {
                     .handle_symbol("H")
                     .show_handle(true)
                     .render(v_area, &mut buf);
-                let hy = (0..size).find(|&y| buf[(0, y)].symbol() == "H").unwrap();
+                let hy = (0..size)
+                    .find(|&y| buf[(0, y)].symbol() == "H")
+                    .expect("the handle is drawn");
                 assert_eq!(state.cell_vertical(size), hy, "vertical h={size} v={value}");
             }
         }
@@ -1780,7 +1786,9 @@ mod tests {
                     .segmented(true)
                     .show_handle(true)
                     .render(area, &mut buf);
-                let hx = (0..width).find(|&x| buf[(x, 0)].symbol() == "H").unwrap();
+                let hx = (0..width)
+                    .find(|&x| buf[(x, 0)].symbol() == "H")
+                    .expect("the handle is drawn");
                 for x in 0..hx {
                     let sym = buf[(x, 0)].symbol();
                     assert!(
@@ -1906,9 +1914,9 @@ mod tests {
                 .render(area, &mut buf);
             let bar_x = (1..1 + width)
                 .find(|&x| buf[(x, 2)].symbol() != " ")
-                .unwrap();
+                .expect("the bar is drawn");
             let row: String = (0..width + 4).map(|x| buf[(x, 8)].symbol()).collect();
-            let text_x = row.find("100").unwrap() as u16;
+            let text_x = row.find("100").expect("the value is drawn") as u16;
             // "100" is 3 wide: its middle character must sit under the bar.
             assert_eq!(text_x + 1, bar_x, "width {width}");
         }

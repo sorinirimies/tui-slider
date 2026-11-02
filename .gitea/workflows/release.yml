@@ -1,115 +1,57 @@
 name: Release
 
+# Runs the gate at the tag and publishes a Gitea release with the notes; crates.io
+# gets the crate from the GitHub release workflow.
+
 on:
   push:
-    tags:
-      - "v*"
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing release tag to build
+        description: "Tag to release (e.g. v0.2.0)"
         required: true
-        type: string
 
 env:
-  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
-
-permissions:
-  contents: write
-  packages: write
+  CARGO_TERM_COLOR: always
+  RUSTUP_MAX_RETRIES: "10"
+  CARGO_NET_RETRY: "10"
 
 jobs:
-  test:
-    name: Test
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_TAG }}
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-      - name: Run clippy
-        run: cargo clippy -- -D warnings -A deprecated
-
-      - name: Run tests
-        run: cargo test --all-features
-
-  build:
-    name: Build and release
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
           fetch-depth: 0
-          ref: ${{ env.RELEASE_TAG }}
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Install cliff
-        run: cargo install git-cliff
-
-      # hustcer/setup-nu needs Node >= 20 (global `File`); the Gitea runner has Node 18.
-      - name: Install Nushell
+      - name: Install Rust stable + targets
         run: |
-          case "$(uname -m)" in
-            x86_64) arch=x86_64-unknown-linux-gnu ;;
-            aarch64|arm64) arch=aarch64-unknown-linux-gnu ;;
-            *) echo "unsupported arch"; exit 1 ;;
-          esac
-          tag=0.116.1
-          curl -fsSL "https://github.com/nushell/nushell/releases/download/${tag}/nu-${tag}-${arch}.tar.gz" | tar xz -C /tmp
-          install -d "$HOME/.local/bin"
-          cp /tmp/nu-${tag}-${arch}/nu "$HOME/.local/bin/nu"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          "$HOME/.local/bin/nu" --version
-
-      - name: Prepare release artifacts
-        run: nu scripts/release_prepare.nu ${{ env.RELEASE_TAG }}
-
-      - name: Build release
-        run: cargo build --release --all-features
-
-      - name: Create Gitea Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          body_path: RELEASE_NOTES.md
-          files: |
-            LICENSE
-            README.md
-            CHANGELOG.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish to crates.io
-        if: env.CRATES_IO_TOKEN != ''
-        env:
-          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+          for i in 1 2 3 4 5; do
+            curl --proto '=https' --tlsv1.2 -sSf --retry 5 --retry-all-errors --retry-delay 5 https://sh.rustup.rs | sh -s -- -y --default-toolchain stable && break
+            [ $i = 5 ] && exit 1
+            echo "rustup install failed, retrying..."; sleep 15
+          done
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          . "$HOME/.cargo/env"
+          rustup component add rustfmt clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Install Nushell, git-cliff
         run: |
-          echo "Publishing to crates.io..."
-          cargo publish --token "$CRATES_IO_TOKEN" --allow-dirty
-
-      - name: Skip crates.io publish
-        if: env.CRATES_IO_TOKEN == ''
+          V=0.116.1
+          curl -fsSL --retry 5 https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /tmp
+          sudo install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu /usr/local/bin/nu || install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu $HOME/.cargo/bin/nu
+          cargo install git-cliff --locked
+      - name: Validate tag
+        id: v
+        run: nu scripts/ci/validate_tag.nu "${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+      - name: Versions match the tag
+        run: nu scripts/ci/check_versions.nu "${{ steps.v.outputs.tag }}"
+      - name: Quality gate
+        run: nu scripts/ci/quality_gate.nu
+      - name: Release notes
+        run: nu scripts/ci/release_notes.nu ${{ steps.v.outputs.tag }}
+      - name: Create Gitea release
         env:
-          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-        run: |
-          echo "⚠️  CRATES_IO_TOKEN not set. Skipping crates.io publication."
-          echo "To publish to crates.io, add CRATES_IO_TOKEN to your GitHub secrets."
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: nu scripts/ci/gitea_release.nu ${{ steps.v.outputs.tag }} --api "${{ github.server_url }}/api/v1/repos/${{ github.repository }}" --dir dist

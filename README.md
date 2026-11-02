@@ -420,9 +420,10 @@ just --list
 just build              # Build the project
 just test               # Run tests
 just check-all          # Run all checks (fmt, clippy, test)
-just run                # Run horizontal slider example
-just examples           # Run all examples
+just examples           # List the examples
+just example horizontal # Run one (every feature on)
 just bump <version>     # Bump version (runs checks first)
+just vhs-all            # Record the demo GIFs (needs vhs)
 ```
 
 For a complete list of available commands, run `just --list` or see the [justfile](justfile).
@@ -434,7 +435,8 @@ This project follows the "fail early" pattern for version bumps and releases:
 - **`just release <version>`** depends on `bump`, ensuring quality before release
 - All destructive operations have quality gates
 
-See [Justfile Best Practices & Patterns](docs/JUSTFILE_PATTERNS.md) for detailed documentation.
+A nightly job raises the compatible dependency requirements; when one changes and
+the checks pass, it releases the next patch version on its own.
 
 ## 🧪 Fuzzing
 

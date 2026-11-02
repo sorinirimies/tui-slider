@@ -8,14 +8,14 @@ use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{
+    Frame, Terminal,
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     widgets::{Block, BorderType, Borders, Paragraph},
-    Frame, Terminal,
 };
 use std::io;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -203,18 +203,18 @@ where
     loop {
         terminal.draw(|f| ui(f, app))?;
 
-        if event::poll(std::time::Duration::from_millis(16))? {
-            if let Event::Key(key) = event::read()? {
-                match key.code {
-                    KeyCode::Char('t') => cycle_theme(true),
-                    KeyCode::Char('T') => cycle_theme(false),
-                    KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                    KeyCode::Right | KeyCode::Char('l') => app.next(),
-                    KeyCode::Left | KeyCode::Char('h') => app.previous(),
-                    KeyCode::Up | KeyCode::Char('k') => app.increase(),
-                    KeyCode::Down | KeyCode::Char('j') => app.decrease(),
-                    _ => {}
-                }
+        if event::poll(std::time::Duration::from_millis(16))?
+            && let Event::Key(key) = event::read()?
+        {
+            match key.code {
+                KeyCode::Char('t') => cycle_theme(true),
+                KeyCode::Char('T') => cycle_theme(false),
+                KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+                KeyCode::Right | KeyCode::Char('l') => app.next(),
+                KeyCode::Left | KeyCode::Char('h') => app.previous(),
+                KeyCode::Up | KeyCode::Char('k') => app.increase(),
+                KeyCode::Down | KeyCode::Char('j') => app.decrease(),
+                _ => {}
             }
         }
     }

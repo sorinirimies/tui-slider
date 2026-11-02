@@ -7,21 +7,21 @@ use anyhow::Result;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use ratatui::{
+    Frame, Terminal,
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Paragraph},
-    Frame, Terminal,
 };
 use std::io;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use tui_slider::style::SliderStyle;
 use tui_slider::Theme;
-use tui_slider::{symbols, Slider, SliderOrientation, SliderState};
+use tui_slider::style::SliderStyle;
+use tui_slider::{Slider, SliderOrientation, SliderState, symbols};
 
 static THEME_IDX: AtomicUsize = AtomicUsize::new(0);
 
@@ -209,18 +209,18 @@ where
     loop {
         terminal.draw(|f| ui(f, app))?;
 
-        if event::poll(std::time::Duration::from_millis(16))? {
-            if let Event::Key(key) = event::read()? {
-                match key.code {
-                    KeyCode::Char('t') => cycle_theme(true),
-                    KeyCode::Char('T') => cycle_theme(false),
-                    KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                    KeyCode::Down | KeyCode::Char('j') => app.next(),
-                    KeyCode::Up | KeyCode::Char('k') => app.previous(),
-                    KeyCode::Right | KeyCode::Char('l') => app.increase(),
-                    KeyCode::Left | KeyCode::Char('h') => app.decrease(),
-                    _ => {}
-                }
+        if event::poll(std::time::Duration::from_millis(16))?
+            && let Event::Key(key) = event::read()?
+        {
+            match key.code {
+                KeyCode::Char('t') => cycle_theme(true),
+                KeyCode::Char('T') => cycle_theme(false),
+                KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
+                KeyCode::Down | KeyCode::Char('j') => app.next(),
+                KeyCode::Up | KeyCode::Char('k') => app.previous(),
+                KeyCode::Right | KeyCode::Char('l') => app.increase(),
+                KeyCode::Left | KeyCode::Char('h') => app.decrease(),
+                _ => {}
             }
         }
     }

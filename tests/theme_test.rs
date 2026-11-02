@@ -1,3 +1,4 @@
+//! Theming through tui-nuances: `.theme()` sets the slider colors.
 #![cfg(feature = "theme")]
 use ratatui::{
     buffer::Buffer,

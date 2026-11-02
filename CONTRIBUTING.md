@@ -124,7 +124,7 @@ cargo test -- --nocapture
 cargo run --example horizontal
 
 # Or use just
-just example-horizontal
+just example horizontal
 ```
 
 ### Using Just

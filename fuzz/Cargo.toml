@@ -2,7 +2,7 @@
 name = "tui-slider-fuzz"
 version = "0.0.0"
 publish = false
-edition = "2021"
+edition = "2024"
 
 [package.metadata]
 cargo-fuzz = true
@@ -13,7 +13,7 @@ arbitrary = { version = "1", features = ["derive"] }
 ratatui = { version = "0.30", default-features = false }
 tui-slider = { path = ".." }
 
-# Not part of the main crate (needs nightly).
+# Not part of the main workspace (needs nightly).
 [workspace]
 
 [[bin]]

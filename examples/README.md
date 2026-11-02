@@ -56,15 +56,12 @@ just vhs-all
 nu scripts/generate_all_tapes.nu
 
 # Or generate specific demos manually
-just vhs-horizontal
-just vhs-vertical
-just vhs-borders
-# ... etc
+just vhs horizontal
+just vhs vertical
+just vhs borders
 ```
 
 The `vhs-all` command automatically discovers all `.tape` files in `examples/vhs/` and generates their GIFs, so you don't need to manually list each tape when adding new examples.
-
-See [`scripts/README.md`](../scripts/README.md#generate_all_tapesnu) for more details.
 
 ## License
 
