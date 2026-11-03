@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code)] // Shared by several fuzz targets; each uses only part of it.
 use arbitrary::Arbitrary;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::Color;
