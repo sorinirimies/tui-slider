@@ -32,8 +32,6 @@ jobs:
       version: ${{ steps.v.outputs.version }}
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.inputs.tag || github.ref_name }}
       - uses: hustcer/setup-nu@v3
         with:
           version: "0.116.1"
@@ -49,8 +47,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.validate.outputs.tag }}
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt,clippy
@@ -68,7 +64,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.validate.outputs.tag }}
           fetch-depth: 0
       - uses: hustcer/setup-nu@v3
         with:
@@ -90,8 +85,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.validate.outputs.tag }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: hustcer/setup-nu@v3
         with:
